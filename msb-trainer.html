@@ -125,6 +125,23 @@ svg text{font-family:"Arial Narrow","Roboto Condensed","Helvetica Neue",Arial,sa
 .lcd .w{color:#ffd24a;text-shadow:0 0 4px #c90}
 .lcd .a{color:#ff6a5a;text-shadow:0 0 4px #f30}
 .lcd .d{color:#3c7a48;text-shadow:none}
+/* ---------- annunciator ---------- */
+.ablk{position:absolute}
+.ablk .hd{position:absolute;left:0;right:0;top:0;height:12px}
+.win{position:absolute;width:80px;height:38px;border-radius:2px;background:linear-gradient(#e9e4d6,#cfc9b8);color:#4e4a40;
+  font-size:7.4px;font-weight:700;line-height:8.6px;text-align:center;display:flex;align-items:center;justify-content:center;padding:2px 3px;
+  box-shadow:inset 0 0 0 1px #8d8778,inset 0 0 0 3px #f7f3e8,0 1px 0 #fff8;letter-spacing:.2px;overflow:hidden}
+.win.lit.alarm{background:radial-gradient(ellipse at 50% 40%,#fff4c8,#ffc634 70%,#e39a00);color:#2a1a00;box-shadow:inset 0 0 0 1px #8d6a10,inset 0 0 0 3px #ffe39a,0 0 10px #ffb30088}
+.win.lit.trip{background:radial-gradient(ellipse at 50% 40%,#ffd6c8,#ff5a3a 70%,#d01e08);color:#fff;box-shadow:inset 0 0 0 1px #801206,inset 0 0 0 3px #ff9a80,0 0 10px #ff302088;text-shadow:0 1px 1px #600}
+.win.lit.dimw{filter:saturate(.55) brightness(.82)}
+.alog{position:absolute;background:#0c0f10;color:#c8d0c8;font-family:"Consolas","Courier New",monospace;font-size:10px;line-height:13px;
+  overflow-y:auto;padding:3px 6px;border-radius:2px;box-shadow:inset 0 0 0 2px #2a2f2b,0 1px 0 #fff8;touch-action:pan-y;-webkit-user-select:text;user-select:text}
+.alog div{white-space:nowrap}
+.alog .c{color:#6b7a6b}
+.alog .trip{color:#ff6a50}.alog .alarm{color:#ffc040}.alog .normal{color:#7fbf7f}.alog .op{color:#8fc8ff}
+.alog .warn{color:#ffd77a}.alog .pms{color:#d6a8ff}.alog .instr{color:#ff9ad6}.alog .info{color:#d0d6d0}
+body.lamptest .lamp::after{background:radial-gradient(circle at 45% 40%,#fff 0 12%,var(--lc,#f33) 45%,var(--lc2,#a00) 100%)!important;box-shadow:0 0 10px 3px var(--lc,#f33)!important}
+body.lamptest .led{background:#4dff7a}
 /* ---------- toasts ---------- */
 #toasts{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;max-width:94vw}
 .toast{background:#202529ee;color:#eee;border:1px solid #555;border-left:4px solid #999;padding:7px 12px;border-radius:4px;font-size:13px;
@@ -170,8 +187,8 @@ const CONFIG = {
     count: 3,                                  // число дизель-генераторов
     ratedKW: 1200, ratedKVA: 1500, Un: 440, fn: 60, pf: 0.8, rpm: 900,
     Xd1: 0.30,        // переходное сопротивление X'd (о.е., с кабелем) — сеть и синхронизирующая мощность
-    Xd2: 0.10,        // сверхпереходное X''d — бросок тока при включении / КЗ
-    tauSub: 0.06,     // постоянная затухания сверхпереходной составляющей, с
+    Xd2: 0.10,        // сверхпереходное X''d — бросок тока при включении / КЗ (сеть решается для E'' за X''d)
+    tauSub: 0.06,     // постоянная времени релаксации E'' к E' (затухание сверхпереходного тока), с
     H: 2.0,           // постоянная инерции агрегата, с
     D: 12,            // демпфирование (демпферная обмотка), о.е. мощности / о.е. скольжения
     winding: { amb: 45, rise: 65, tau: 480 },        // °C: окружающая, перегрев при Iном, постоянная времени
@@ -185,7 +202,7 @@ const CONFIG = {
     tauAct: 0.05, tauEng: 0.25,     // исполнительный механизм / запаздывание сгорания-турбины
     govKd: 3.0,                     // производная составляющая регулятора
     speedRefMin: 0.92, speedRefMax: 1.10,
-    speedRefDefault: 1.0032,        // уставка х.х. → 60,0 Гц без нагрузки
+    speedRefDefault: 1.004,         // уставка х.х. → 60,0 Гц без нагрузки
     govRate: 0.004,                 // скорость серводвигателя уставки, о.е./с (≈0,24 Гц/с)
     startFuelLimit: 0.70,           // ограничение подачи топлива при пуске
     prelubTime: 4,                  // предпусковая прокачка масла, с
@@ -193,7 +210,7 @@ const CONFIG = {
     firingSpeed: 0.10, cutoutSpeed: 0.33,
     startAttempts: 3, startPause: 6, startRamp: 8,
     runSpeed: 0.30, readySpeed: 0.95,
-    lossA: 0.02, lossB: 0.06,       // момент потерь = 0,8·(A + B·n), о.е.
+    lossA: 0.02, lossB: 0.08,       // момент потерь = 0,8·(A + B·n), о.е. (моторный режим ≈ 10 % Pном)
     stopLoss: 0.07,                 // доп. торможение компрессией при остановке (выбег ≈ 35 с)
     lo: { nominal: 4.6, prelub: 0.9, tau: 0.8 },         // бар
     jw: { thermostat: 80, standby: 55, ambient: 30, warmRate: 0.06, coldLoad: 50 }, // °C
@@ -221,6 +238,48 @@ const CONFIG = {
     autoTimeout: 90,                 // SYNCHRONIZING FAILURE
     softLoadRate: 0.5,               // скорость плавного нагружения (доля скорости серводвигателя)
     grade: { soft: 10, jolt: 30 },   // оценка по углу: до 10° мягко, 10–30° толчок
+  },
+
+  /* ---- ЗАЩИТЫ: единая таблица уставок и выдержек ----
+     q: измеряемая величина; pickup — в о.е. (P — от Pном, I — от Iном, U — от Uном, Q — от Sном) или в Гц/°C/бар;
+     act: trip — отключение АВ; trip+stop — АВ + остановка двигателя; pref1/pref2 — ступени preferential trip;
+          alarm — сигнализация; shutdown — аварийная остановка дизеля (с отключением АВ) */
+  protection: {
+    gen: [
+      { id: 'RP',  name: 'REVERSE POWER',             q: 'P',    cmp: '<', pickup: -0.08, delay: 5,    act: 'trip',  win: 'RP' },
+      { id: 'PT1', name: 'OVERLOAD — PREF. TRIP 1',   q: 'I',    cmp: '>', pickup: 1.00,  delay: 5,    act: 'pref1', win: 'OL' },
+      { id: 'PT2', name: 'OVERLOAD — PREF. TRIP 2',   q: 'I',    cmp: '>', pickup: 1.00,  delay: 10,   act: 'pref2', win: 'OL' },
+      { id: 'OCL', name: 'OVERCURRENT LONG TIME',     q: 'I',    cmp: '>', pickup: 1.15,  delay: 20,   act: 'trip',  win: 'OC' },
+      { id: 'SCS', name: 'SHORT CIRCUIT SHORT TIME',  q: 'I',    cmp: '>', pickup: 2.50,  delay: 0.4,  act: 'trip',  win: 'OC' },
+      { id: 'SCI', name: 'SHORT CIRCUIT INSTANTANEOUS', q: 'I',  cmp: '>', pickup: 5.00,  delay: 0,    act: 'trip',  win: 'OC' },
+      { id: 'MCR', name: 'MAKING CURRENT RELEASE',    q: 'I',    cmp: '>', pickup: 2.50,  delay: 0,    act: 'trip',  win: 'OC', window: 0.15 }, // активна 0,15 с после замыкания АВ
+      { id: 'UV',  name: 'UNDERVOLTAGE',              q: 'U',    cmp: '<', pickup: 0.70,  delay: 0.5,  act: 'trip',  win: 'VF' },
+      { id: 'OV',  name: 'OVERVOLTAGE',               q: 'U',    cmp: '>', pickup: 1.10,  delay: 5,    act: 'trip',  win: 'VF' },
+      { id: 'UF',  name: 'UNDERFREQUENCY',            q: 'f',    cmp: '<', pickup: 57,    delay: 5,    act: 'trip',  win: 'VF' },
+      { id: 'OF',  name: 'OVERFREQUENCY',             q: 'f',    cmp: '>', pickup: 63,    delay: 5,    act: 'trip',  win: 'VF' },
+      { id: 'LOE', name: 'LOSS OF EXCITATION',        q: 'Q',    cmp: '<', pickup: -0.30, delay: 2,    act: 'trip',  win: 'EX' },
+      { id: 'DIF', name: 'DIFFERENTIAL',              q: 'diff', cmp: '>', pickup: 0.5,   delay: 0.05, act: 'trip+stop', win: 'EX', always: true },
+      { id: 'UNB', name: 'PHASE UNBALANCE',           q: 'unb',  cmp: '>', pickup: 0.15,  delay: 8,    act: 'trip',  win: 'EX' },
+    ],
+    closeBlockU: 0.85,        // блокировка включения АВ при U < 85 %
+    severeAngle: 120,         // включение с углом > 120° — механический удар, остановка агрегата
+    feeder: { inst: 12, ol: 1.3, olDelay: 20, uvLevel: 0.5, uvDelay: 0.3 },   // автоматы фидеров (кратно Iном фидера)
+    engine: [
+      { id: 'LOA', name: 'L.O. PRESSURE LOW',              q: 'lo', cmp: '<', pickup: 2.5,  delay: 3,  act: 'alarm',    win: 'DA', inhibit: 15 },
+      { id: 'LOS', name: 'L.O. PRESSURE LOW — SHUTDOWN',   q: 'lo', cmp: '<', pickup: 1.5,  delay: 2,  act: 'shutdown', win: 'SD', inhibit: 15 },
+      { id: 'JWA', name: 'J.W. TEMPERATURE HIGH',          q: 'jw', cmp: '>', pickup: 90,   delay: 5,  act: 'alarm',    win: 'DA' },
+      { id: 'JWS', name: 'J.W. TEMPERATURE HIGH — SHUTDOWN', q: 'jw', cmp: '>', pickup: 95, delay: 5,  act: 'shutdown', win: 'SD' },
+      { id: 'OS',  name: 'OVERSPEED',                      q: 'n',  cmp: '>', pickup: 1.15, delay: 0,  act: 'shutdown', win: 'SD' },
+      { id: 'WT',  name: 'GEN. WINDING TEMPERATURE HIGH',  q: 'tw', cmp: '>', pickup: 130,  delay: 10, act: 'alarm',    win: 'DA' },
+      { id: 'BT',  name: 'GEN. BEARING TEMPERATURE HIGH',  q: 'tb', cmp: '>', pickup: 85,   delay: 10, act: 'alarm',    win: 'DA' },
+    ],
+    bus: {
+      U: [0.90, 1.08], Udelay: 5,           // BUS VOLTAGE ABNORMAL
+      f: [58.2, 61.8], fdelay: 5,           // BUS FREQUENCY ABNORMAL
+      highLoad: 0.85, highLoadDelay: 30,    // LOAD > 85 % — запрос на пуск резервного
+      ins440: 1.0, ins220: 0.5,             // LOW INSULATION, МОм
+      loadShare: 0.15, loadShareDelay: 30,  // LOAD SHARING FAILURE (рассогласование > 15 % Pном)
+    },
   },
 
   /* ---- приборы (шкалы). Внешний вид — CONFIG.gaugeStyle ---- */
@@ -318,7 +377,68 @@ const Log = {
     this.dirty = true;
   },
 };
-const Alarms = { cond() {}, step() {} };   // заглушка, заменяется на этапе 3
+/** Табло алармов: окна, мигание до квитирования, ревун, ACK / SILENCE / RESET / LAMP TEST.
+ *  Состояния окна: OFF → ALM (быстро мигает, ревун) → ACK (горит) → RTNACK (норма, ждёт RESET) → OFF;
+ *                  ALM → RTN (норма до квитирования, медленно мигает) → ACK → RTNACK. */
+const Alarms = {
+  wins: {}, order: [], conds: {}, silenced: false, lampTest: false,
+  define(id, text, sev, group) { this.wins[id] = { id, text, sev, group, state: 'OFF', n: 0 }; this.order.push(id); },
+  cond(key, active, win, text) {
+    let c = this.conds[key];
+    if (!c) c = this.conds[key] = { active: false, win, text };
+    active = !!active;
+    if (text) c.text = text;
+    if (active === c.active) return;
+    c.active = active;
+    const w = this.wins[win]; if (!w) return;
+    if (active) { w.n++; w.state = 'ALM'; this.silenced = false; Log.add('ALARM  ' + c.text, w.sev === 'trip' ? 'trip' : 'alarm'); }
+    else { w.n = Math.max(0, w.n - 1); Log.add('NORMAL ' + c.text, 'normal'); }
+  },
+  step() {
+    let horn = false;
+    for (const id of this.order) {
+      const w = this.wins[id];
+      if (w.n === 0) { if (w.state === 'ALM') w.state = 'RTN'; else if (w.state === 'ACK') w.state = 'RTNACK'; }
+      if (w.state === 'ALM') horn = true;
+    }
+    if (horn && !this.silenced) Audio.hornOn(); else Audio.hornOff();
+    this.hornActive = horn && !this.silenced;
+  },
+  ack() {
+    let k = 0;
+    for (const id of this.order) { const w = this.wins[id]; if (w.state === 'ALM') { w.state = 'ACK'; k++; } else if (w.state === 'RTN') { w.state = 'RTNACK'; k++; } }
+    Audio.hornOff(); if (k) Log.add(`ACK (${k})`, 'op');
+  },
+  silence() { this.silenced = true; Audio.hornOff(); Log.add('SILENCE', 'op'); },
+  reset() {
+    let k = 0;
+    for (const id of this.order) { const w = this.wins[id]; if (w.state === 'RTNACK') { w.state = 'OFF'; k++; } }
+    Automation.resetLatches();
+    Log.add(`ALARM RESET (${k})`, 'op');
+  },
+  counts() { let unack = 0, active = 0; for (const id of this.order) { const w = this.wins[id]; if (w.state === 'ALM' || w.state === 'RTN') unack++; if (w.state !== 'OFF') active++; } return { unack, active }; },
+};
+function defineAlarms() {
+  Alarms.wins = {}; Alarms.order = []; Alarms.conds = {};
+  for (const g of Model.gens) {
+    const n = g.name, gr = g.tag;
+    Alarms.define(gr + '.ACB', `${n} GEN ACB ABNORMAL TRIP`, 'trip', gr);
+    Alarms.define(gr + '.RP', `${n} GEN REVERSE POWER`, 'trip', gr);
+    Alarms.define(gr + '.OC', `${n} GEN OVERCURRENT / S.C.`, 'trip', gr);
+    Alarms.define(gr + '.VF', `${n} GEN VOLT. / FREQ. ABNORMAL`, 'trip', gr);
+    Alarms.define(gr + '.EX', `${n} GEN EXCIT. / DIFF. / UNBAL.`, 'trip', gr);
+    Alarms.define(gr + '.OL', `${n} GEN OVERLOAD`, 'alarm', gr);
+    Alarms.define(gr + '.SD', `${n} D/G SHUTDOWN`, 'trip', gr);
+    Alarms.define(gr + '.DA', `${n} D/G COMMON ALARM`, 'alarm', gr);
+    Alarms.define(gr + '.SF', `${n} D/G START FAILURE`, 'alarm', gr);
+  }
+  const C = [['BO', 'BLACKOUT', 'trip'], ['PT', 'PREFERENTIAL TRIP ACTIVATED', 'trip'], ['HL', 'LOAD > 85 % STBY GEN REQUEST', 'alarm'],
+    ['BV', 'BUS VOLTAGE ABNORMAL', 'alarm'], ['BF', 'BUS FREQUENCY ABNORMAL', 'alarm'], ['I440', 'LOW INSULATION 440 V', 'alarm'],
+    ['I220', 'LOW INSULATION 220 V', 'alarm'], ['SYF', 'SYNCHRONIZING FAILURE', 'alarm'], ['LSF', 'LOAD SHARING FAILURE', 'alarm'],
+    ['SCO', 'SYNCHROSCOPE ON > 15 MIN', 'alarm'], ['AIR', 'START AIR PRESSURE LOW', 'alarm'], ['HCB', 'HEAVY CONSUMER START BLOCKED', 'alarm'],
+    ['FT', 'FEEDER CB TRIP', 'alarm'], ['BSC', 'BUS FAULT — PMS LOCKOUT', 'trip'], ['SP', 'SPARE', 'alarm']];
+  for (const [id, t, sev] of C) Alarms.define(id, t, sev, 'COM');
+}
 
 /* ======================================================================
    4. MODEL — дизель-генераторы, АВ, шины, потребители, сеть
@@ -341,7 +461,8 @@ class GenSet {
     this.psi = 0; this.efd = 0; this.avrInt = 0; this.avrSet = CONFIG.avr.setDefault; this.soft = 0;
     this.delta = U.rnd() * 2 * Math.PI - Math.PI; this.E = 0;
     this.U = 0; this.ang = 0; this.f = 0;
-    this.I1 = 0; this.Isub = 0; this.I = 0; this.P = 0; this.Q = 0; this.Ipeak = 0;
+    this.Es = { re: 0, im: 0 };   // сверхпереходная ЭДС E'' в осях ротора
+    this.Iph = { re: 0, im: 0 }; this.I = 0; this.P = 0; this.Q = 0; this.Ipeak = 0;
     this.tw = G.winding.amb; this.tb = G.bearing.base; this.heaterSw = true; this.heaterOn = false; this.ins = G.insulation.dry;
     // АВ
     this.acb = { closed: false, tripped: null, closing: -1, spring: 1, closedAt: -1e9, src: '' };
@@ -474,6 +595,14 @@ class GenSet {
     this.efd = efd;
     this.psi = U.approach(this.psi, efd, dt, this.faults.loe ? 0.9 : A.tauField);
     this.E = this.psi * e.n + A.residual * e.n;
+    if (!this.acb.closed) this.Es = { re: this.E, im: 0 };
+  }
+  /* релаксация E'' → E' − j(X'd − X''d)·I (сверхпереходный процесс) */
+  stepSub(dt) {
+    if (!this.acb.closed) return;
+    const G = CONFIG.gen, k = 1 - Math.exp(-dt / G.tauSub), Ir = Cx.mul(this.Iph, Cx.pol(1, -this.delta));
+    const tgt = { re: this.E + (G.Xd1 - G.Xd2) * Ir.im, im: -(G.Xd1 - G.Xd2) * Ir.re };
+    this.Es.re += (tgt.re - this.Es.re) * k; this.Es.im += (tgt.im - this.Es.im) * k;
   }
 
   /* ---- уравнение движения ротора ---- */
@@ -502,7 +631,7 @@ class GenSet {
     // охлаждающая вода
     const load = Math.max(0, this.P / G.PnPu);
     if (e.n > 0.3) {
-      if (this.faults.overheat) e.jw += 0.16 * dt * e.n;
+      if (this.faults.overheat) e.jw += 0.25 * dt * e.n;
       else if (e.jw < E.jw.thermostat - 1) e.jw += (E.jw.warmRate * (0.25 + load)) * e.n * dt;
       else e.jw = U.approach(e.jw, E.jw.thermostat + 4 * load, dt, 60);
     } else {
@@ -540,7 +669,7 @@ class GenSet {
     Log.add(`${this.name} ACB OPEN (${src}), нагрузка в момент отключения ${Math.round(kw)} кВт`, src === 'OP' ? 'op' : 'pms');
     return true;
   }
-  openACB() { this.acb.closed = false; this.acb.closing = -1; this.Isub = 0; this.I1 = 0; Audio.clack(0.8); }
+  openACB() { this.acb.closed = false; this.acb.closing = -1; this.Iph = { re: 0, im: 0 }; Audio.clack(0.8); }
   doClose() {
     const a = this.acb; a.closing = -1; a.closed = true; a.closedAt = Sim.t; a.spring = 0; this.Ipeak = 0;
     Model.onClose(this);
@@ -588,45 +717,47 @@ class Consumer {
   measure(V) {
     const S = CONFIG.gen.ratedKVA, v2 = V * V;
     this.P = v2 * this.y.re * S; this.Q = -v2 * this.y.im * S;
-    const kva = Math.hypot(this.P, this.Q);
-    this.I = V > 0.01 ? kva * 1000 / (Math.sqrt(3) * (this.c.sys === '220' ? 220 : CONFIG.gen.Un) * V) : 0;
+    let ym = Math.hypot(this.y.re, this.y.im);
+    if (this.fault && this.sw === 'ON') ym = Math.hypot(this.y.re + FAULT_Y.re, this.y.im + FAULT_Y.im);
+    this.I = V * ym * CONFIG.gen.In * (this.c.sys === '220' ? CONFIG.gen.Un / 220 : 1);
+  }
+  trip(why) {
+    this.sw = 'TRIP'; this.state = 'STOP'; this.y = { re: 0, im: 0 }; this.ocT = 0;
+    Log.add(`${this.c.name}: автомат фидера отключился — ${why}`, 'trip'); Audio.clack(0.6);
   }
 }
 
 /* ---- сеть: узел шин, ЭДС генераторов за X'd ---- */
-Model.solve = function (dt) {
+const FAULT_Y = { re: 6.9, im: -17.2 };   // проводимость металлического КЗ на фидере (о.е.)
+Model.solve = function (dt, prep = true) {
   const G = CONFIG.gen, bus = this.bus, online = [];
   for (const g of this.gens) if (g.acb.closed) online.push(g);
   const fpu = online.length ? online.reduce((s, g) => s + g.eng.n, 0) / online.length : 1;
   const busOK = bus.live || online.length > 0;
   let YL = { re: 0, im: 0 };
-  for (const c of this.consumers) { c.prepare(dt, busOK, fpu); YL.re += c.y.re; YL.im += c.y.im; }
+  for (const c of this.consumers) { if (prep) c.prepare(dt, busOK, fpu); YL.re += c.y.re; YL.im += c.y.im; }
   if (this.busFault) { YL.re += this.busFault.y.re; YL.im += this.busFault.y.im; }
-  for (const c of this.consumers) if (c.fault && c.sw === 'ON') { YL.re += 6.9; YL.im -= 17.2; }   // КЗ на фидере
+  for (const c of this.consumers) if (c.fault && c.sw === 'ON') { YL.re += FAULT_Y.re; YL.im += FAULT_Y.im; }   // КЗ на фидере
   let V = { re: 0, im: 0 };
   if (online.length) {
     let YE = { re: 0, im: 0 }, Ys = { re: 0, im: 0 };
     for (const g of online) {
-      const y = { re: 0, im: -1 / G.Xd1 }, E = Cx.pol(g.E, g.delta);
+      const y = { re: 0, im: -1 / G.Xd2 }, E = Cx.mul(g.Es, Cx.pol(1, g.delta));
       YE = Cx.add(YE, Cx.mul(y, E)); Ys = Cx.add(Ys, y);
     }
     V = Cx.div(YE, Cx.add(Ys, YL));
   }
   bus.V = V; bus.U = Cx.abs(V); bus.ang = Cx.arg(V);
   let Ptot = 0, Qtot = 0;
-  const gSub = G.Xd1 / G.Xd2 - 1, kSub = Math.exp(-dt / G.tauSub);
   for (const g of this.gens) {
     if (g.acb.closed) {
-      const y = { re: 0, im: -1 / G.Xd1 }, E = Cx.pol(g.E, g.delta);
+      const y = { re: 0, im: -1 / G.Xd2 }, E = Cx.mul(g.Es, Cx.pol(1, g.delta));
       const I = Cx.mul(y, Cx.sub(E, V)), S = Cx.mul(V, Cx.conj(I));
-      g.P = S.re; g.Q = S.im;
-      const I1 = Cx.abs(I);
-      g.Isub = g.Isub * kSub + gSub * (I1 - g.I1); g.I1 = I1;
-      g.I = Math.max(0, I1 + g.Isub);
+      g.Iph = I; g.P = S.re; g.Q = S.im; g.I = Cx.abs(I);
       g.U = bus.U; g.ang = bus.ang;
       if (Sim.t - g.acb.closedAt < 0.6) g.Ipeak = Math.max(g.Ipeak, g.I);
     } else {
-      g.P = 0; g.Q = 0; g.I = 0; g.I1 = 0; g.Isub = 0;
+      g.P = 0; g.Q = 0; g.I = 0; g.Iph = { re: 0, im: 0 };
       g.U = g.E; g.ang = g.delta;
     }
     g.f = g.eng.n * G.fn;
@@ -643,9 +774,10 @@ Model.solve = function (dt) {
 /* условия блокировки включения АВ (расширяется на этапах 2–3) */
 Model.closeBlock = function (g, src) {
   if (g.acb.tripped) return 'АВ отключён защитой — нажмите RESET';
+  if (g.eng.shutdown) return 'аварийная остановка двигателя';
   if (g.acb.spring < 1) return 'пружина АВ не взведена';
   if (!g.running || g.eng.n < 0.9) return 'двигатель не работает';
-  if (g.U < 0.85) return 'напряжение генератора < 85 % (UV close block)';
+  if (g.U < CONFIG.protection.closeBlockU) return 'напряжение генератора < 85 % (UV close block)';
   if (this.bus.live) {
     if (src === 'OP') {
       if (Sync.bypass) return null;   // блокировка снята ключом BYPASS — последствия на совести оператора
@@ -668,13 +800,148 @@ Model.onClose = function (g) {
     Sync.lastClose = ev; Sync.closeEvents.push(ev);
   }
   Audio.clack(live ? 1 + Math.min(1.5, Math.abs(ev.phi) / 25) : 1);
+
   Log.add(`${g.name} ACB CLOSED${live ? ` (φ=${ev.phi.toFixed(1)}°, Δf=${ev.df.toFixed(2)} Гц, ΔU=${ev.dU.toFixed(0)} В)` : ' на обесточенные шины (dead bus)'}`, 'info');
 };
 
 /* ======================================================================
-   5. PROTECTION (этап 3)
+   5. PROTECTION — защиты генератора, дизеля, фидеров, контроль шин
    ====================================================================== */
-const Protection = { step() {} };
+const Protection = {
+  Q: {
+    P: g => g.P / CONFIG.gen.PnPu, I: g => g.I, U: g => g.U, f: g => g.f, Q: g => g.Q,
+    diff: g => (g.faults.diff && g.U > 0.2) ? 1 : 0, unb: g => (g.I > 0.1 ? g.faults.unb : 0),
+    lo: g => g.eng.lo, jw: g => g.eng.jw, n: g => g.eng.n, tw: g => g.tw, tb: g => g.tb,
+  },
+  bt: {},   // таймеры контроля шин
+  step(dt) {
+    for (const g of Model.gens) { this.gen(g, dt); this.engine(g, dt); this.genAlarms(g); }
+    this.bus(dt);
+  },
+  gen(g, dt) {
+    const P = CONFIG.protection;
+    for (const r of P.gen) {
+      if (!r.always && !g.acb.closed) { g.timers[r.id] = 0; continue; }
+      const v = this.Q[r.q](g);
+      let c = r.cmp === '>' ? v > r.pickup : v < r.pickup;
+      if (r.window) c = c && (Sim.t - g.acb.closedAt) <= r.window;
+      g.timers[r.id] = c ? (g.timers[r.id] || 0) + dt : 0;
+      if (c && g.timers[r.id] >= r.delay - 1e-9) {
+        if (r.act === 'pref1') Model.prefTrip(1, g);
+        else if (r.act === 'pref2') Model.prefTrip(2, g);
+        else Model.tripACB(g, r);
+      }
+    }
+  },
+  engine(g, dt) {
+    const e = g.eng, running = e.state === 'RUN' || e.state === 'ACCEL';
+    for (const r of CONFIG.protection.engine) {
+      const key = 'E' + r.id;
+      let c = false;
+      if (r.q === 'lo') c = running && Sim.t - e.firedAt > (r.inhibit || 0) && e.lo < r.pickup;
+      else if (r.q === 'n') c = e.n > r.pickup;
+      else c = r.cmp === '>' ? this.Q[r.q](g) > r.pickup : this.Q[r.q](g) < r.pickup;
+      g.timers[key] = c ? (g.timers[key] || 0) + dt : 0;
+      const on = c && g.timers[key] >= r.delay - 1e-9;
+      if (r.act === 'shutdown') { if (on) Model.shutdown(g, r); }
+      else Alarms.cond(g.tag + '.' + r.id, on || (g.timers[key] > 0 && Alarms.conds[g.tag + '.' + r.id]?.active), r.win ? g.tag + '.' + r.win : null, `${g.name} ${r.name}`);
+    }
+  },
+  genAlarms(g) {
+    const t = g.acb.tripped, sd = g.eng.shutdown, T = g.tag;
+    const tw = id => (t && CONFIG.protection.gen.find(r => r.id === t.id)?.win === id);
+    Alarms.cond(T + '.ACBT', !!t, T + '.ACB', `${g.name} GEN ACB TRIP${t ? ' — ' + t.text : ''}`);
+    for (const w of ['RP', 'OC', 'VF', 'EX']) Alarms.cond(T + '.T' + w, tw(w), T + '.' + w, `${g.name} ${t ? t.text : w} TRIP`);
+    g.timers.OLA = g.acb.closed && g.I > 1.0 ? (g.timers.OLA || 0) + CONFIG.sim.dt : 0;
+    Alarms.cond(T + '.OLA', g.timers.OLA > 2, T + '.OL', `${g.name} GEN OVERLOAD (I > 100 %)`);
+    Alarms.cond(T + '.SDA', !!sd, T + '.SD', `${g.name} D/G SHUTDOWN${sd ? ' — ' + sd.text : ''}`);
+    Alarms.cond(T + '.SFA', g.eng.startFail, T + '.SF', `${g.name} D/G START FAILURE`);
+  },
+  /* автоматы фидеров: мгновенная и перегрузочная защиты, нулевой расцепитель контакторов */
+  feeders(dt) {
+    const F = CONFIG.protection.feeder, U0 = Model.bus.U;
+    let inst = false;
+    for (const c of Model.consumers) {
+      if (c.sw !== 'ON') { c.ocT = 0; c.uvT = 0; continue; }
+      if (c.I > F.inst * c.In) { c.trip(`instantaneous ${Math.round(c.I)} A`); inst = true; continue; }
+      c.ocT = c.I > F.ol * c.In ? c.ocT + dt : 0;
+      if (c.ocT > F.olDelay) { c.trip(`overload ${Math.round(c.I)} A`); continue; }
+      if (c.c.uv !== false && (c.motor || c.c.uv)) {
+        c.uvT = U0 < F.uvLevel ? c.uvT + dt : 0;
+        if (c.uvT > F.uvDelay) { c.sw = 'OFF'; c.uvDropped = true; c.state = 'STOP'; c.y = { re: 0, im: 0 }; Log.add(`${c.c.name}: отпадание контактора (нулевая защита)`, 'info'); }
+      }
+    }
+    return inst;
+  },
+  bus(dt) {
+    const B = CONFIG.protection.bus, bus = Model.bus, bt = this.bt;
+    const tm = (k, c) => (bt[k] = c ? (bt[k] || 0) + dt : 0);
+    Alarms.cond('BO', !bus.live && bus.everLive, 'BO', 'MAIN BUS BLACKOUT');
+    Alarms.cond('BV', tm('BV', bus.live && (bus.U < B.U[0] || bus.U > B.U[1])) > B.Udelay, 'BV', `BUS VOLTAGE ABNORMAL ${(bus.U * 440).toFixed(0)} V`);
+    Alarms.cond('BF', tm('BF', bus.live && (bus.f < B.f[0] || bus.f > B.f[1])) > B.fdelay, 'BF', `BUS FREQUENCY ABNORMAL ${bus.f.toFixed(1)} Hz`);
+    const on = Model.gens.filter(g => g.acb.closed), cap = on.length * CONFIG.gen.ratedKW;
+    Alarms.cond('HL', tm('HL', on.length && bus.P / cap > B.highLoad) > B.highLoadDelay, 'HL', `LOAD > ${B.highLoad * 100} % — STANDBY GEN. START REQUEST`);
+    const ins = Model.ins;
+    Alarms.cond('I440', bus.live && ins.r440 < B.ins440, 'I440', `LOW INSULATION 440 V (${ins.r440.toFixed(2)} MΩ)`);
+    Alarms.cond('I220', bus.live && ins.on220 && ins.r220 < B.ins220, 'I220', `LOW INSULATION 220 V (${ins.r220.toFixed(2)} MΩ)`);
+    Alarms.cond('SCO', Sync.scopeOnT > CONFIG.sync.scopeMaxTime, 'SCO', 'SYNCHROSCOPE ON > 15 MIN');
+    Alarms.cond('AIR', Model.air.p < CONFIG.air.low, 'AIR', `START AIR PRESSURE LOW (${Model.air.p.toFixed(1)} bar)`);
+    Alarms.cond('PT', Model.consumers.some(c => c.sw === 'PT'), 'PT', 'PREFERENTIAL TRIP ACTIVATED');
+    Alarms.cond('FT', Model.consumers.some(c => c.sw === 'TRIP'), 'FT', 'FEEDER CIRCUIT BREAKER TRIP');
+    Alarms.cond('HCB', Model.consumers.some(c => c.sw === 'WAIT'), 'HCB', 'HEAVY CONSUMER START BLOCKED — INSUFFICIENT RESERVE');
+    Alarms.cond('SYF', Model.gens.some(g => g.autoSync.failed), 'SYF', 'SYNCHRONIZING FAILURE');
+    Alarms.cond('LSF', !!Automation.lsFail, 'LSF', 'LOAD SHARING FAILURE');
+    Alarms.cond('BSC', !!Automation.busLockout, 'BSC', 'BUS FAULT — PMS RESTART LOCKOUT');
+  },
+};
+
+/* отключение АВ защитой (защёлка до RESET) */
+Model.tripACB = function (g, r) {
+  if (!g.acb.closed && g.acb.closing < 0) return;
+  const I = g.amps, P = g.kW;
+  g.openACB(); Audio.clack(1.2);
+  g.acb.tripped = { id: r.id, text: r.name, t: Sim.t };
+  Log.add(`${g.name} ACB TRIP — ${r.name} (I=${Math.round(I)} A, P=${Math.round(P)} kW)`, 'trip');
+  if (r.act === 'trip+stop') Model.shutdown(g, { id: r.id, name: r.name });
+  if (['SCI', 'SCS'].includes(r.id) && !Model.gens.some(x => Sim.t - x.acb.closedAt < 0.5)) Automation.onShortCircuitTrip(g);   // не при несинхронном включении
+};
+/* аварийная остановка дизеля */
+Model.shutdown = function (g, r) {
+  const e = g.eng;
+  if (e.shutdown) return;
+  e.shutdown = { id: r.id, text: r.name, t: Sim.t };
+  if (e.state !== 'STOPPED') g.setEngState('STOPPING');
+  Log.add(`${g.name} D/G SHUTDOWN — ${r.name}`, 'trip');
+  if (CONFIG.engine.shutdownTripsACB && (g.acb.closed || g.acb.closing >= 0)) Model.tripACB(g, { id: 'ESD', name: 'ENGINE SHUTDOWN', act: 'trip' });
+};
+/* preferential trip: отключение неответственных потребителей по ступеням */
+Model.prefTrip = function (stage, g) {
+  const cat = 'pt' + stage, list = Model.consumers.filter(c => c.c.cat === cat && c.sw === 'ON');
+  if (!list.length) return;
+  for (const c of list) { c.sw = 'PT'; c.state = 'STOP'; c.y = { re: 0, im: 0 }; }
+  Log.add(`PREFERENTIAL TRIP ${stage}: ${list.map(c => c.c.name).join(', ')} (перегрузка ${g.name}, I=${Math.round(g.amps)} A)`, 'trip');
+};
+/* изоляция: сеть 440 В и 220 В (IT-система), замыкание на землю */
+Model.ins = { r440: 50, r220: 50, on220: false, earth: null, phaseV440: [1, 1, 1], phaseV220: [1, 1, 1] };
+Model.stepInsulation = function () {
+  const I = this.ins, bus = this.bus;
+  let g440 = 1 / 30, g220 = 1 / 25;
+  for (const g of this.gens) if (g.acb.closed) g440 += 1 / Math.max(0.01, g.ins);
+  const tr = this.consumers.find(c => c.c.kind === 'tr');
+  I.on220 = !!tr && tr.sw === 'ON' && bus.live;
+  for (const c of this.consumers) if (c.sw === 'ON') { if (c.c.sys === '220') g220 += 1 / 120; else g440 += 1 / 200; }
+  const e = I.earth;
+  if (e && e.sys === '440') g440 += 1 / e.R;
+  if (e && e.sys === '220') g220 += 1 / e.R;
+  I.r440 = 1 / g440; I.r220 = 1 / g220;
+  const pv = (sys) => {   // напряжения фаз относительно корпуса (о.е. фазного)
+    if (!e || e.sys !== sys) return [1, 1, 1];
+    const d = 1 / (1 + e.R / 0.05), v = [0, 0, 0];
+    for (let k = 0; k < 3; k++) v[k] = k === e.phase ? 1 - d : Math.sqrt(1 + d + d * d);
+    return v;
+  };
+  I.phaseV440 = pv('440'); I.phaseV220 = pv('220');
+};
 
 /* ======================================================================
    6. AUTOMATION — реле синхронизма, автосинхронизатор, PMS (этап 4)
@@ -714,7 +981,14 @@ const Sync = {
   },
   onCloseDone(ev) {
     const G = CONFIG.sync.grade, a = Math.abs(ev.phi);
+    if (a > CONFIG.protection.severeAngle) {
+      Log.add(`${ev.g.name}: включение в противофазе (${ev.phi.toFixed(0)}°) — механический удар по агрегату!`, 'trip');
+      Model.shutdown(ev.g, { id: 'MECH', name: 'OUT-OF-PHASE CLOSING — MECHANICAL SHOCK' });
+    }
+    const tripped = Model.gens.filter(x => x.acb.tripped && x.acb.tripped.t >= ev.t - 0.01);
+    ev.tripped = tripped.map(x => x.tag); ev.blackout = !Model.bus.live;
     ev.result = a <= G.soft ? 'мягкое включение' : a <= G.jolt ? 'толчок, качания' : 'включение с большим углом';
+    if (tripped.length) ev.result += ev.blackout ? ' → отключены ' + ev.tripped.join(', ') + ', БЛЭКАУТ' : ' → защита отключила ' + ev.tripped.join(', ');
     const txt = `${ev.g.name} синхронизация: φ ${ev.phi.toFixed(1)}°, Δf ${ev.df >= 0 ? '+' : ''}${ev.df.toFixed(2)} Гц, ΔU ${ev.dU >= 0 ? '+' : ''}${ev.dU.toFixed(0)} В, бросок ${Math.round(ev.Ipeak * CONFIG.gen.In)} А (${Math.round(ev.Ipeak * 100)} % Iн) — ${ev.result}`;
     Log.add(txt, a <= G.soft ? 'info' : 'warn');
     if (typeof Assess !== 'undefined') Assess.onClose(ev); else UI.toast(txt, a <= G.soft ? 'ok' : 'warn', 6000);
@@ -727,6 +1001,7 @@ class AutoSync {
   start(src, opt = {}) {
     const g = this.g;
     if (this.active) return;
+    this.failed = 0;
     if (g.acb.closed) return;
     this.active = true; this.phase = 'MATCH'; this.t = 0; this.src = src; this.softLoad = opt.softLoad !== false; this.onDone = opt.onDone || null;
     Log.add(`${g.name} AUTO SYNC START (${src})`, 'pms');
@@ -774,6 +1049,9 @@ class AutoSync {
 }
 
 const Automation = {
+  lsFail: false, busLockout: false,
+  resetLatches() { for (const g of Model.gens) g.autoSync.failed = 0; this.lsFail = false; if (!Model.busFault) this.busLockout = false; },
+  onShortCircuitTrip(g) { this.busLockout = true; Log.add('Отключение по КЗ — блокировка автоматического восстановления шин (PMS)', 'trip'); },
   step(dt) {
     Sync.step(dt);
     for (const g of Model.gens) g.autoSync.step(dt);
@@ -793,13 +1071,17 @@ const Sim = {
     for (const g of gens) { g.stepEngine(dt); g.stepAVR(dt); }
     // АВ: собственное время включения
     for (const g of gens) if (g.acb.closing >= 0) { g.acb.closing -= dt; if (g.acb.closing < 0) g.doClose(); }
-    const online = Model.solve(dt);
+    let online = Model.solve(dt);
+    if (Protection.feeders(dt)) online = Model.solve(dt, false);   // селективность: фидер отключается раньше генераторов
     let nCoi = 0; for (const g of online) nCoi += g.eng.n; nCoi = online.length ? nCoi / online.length : 0;
     for (const g of gens) { g.stepRotor(dt, nCoi, online.length); g.stepSlow(dt); }
     // пусковой воздух: компрессор
     const comp = Model.consumers.find(c => c.c.cyclic === 'air');
     if (comp && comp.state === 'RUN') Model.air.p = Math.min(CONFIG.air.max + 0.5, Model.air.p + CONFIG.air.compRate * dt);
+    if (Model.airLeak) Model.air.p = Math.max(0, Model.air.p - 0.05 * dt);
+    Model.stepInsulation();
     Protection.step(dt);
+    for (const g of gens) g.stepSub(dt);
     Alarms.step(dt);
     this.t += dt;
   },
@@ -1179,7 +1461,7 @@ class GenPanel {
       `L.O.  ${e.lo < 2.5 && e.n > 0.3 ? w('a', lo) : lo} bar  J.W. ${e.jw > 90 ? w('a', jw) : (e.jw < E.jw.coldLoad ? w('w', jw) : jw)}°C\n` +
       `WDG ${g.tw.toFixed(0).padStart(4)}°C  BRG ${g.tb > 85 ? w('a', g.tb.toFixed(0).padStart(3)) : g.tb.toFixed(0).padStart(3)}°C\n` +
       `RACK ${String(Math.round(e.rack * 100)).padStart(3)}%  AIR ${Model.air.p.toFixed(1).padStart(4)} bar\n` +
-      `${w('d', 'SET')} ${((e.speedRef - E.droop * 0.08) * 60).toFixed(2)}Hz ${w('d', 'AVR')} ${g.avrSet.toFixed(0)}V`;
+      `${w('d', 'SET')} ${((e.speedRef - E.droop * (E.lossA + E.lossB)) * 60).toFixed(2)}Hz ${w('d', 'AVR')} ${g.avrSet.toFixed(0)}V`;
     this.info.innerHTML =
       `U   ${g.volts.toFixed(0).padStart(5)} V\n` +
       `I   ${g.amps.toFixed(0).padStart(5)} A\n` +
@@ -1278,6 +1560,63 @@ class SyncPanel {
   }
 }
 
+class AlarmPanel {
+  constructor(board) {
+    const p = this.el = U.el('div', 'panel span2 alarms snapA', board); p.dataset.panel = 'ALARM';
+    U.el('div', 'snapB snapA', p);
+    U.el('div', 'nameplate', p, 'ALARM MONITORING PANEL');
+    this.w = {};
+    const groups = [...Model.gens.map(g => [g.tag, `${g.name} GENERATOR`, 3]), ['COM', 'COMMON', 5]];
+    let x = 30;
+    for (const [gr, title, cols] of groups) {
+      const ids = Alarms.order.filter(id => Alarms.wins[id].group === gr);
+      const bw = cols * 80 + (cols - 1) * 4;
+      UIK.plate(p, title, x, 32, bw);
+      ids.forEach((id, k) => {
+        const d = U.el('div', 'win ' + Alarms.wins[id].sev, p, Alarms.wins[id].text.replace(/^No\.\d GEN |^No\.\d /, ''));
+        U.place(d, x + (k % cols) * 84, 48 + Math.floor(k / cols) * 42);
+        this.w[id] = d;
+      });
+      x += bw + 14;
+    }
+    const by = 196;
+    const btn = (cls, x, label, fn, down, up) => {
+      const b = UIK.button(p, cls, x, by, '', fn, 'rect', label);
+      if (down) { b.addEventListener('pointerdown', down); b.addEventListener('pointerup', up); b.addEventListener('pointerleave', up); b.addEventListener('pointercancel', up); }
+      return b;
+    };
+    btn('yellow', 30, 'ACK', () => Alarms.ack());
+    btn('black', 96, 'SILENCE', () => Alarms.silence());
+    btn('blue', 162, 'RESET', () => Alarms.reset());
+    btn('white', 228, 'LAMP TEST', () => {}, () => { Alarms.lampTest = true; document.body.classList.add('lamptest'); }, () => { Alarms.lampTest = false; document.body.classList.remove('lamptest'); });
+    this.lHorn = UIK.lamp(p, 'red', 304, by + 1, '', 'sm');
+    const hl = U.el('div', 'subplate', p, 'HORN'); hl.style.left = '324px'; hl.style.top = (by + 4) + 'px';
+    this.sum = U.el('div', 'subplate', p, ''); this.sum.style.left = '370px'; this.sum.style.top = (by + 4) + 'px'; this.sum.style.fontWeight = '700';
+    UIK.plate(p, 'EVENT LOG', 30, 228, 1192);
+    this.log = U.el('div', 'alog', p); U.place(this.log, 30, 242, 1192, 106);
+  }
+  update() {}
+  updateSlow() {
+    for (const id in this.w) {
+      const w = Alarms.wins[id], d = this.w[id];
+      let lit = false, dim = false;
+      if (Alarms.lampTest) lit = true;
+      else if (w.state === 'ALM') lit = UI.blinkFast;
+      else if (w.state === 'RTN') lit = UI.blinkSlow;
+      else if (w.state === 'ACK') lit = true;
+      else if (w.state === 'RTNACK') { lit = true; dim = true; }
+      d.classList.toggle('lit', lit); d.classList.toggle('dimw', dim && !Alarms.lampTest);
+    }
+    UIK.setLamp(this.lHorn, Alarms.hornActive, true);
+    const c = Alarms.counts();
+    this.sum.textContent = `UNACK ${c.unack}   ACTIVE ${c.active}`;
+    if (Log.dirty) {
+      Log.dirty = false;
+      this.log.innerHTML = Log.items.slice(0, 120).map(e => `<div class="${e.type}"><span class="c">${e.clock}</span> ${e.text.replace(/</g, '&lt;')}</div>`).join('');
+    }
+  }
+}
+
 Model.genReset = function (g) {
   let done = [];
   if (g.acb.tripped) { if (g.faults.diff) { UI.toast(`${g.name}: дифзащита — неисправность не устранена`, 'err'); } else { done.push('ACB TRIP ' + g.acb.tripped.id); g.acb.tripped = null; } }
@@ -1300,6 +1639,7 @@ const UI = {
     const board = document.getElementById('board');
     for (const g of Model.gens) { const gp = new GenPanel(g, board); this.genPanels.push(gp); this.panels.push(gp); }
     this.sync = new SyncPanel(board); this.panels.push(this.sync);
+    this.alarms = new AlarmPanel(board); this.panels.push(this.alarms);
     Layout.init();
     this.keys();
     // верхняя панель
@@ -1309,6 +1649,7 @@ const UI = {
     }));
     document.getElementById('tbSound').addEventListener('click', ev => { ev.currentTarget.textContent = Audio.toggle() ? '🔊' : '🔇'; });
     document.addEventListener('pointerdown', () => Audio.init(), { once: true });
+    document.getElementById('tbAlarm').addEventListener('click', () => this.alarms.el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' }));
   },
   keys() {   // клавиатура: ←/→ регулятор, ↓/↑ напряжение выбранного на SYNC SELECT генератора
     const map = { ArrowLeft: ['govOp', -1], ArrowRight: ['govOp', 1], ArrowDown: ['avrOp', -1], ArrowUp: ['avrOp', 1] };
@@ -1330,6 +1671,9 @@ const UI = {
       for (const p of this.panels) p.updateSlow();
       document.getElementById('tbClock').textContent = Sim.clockStr();
       const b = Model.bus;
+      const ac = Alarms.counts(), ta = document.getElementById('tbAlarm');
+      ta.textContent = ac.active ? `ALARM ${ac.active}` : 'ALARM';
+      ta.classList.toggle('on', ac.unack > 0 && this.blinkFast); ta.classList.toggle('steady', ac.unack === 0 && ac.active > 0);
       document.getElementById('tbStatus').textContent = b.live ? `BUS ${(b.U * 440).toFixed(0)} V  ${b.f.toFixed(2)} Hz  ${b.P.toFixed(0)} kW` : 'BUS DEAD';
     }
   },
@@ -1382,6 +1726,7 @@ const Layout = {
 /* ---------- сценарий по умолчанию (этап 1) ---------- */
 function buildModel() {
   Model.gens = []; for (let i = 0; i < CONFIG.gen.count; i++) { const g = new GenSet(i); g.autoSync = new AutoSync(g); Model.gens.push(g); }
+  defineAlarms();
   Model.consumers = (CONFIG.consumers || [
     { id: 'BASE', name: 'TEST LOAD', kW: 600, pf: 0.82, on: true },
   ]).map(c => new Consumer(c));
@@ -1397,7 +1742,7 @@ function loop(ts) {
 buildModel();
 UI.build();
 requestAnimationFrame(loop);
-window.SIM = { CONFIG, Model, Sim, UI, U, Log, Layout, Sync };
+window.SIM = { CONFIG, Model, Sim, UI, U, Log, Layout, Sync, Alarms, Protection, Automation };
 </script>
 </body>
 </html>
