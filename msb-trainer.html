@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#202427">
+<title>ГРЩ — тренажёр ввода генератора в параллель</title>
+<style>
+/* ======================================================================
+   STYLES
+   ====================================================================== */
+:root{
+  --bg:#14171a; --bar:#22262a; --bar-ink:#d8dbdf; --bar-btn:#33393f;
+  --panel-a:#d3d6d1; --panel-b:#bfc3be; --panel-edge:#7d827d;
+  --plate:#1b1d1f; --plate-ink:#f1f1ee;
+  --lcd-bg:#0b160d; --lcd-ink:#86ff9f;
+  --red:#ff3322; --green:#2ee65a; --amber:#ffb300; --white:#fffbe6; --blue:#49a8ff;
+  --ink:#1a1a1a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:#ddd;
+  font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
+  overscroll-behavior:none}
+button{font-family:inherit}
+/* ---------- top bar ---------- */
+#topbar{position:fixed;left:0;right:0;top:0;height:40px;display:flex;align-items:center;gap:6px;
+  padding:0 8px;padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right));
+  background:var(--bar);color:var(--bar-ink);font-size:13px;z-index:20;border-bottom:1px solid #000;white-space:nowrap}
+#topbar button{background:var(--bar-btn);color:var(--bar-ink);border:1px solid #111;border-radius:4px;
+  height:28px;min-width:30px;padding:0 7px;font-size:12px;cursor:pointer;touch-action:manipulation}
+#topbar button.act{background:#5b6b3a;color:#fff}
+#topbar button:active{filter:brightness(1.3)}
+.tb-title b{color:#fff;letter-spacing:1px}
+.tb-clock{font-family:"Consolas","Courier New",monospace;background:#0b0d0e;color:#9effb0;padding:3px 7px;border-radius:3px;font-size:13px}
+.tb-grp{display:flex;gap:2px}
+.tb-status{font-family:"Consolas","Courier New",monospace;font-size:12px;color:#bfc6cc;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.tb-alarm{font-weight:700;font-size:12px;padding:4px 8px;border-radius:3px;background:#333;color:#777;cursor:pointer}
+.tb-alarm.on{background:#b00;color:#fff}
+.tb-alarm.steady{background:#7a3a00;color:#ffd}
+.tb-nav{display:flex;gap:2px}
+.tb-nav button{min-width:26px!important;padding:0 4px!important;font-size:11px!important}
+@media (max-width:900px){.hide-s{display:none}}
+@media (max-width:700px){.tb-status{display:none}}
+/* ---------- viewport / board ---------- */
+#viewport{position:fixed;top:40px;left:0;right:0;bottom:0;overflow:auto;-webkit-overflow-scrolling:touch}
+#viewport.snap{scroll-snap-type:x mandatory}
+#viewport.snap .snapA{scroll-snap-align:start}
+#board{display:grid;gap:12px;padding:12px;width:max-content;transform-origin:0 0}
+.panel{position:relative;width:620px;height:360px;border-radius:5px;overflow:hidden;
+  background:
+   radial-gradient(circle at 9px 9px,#8d918c 0 3px,#e8eae6 3.2px 3.8px,transparent 4px),
+   radial-gradient(circle at calc(100% - 9px) 9px,#8d918c 0 3px,#e8eae6 3.2px 3.8px,transparent 4px),
+   radial-gradient(circle at 9px calc(100% - 9px),#8d918c 0 3px,#e8eae6 3.2px 3.8px,transparent 4px),
+   radial-gradient(circle at calc(100% - 9px) calc(100% - 9px),#8d918c 0 3px,#e8eae6 3.2px 3.8px,transparent 4px),
+   linear-gradient(180deg,var(--panel-a),var(--panel-b));
+  box-shadow:inset 0 0 0 1px #eef0ec,inset 0 0 0 2px var(--panel-edge),0 3px 10px #000a;color:var(--ink)}
+.panel.span2{width:1252px;grid-column:span 2}
+.panel .snapB{position:absolute;left:50%;top:0;width:1px;height:1px}
+.abs{position:absolute}
+.nameplate{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:var(--plate);color:var(--plate-ink);
+  font-weight:700;font-size:12px;letter-spacing:1.5px;padding:3px 14px;border-radius:2px;box-shadow:0 1px 0 #fff8,inset 0 0 0 1px #444;white-space:nowrap}
+.subplate{position:absolute;top:9px;font-size:8.5px;color:#333;letter-spacing:.5px;white-space:nowrap}
+.plate{position:absolute;background:var(--plate);color:var(--plate-ink);font-size:7.5px;font-weight:700;letter-spacing:.6px;
+  text-align:center;line-height:11px;height:11px;border-radius:1.5px;white-space:nowrap;overflow:hidden;box-shadow:0 1px 0 #fff8}
+.plate.wht{background:#f4f4ef;color:#111;box-shadow:inset 0 0 0 .6px #555,0 1px 0 #fff8}
+.plate.red{background:#a8140c;color:#fff}
+svg.gauge,svg.ctl{position:absolute;display:block;overflow:visible}
+svg.ctl{touch-action:none;cursor:pointer}
+svg text{font-family:"Arial Narrow","Roboto Condensed","Helvetica Neue",Arial,sans-serif}
+/* ---------- lamps ---------- */
+.lamp{position:absolute;width:24px;height:24px;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,#2a2a2a 0 10px,#0000 10.5px),radial-gradient(circle,#777,#222);
+  box-shadow:0 1px 2px #0008}
+.lamp::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--lc-off,#433);
+  box-shadow:inset 0 -3px 5px #0008,inset 0 2px 3px #fff3}
+.lamp.on::after{background:radial-gradient(circle at 45% 40%,#fff 0 12%,var(--lc,#f33) 45%,var(--lc2,#a00) 100%);
+  box-shadow:0 0 10px 3px var(--lc,#f33),inset 0 2px 3px #fff8}
+.lamp.dim::after{background:radial-gradient(circle,var(--lc,#f33) 0,var(--lc2,#600) 90%);opacity:.55}
+.lamp.red{--lc:#ff3b2b;--lc2:#a00;--lc-off:#4a1712}
+.lamp.green{--lc:#3bff6a;--lc2:#0a7a2a;--lc-off:#123a1c}
+.lamp.amber{--lc:#ffbf2a;--lc2:#a66a00;--lc-off:#45330c}
+.lamp.white{--lc:#fffbe8;--lc2:#b8b49a;--lc-off:#4a4a44}
+.lamp.blue{--lc:#5ab4ff;--lc2:#0b4fa0;--lc-off:#122a45}
+.lamp.big{width:34px;height:34px}
+.lamp.sm{width:16px;height:16px}
+.lamp.sm::after{inset:2px}
+/* синхронизирующие лампы — яркость задаётся --b (0..1) */
+.slamp{position:absolute;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle,#666 0 55%,#2a2a2a 58%,#111 100%);box-shadow:0 1px 3px #000a}
+.slamp::before{content:"";position:absolute;inset:4px;border-radius:50%;background:radial-gradient(circle at 45% 40%,#6a6455,#2f2b22)}
+.slamp i{position:absolute;inset:4px;border-radius:50%;background:radial-gradient(circle at 45% 40%,#fff 0 18%,#ffe7a0 48%,#d08c25 100%);
+  opacity:var(--b,0);box-shadow:0 0 calc(var(--b,0)*16px) calc(var(--b,0)*6px) #ffd27a}
+.slamp b{position:absolute;top:31px;left:50%;transform:translateX(-50%);font-size:7px;color:#222;font-weight:700}
+.relay{position:absolute;background:linear-gradient(#3a3f44,#24282c);border-radius:3px;box-shadow:inset 0 0 0 1px #555,0 2px 4px #0008;color:#ddd}
+.relay .hd{font-size:7.5px;font-weight:700;letter-spacing:.5px;text-align:center;padding:3px 0;border-bottom:1px solid #555;color:#fff}
+.relay .row{position:absolute;left:8px;font-size:8px;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.led{width:9px;height:9px;border-radius:50%;background:#1d3a22;box-shadow:inset 0 0 2px #000}
+.led.on{background:#4dff7a;box-shadow:0 0 6px 1px #3f6}
+.led.r.on{background:#ff4a3a;box-shadow:0 0 6px 1px #f43}
+.led.y.on{background:#ffc23a;box-shadow:0 0 6px 1px #fb3}
+/* ---------- push buttons ---------- */
+.pb{position:absolute;width:34px;height:34px;border-radius:50%;border:none;padding:0;cursor:pointer;touch-action:manipulation;
+  background:radial-gradient(circle,#999 0 60%,#555 62%,#222 100%);box-shadow:0 2px 3px #0009}
+.pb::after{content:"";position:absolute;inset:5px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--pc1,#888),var(--pc2,#333));
+  box-shadow:inset 0 -2px 3px #0007,inset 0 2px 2px #fff5,0 1px 1px #000}
+.pb:active::after,.pb.pressed::after{inset:6px;filter:brightness(.8)}
+.pb.red{--pc1:#ff5a4a;--pc2:#9a0f06}
+.pb.green{--pc1:#4dff7a;--pc2:#077a26}
+.pb.black{--pc1:#666;--pc2:#111}
+.pb.yellow{--pc1:#ffe36a;--pc2:#b38600}
+.pb.blue{--pc1:#6ab8ff;--pc2:#0b4b96}
+.pb.white{--pc1:#fff;--pc2:#a9a9a0}
+.pb.sm{width:26px;height:26px}
+.pb.sm::after{inset:4px}
+.pb.rect{border-radius:4px;width:56px;height:26px;background:linear-gradient(#999,#444)}
+.pb.rect::after{border-radius:3px;inset:3px}
+.pb .t{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;z-index:2;text-shadow:0 1px 1px #000;letter-spacing:.3px;pointer-events:none}
+.pb.yellow .t,.pb.white .t{color:#222;text-shadow:none}
+/* ---------- LCD ---------- */
+.lcd{position:absolute;background:var(--lcd-bg);color:var(--lcd-ink);font-family:"Consolas","Courier New",monospace;
+  font-size:10px;line-height:12.5px;padding:4px 6px;border-radius:2px;white-space:pre;overflow:hidden;
+  box-shadow:inset 0 0 0 2px #2a2f2b,inset 0 0 12px #000,0 1px 0 #fff8;text-shadow:0 0 4px #3f6}
+.lcd .w{color:#ffd24a;text-shadow:0 0 4px #c90}
+.lcd .a{color:#ff6a5a;text-shadow:0 0 4px #f30}
+.lcd .d{color:#3c7a48;text-shadow:none}
+/* ---------- toasts ---------- */
+#toasts{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;max-width:94vw}
+.toast{background:#202529ee;color:#eee;border:1px solid #555;border-left:4px solid #999;padding:7px 12px;border-radius:4px;font-size:13px;
+  box-shadow:0 4px 14px #000a;max-width:640px;pointer-events:auto;white-space:pre-line}
+.toast.warn{border-left-color:#ffb300}.toast.err{border-left-color:#ff3322}.toast.ok{border-left-color:#2ee65a}
+/* ---------- overlays ---------- */
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="tb-title"><b>MSB</b><span class="hide-s">&nbsp;·&nbsp;Тренажёр ГРЩ</span></div>
+  <div class="tb-clock" id="tbClock" title="Судовое время">08:00:00</div>
+  <div class="tb-grp" id="tbSpeed">
+    <button data-speed="0" title="Пауза">❚❚</button>
+    <button data-speed="1" class="act" title="Реальное время">×1</button>
+    <button data-speed="5" title="Ускорение ×5">×5</button>
+    <button data-speed="10" title="Ускорение ×10">×10</button>
+  </div>
+  <div class="tb-status" id="tbStatus"></div>
+  <div class="tb-alarm" id="tbAlarm" title="Табло алармов">ALARM</div>
+  <div class="tb-nav" id="tbNav"></div>
+  <div class="tb-grp">
+    <button id="tbZoomOut" title="Уменьшить">−</button>
+    <button id="tbFit" title="Вписать / прокрутка">⤢</button>
+    <button id="tbZoomIn" title="Увеличить">+</button>
+  </div>
+  <button id="tbSound" title="Звук">🔇</button>
+</div>
+<div id="viewport"><div id="board"></div></div>
+<div id="toasts"></div>
+
+<script>
+'use strict';
+/* ======================================================================
+   0. CONFIG — все номиналы, уставки и параметры моделей
+   ====================================================================== */
+const CONFIG = {
+  sim: { dt: 0.02, maxStepsPerFrame: 600 },   // шаг модели 20 мс, независимо от FPS
+  clockStart: 8 * 3600,                        // судовое время старта сценария
+
+  gen: {
+    count: 3,                                  // число дизель-генераторов
+    ratedKW: 1200, ratedKVA: 1500, Un: 440, fn: 60, pf: 0.8, rpm: 900,
+    Xd1: 0.30,        // переходное сопротивление X'd (о.е., с кабелем) — сеть и синхронизирующая мощность
+    Xd2: 0.10,        // сверхпереходное X''d — бросок тока при включении / КЗ
+    tauSub: 0.06,     // постоянная затухания сверхпереходной составляющей, с
+    H: 2.0,           // постоянная инерции агрегата, с
+    D: 12,            // демпфирование (демпферная обмотка), о.е. мощности / о.е. скольжения
+    winding: { amb: 45, rise: 65, tau: 480 },        // °C: окружающая, перегрев при Iном, постоянная времени
+    bearing: { base: 42, rise: 20, fault: 55, tau: 240 },
+    insulation: { dry: 40, wet: 0.8, tauWet: 10800, tauDry: 1500 }, // МОм обмотки
+  },
+
+  engine: {
+    droop: 0.04,                    // статизм регулятора 4 %
+    rackMax: 1.18,                  // ограничение топливной рейки (о.е.)
+    tauAct: 0.05, tauEng: 0.25,     // исполнительный механизм / запаздывание сгорания-турбины
+    govKd: 3.0,                     // производная составляющая регулятора
+    speedRefMin: 0.92, speedRefMax: 1.10,
+    speedRefDefault: 1.0032,        // уставка х.х. → 60,0 Гц без нагрузки
+    govRate: 0.004,                 // скорость серводвигателя уставки, о.е./с (≈0,24 Гц/с)
+    startFuelLimit: 0.70,           // ограничение подачи топлива при пуске
+    prelubTime: 4,                  // предпусковая прокачка масла, с
+    crankTime: 7, crankTorque: 0.35, crankLimit: 0.16,
+    firingSpeed: 0.10, cutoutSpeed: 0.33,
+    startAttempts: 3, startPause: 6, startRamp: 8,
+    runSpeed: 0.30, readySpeed: 0.95,
+    lossA: 0.02, lossB: 0.06,       // момент потерь = 0,8·(A + B·n), о.е.
+    stopLoss: 0.07,                 // доп. торможение компрессией при остановке (выбег ≈ 35 с)
+    lo: { nominal: 4.6, prelub: 0.9, tau: 0.8 },         // бар
+    jw: { thermostat: 80, standby: 55, ambient: 30, warmRate: 0.06, coldLoad: 50 }, // °C
+    shutdownTripsACB: true,
+    cooldown: 60,                   // охлаждение на х.х. перед остановкой (PMS), с
+  },
+
+  air: { init: 28, max: 30, crankUse: 1.2, compOn: 25, compOff: 30, compRate: 0.05, low: 15, block: 10 }, // бар
+
+  avr: {
+    droopQ: 0.03,                   // статизм по реактивной мощности 3 % при Qном
+    Kp: 2.5, Ki: 5.0, tauField: 0.6, efdMax: 2.6,
+    softStart: 3,                   // нарастание напряжения при возбуждении, с
+    setMin: 396, setMax: 484, setDefault: 440, adjRate: 4, // В, В/с
+    buildSpeed: 0.90, residual: 0.03,
+  },
+
+  acb: { closeTime: 0.08, springTime: 3.0 },   // собственное время включения АВ, взвод пружины
+
+  sync: {
+    dU: 0.05, df: 0.3, dphi: 10,     // реле контроля синхронизма (25): ΔU ≤ 5 %, Δf ≤ 0,3 Гц, |φ| ≤ 10°
+    scopeMaxTime: 900,               // синхроноскоп — кратковременный режим, аларм через 15 мин
+    autoSlip: 0.10,                  // автосинхронизатор: входящий быстрее шин на 0,1 Гц
+    autoDU: 0.02, autoWindow: 2.5,   // допуск по U и окно по углу (°) для команды включения
+    autoTimeout: 90,                 // SYNCHRONIZING FAILURE
+    softLoadRate: 0.5,               // скорость плавного нагружения (доля скорости серводвигателя)
+    grade: { soft: 10, jolt: 30 },   // оценка по углу: до 10° мягко, 10–30° толчок
+  },
+
+  /* ---- приборы (шкалы). Внешний вид — CONFIG.gaugeStyle ---- */
+  meters: {
+    genV:  { min: 0, max: 600, major: 100, minor: 20, nominal: 440, unit: 'V' },
+    genA:  { min: 0, max: 2500, major: 500, minor: 100, nominal: 1968, unit: 'A', red: [[2265, 2500]] },
+    genKW: { min: -300, max: 1500, major: 300, minor: 60, nominal: 1200, unit: 'kW', red: [[-300, 0]] },
+    genHz: { min: 55, max: 65, major: 1, minor: 0.2, nominal: 60, unit: 'Hz', red: [[55, 57], [63, 65]], labels: [55, 57, 60, 63, 65] },
+  },
+  syncMeters: {
+    dualV: { min: 0, max: 600, major: 100, minor: 20, nominal: 440, unit: 'V' },
+    dualHz: { min: 55, max: 65, major: 1, minor: 0.2, nominal: 60, unit: 'Hz', labels: [55, 57, 60, 63, 65] },
+  },
+  gaugeStyle: {
+    geometry: 'sector90',           // 'sector90' (ось внизу по центру) | 'quadrant' (ось в правом нижнем углу)
+    bezel: '#151515', face: '#f5f2e8', ink: '#141414', red: '#d0140c', needle: '#121212', needle2: '#c8100a',
+    font: 6.2, cls: '1.5',
+  },
+};
+CONFIG.gen.In = CONFIG.gen.ratedKVA * 1000 / (Math.sqrt(3) * CONFIG.gen.Un);   // ≈1968 А
+CONFIG.gen.PnPu = CONFIG.gen.ratedKW / CONFIG.gen.ratedKVA;                     // 0,8 о.е.
+
+/* ======================================================================
+   1. UTIL
+   ====================================================================== */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const U = {
+  clamp: (x, a, b) => x < a ? a : (x > b ? b : x),
+  lerp: (a, b, t) => a + (b - a) * t,
+  approach: (x, target, dt, tau) => x + (target - x) * (1 - Math.exp(-dt / Math.max(tau, 1e-6))),
+  wrap180: d => { d = (d + 180) % 360; if (d < 0) d += 360; return d - 180; },
+  wrapPi: r => { r = (r + Math.PI) % (2 * Math.PI); if (r < 0) r += 2 * Math.PI; return r - Math.PI; },
+  deg: r => r * 180 / Math.PI,
+  fmtTime(s) { s = Math.floor(s) % 86400; const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60;
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(x).padStart(2, '0'); },
+  el(tag, cls, parent, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; },
+  svg(tag, attrs, parent) { const e = document.createElementNS(SVGNS, tag); if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; },
+  place(e, x, y, w, h) { e.style.left = x + 'px'; e.style.top = y + 'px'; if (w != null) e.style.width = w + 'px'; if (h != null) e.style.height = h + 'px'; return e; },
+  _seed: 12345,
+  rnd() { let t = (U._seed += 0x6D2B79F5); t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; },
+  gauss() { return Math.sqrt(-2 * Math.log(U.rnd() + 1e-12)) * Math.cos(2 * Math.PI * U.rnd()); },
+};
+/* комплексная арифметика (о.е. фазоры) */
+const Cx = {
+  pol: (m, a) => ({ re: m * Math.cos(a), im: m * Math.sin(a) }),
+  add: (a, b) => ({ re: a.re + b.re, im: a.im + b.im }),
+  sub: (a, b) => ({ re: a.re - b.re, im: a.im - b.im }),
+  mul: (a, b) => ({ re: a.re * b.re - a.im * b.im, im: a.re * b.im + a.im * b.re }),
+  div: (a, b) => { const d = b.re * b.re + b.im * b.im || 1e-12; return { re: (a.re * b.re + a.im * b.im) / d, im: (a.im * b.re - a.re * b.im) / d }; },
+  conj: a => ({ re: a.re, im: -a.im }),
+  abs: a => Math.hypot(a.re, a.im),
+  arg: a => Math.atan2(a.im, a.re),
+};
+
+/* ======================================================================
+   2. AUDIO (Web Audio: ревун, щелчки АВ)
+   ====================================================================== */
+const Audio = {
+  ctx: null, enabled: false, horn: null,
+  init() {
+    if (this.ctx) return;
+    try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.ctx = null; }
+  },
+  toggle() { this.init(); this.enabled = !this.enabled; if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); if (!this.enabled) this.hornOff(); return this.enabled; },
+  hornOn() {
+    if (!this.enabled || !this.ctx || this.horn) return;
+    const c = this.ctx, o = c.createOscillator(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+    o.type = 'square'; o.frequency.value = 820; lfo.type = 'square'; lfo.frequency.value = 2.2; lg.gain.value = 180;
+    lfo.connect(lg); lg.connect(o.frequency); g.gain.value = 0.045; o.connect(g); g.connect(c.destination);
+    o.start(); lfo.start(); this.horn = { o, lfo, g };
+  },
+  hornOff() { if (!this.horn) return; try { this.horn.o.stop(); this.horn.lfo.stop(); } catch (e) {} this.horn = null; },
+  clack(strength = 1) {
+    if (!this.enabled || !this.ctx) return;
+    const c = this.ctx, len = 0.12, buf = c.createBuffer(1, c.sampleRate * len, c.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (c.sampleRate * 0.015));
+    const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    s.buffer = buf; f.type = 'lowpass'; f.frequency.value = 1600; g.gain.value = 0.35 * Math.min(2, strength);
+    s.connect(f); f.connect(g); g.connect(c.destination); s.start();
+    if (strength > 1.3) { // удар при несинхронном включении
+      const o = c.createOscillator(), og = c.createGain(); o.frequency.value = 55; og.gain.setValueAtTime(0.3, c.currentTime);
+      og.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.6); o.connect(og); og.connect(c.destination); o.start(); o.stop(c.currentTime + 0.6);
+    }
+  },
+};
+
+/* ======================================================================
+   3. LOG & ALARMS (этап 3 — полноценное табло)
+   ====================================================================== */
+const Log = {
+  items: [], dirty: true,
+  add(text, type = 'info') {
+    this.items.unshift({ t: Sim.t, clock: Sim.clockStr(), text, type });
+    if (this.items.length > 500) this.items.pop();
+    this.dirty = true;
+  },
+};
+const Alarms = { cond() {}, step() {} };   // заглушка, заменяется на этапе 3
+
+/* ======================================================================
+   4. MODEL — дизель-генераторы, АВ, шины, потребители, сеть
+   ====================================================================== */
+const Model = {
+  gens: [], consumers: [],
+  bus: { V: { re: 0, im: 0 }, U: 0, ang: 0, f: 0, n: 0, live: false, everLive: false, P: 0, Q: 0, deadT: 0 },
+  air: { p: CONFIG.air.init },
+  busFault: null,    // {y} — КЗ на шинах (этап 5)
+};
+
+class GenSet {
+  constructor(i) {
+    const E = CONFIG.engine, G = CONFIG.gen;
+    this.i = i; this.tag = 'G' + (i + 1); this.name = 'No.' + (i + 1);
+    this.eng = { state: 'STOPPED', n: 0, dn: 0, rack: 0, Tm: 0, speedRef: E.speedRefDefault, rampRef: 0, t: 0,
+      attempts: 0, lo: 0, jw: E.jw.standby, shutdown: null, startFail: false, firedAt: -1e9, startedAt: -1e9 };
+    this.crankT = 0; this.fuelAvail = 1; this.oilHealth = 1;
+    // генератор
+    this.psi = 0; this.efd = 0; this.avrInt = 0; this.avrSet = CONFIG.avr.setDefault; this.soft = 0;
+    this.delta = U.rnd() * 2 * Math.PI - Math.PI; this.E = 0;
+    this.U = 0; this.ang = 0; this.f = 0;
+    this.I1 = 0; this.Isub = 0; this.I = 0; this.P = 0; this.Q = 0; this.Ipeak = 0;
+    this.tw = G.winding.amb; this.tb = G.bearing.base; this.heaterSw = true; this.heaterOn = false; this.ins = G.insulation.dry;
+    // АВ
+    this.acb = { closed: false, tripped: null, closing: -1, spring: 1, closedAt: -1e9, src: '' };
+    // управление: оператор (ключи) + автоматика
+    this.govOp = 0; this.govAuto = 0; this.avrOp = 0; this.avrAuto = 0;
+    this.faults = { fuel: false, gov: null, avr: null, loe: false, lo: false, overheat: false, bearing: false, diff: false, unb: 0 };
+    this.timers = {};
+    this.phaseV = [1.0015, 0.9990, 1.0006]; this.phaseI = [1.004, 0.997, 0.999];
+  }
+  get running() { return this.eng.n >= CONFIG.engine.runSpeed && this.eng.state !== 'STOPPED'; }
+  get kW() { return this.P * CONFIG.gen.ratedKVA; }
+  get kvar() { return this.Q * CONFIG.gen.ratedKVA; }
+  get amps() { return this.I * CONFIG.gen.In; }
+  get volts() { return this.U * CONFIG.gen.Un; }
+  get ready() {   // READY: агрегат исправен и готов (к пуску — в стоянке; к включению — на ходу)
+    const e = this.eng, E = CONFIG.engine;
+    if (e.shutdown || e.startFail || this.acb.tripped) return false;
+    if (e.state === 'STOPPED') return Model.air.p >= CONFIG.air.block;
+    if (e.state === 'RUN') return e.n >= E.readySpeed && Math.abs(this.U - this.avrSet / CONFIG.gen.Un) < 0.05 && this.soft >= 1;
+    return false;
+  }
+
+  setEngState(s) { this.eng.state = s; this.eng.t = 0; }
+
+  cmdStart(src = 'OP') {
+    const e = this.eng;
+    if (e.state !== 'STOPPED') { if (e.state === 'STOPPING') return this.refuse('двигатель останавливается'); return false; }
+    if (e.shutdown) return this.refuse('аварийная остановка не сброшена (' + e.shutdown.text + ')');
+    if (e.startFail) return this.refuse('START FAILURE — требуется RESET');
+    if (Model.air.p < CONFIG.air.block) return this.refuse('давление пускового воздуха ' + Model.air.p.toFixed(1) + ' бар — пуск заблокирован');
+    if (this.faults.diff && this.acb.tripped) return this.refuse('блокировка дифзащиты');
+    e.attempts = 1; e.rampRef = 0; e.startedAt = Sim.t;
+    this.setEngState('PRELUB');
+    Log.add(`${this.name} D/G START (${src}) — предпусковая прокачка масла`, src === 'OP' ? 'op' : 'pms');
+    return true;
+  }
+  cmdStop(src = 'OP') {
+    const e = this.eng;
+    if (e.state === 'STOPPED' || e.state === 'STOPPING') return false;
+    if (this.acb.closed) Log.add(`${this.name} STOP при включённом АВ! Генератор перейдёт в двигательный режим`, 'warn');
+    this.setEngState('STOPPING');
+    Log.add(`${this.name} D/G STOP (${src})`, src === 'OP' ? 'op' : 'pms');
+    return true;
+  }
+  refuse(why) { Log.add(`${this.name}: команда отклонена — ${why}`, 'warn'); UI.toast(`${this.name}: ${why}`, 'warn'); return false; }
+
+  /* ---- ДИЗЕЛЬ: последовательность пуска, регулятор, рейка ---- */
+  stepEngine(dt) {
+    const E = CONFIG.engine, e = this.eng, air = Model.air;
+    const gc = U.clamp(this.govOp + this.govAuto, -1, 1);
+    e.speedRef = U.clamp(e.speedRef + gc * E.govRate * dt, E.speedRefMin, E.speedRefMax);
+    e.t += dt;
+    let crankT = 0, fuelOn = false, ref = e.speedRef, rackLim = E.rackMax;
+    switch (e.state) {
+      case 'PRELUB':
+        if (e.t >= E.prelubTime) { this.setEngState('CRANK'); Log.add(`${this.name} проворачивание воздухом, попытка ${e.attempts}/${E.startAttempts}`, 'info'); }
+        break;
+      case 'CRANK': {
+        const pf = U.clamp((air.p - 5) / 12, 0, 1);
+        crankT = E.crankTorque * Math.max(0, 1 - e.n / E.crankLimit) * pf;
+        air.p = Math.max(0, air.p - CONFIG.air.crankUse * dt);
+        if (e.n >= E.firingSpeed && e.t > 1.0) { fuelOn = true; e.rampRef = Math.max(e.rampRef, 0.36); }
+        ref = e.rampRef; rackLim = E.startFuelLimit;
+        if (e.n >= E.cutoutSpeed) { this.setEngState('ACCEL'); e.firedAt = Sim.t; Log.add(`${this.name} двигатель запустился, разгон`, 'info'); }
+        else if (e.t >= E.crankTime) {
+          if (e.attempts >= E.startAttempts) {
+            this.setEngState('STOPPED'); e.startFail = true;
+            Log.add(`${this.name} D/G START FAILURE — ${E.startAttempts} неудачные попытки`, 'alarm');
+          } else { this.setEngState('CRANK_WAIT'); Log.add(`${this.name} неудачная попытка пуска ${e.attempts}`, 'warn'); }
+        }
+        break; }
+      case 'CRANK_WAIT':
+        if (e.t >= E.startPause && e.n < 0.02) {
+          if (air.p < CONFIG.air.block) { this.setEngState('STOPPED'); e.startFail = true; Log.add(`${this.name} START FAILURE — нет пускового воздуха`, 'alarm'); }
+          else { e.attempts++; this.setEngState('CRANK'); Log.add(`${this.name} проворачивание воздухом, попытка ${e.attempts}/${E.startAttempts}`, 'info'); }
+        }
+        break;
+      case 'ACCEL':
+        fuelOn = true;
+        e.rampRef += (e.speedRef - 0.36) / E.startRamp * dt;
+        if (e.rampRef >= e.speedRef) { e.rampRef = e.speedRef; this.setEngState('RUN'); Log.add(`${this.name} D/G RUNNING ${Math.round(e.n * CONFIG.gen.rpm)} rpm`, 'info'); }
+        ref = e.rampRef; rackLim = e.n < 0.6 ? E.startFuelLimit : E.rackMax;
+        if (e.n < E.firingSpeed) { this.setEngState('STOPPING'); Log.add(`${this.name} двигатель заглох при разгоне`, 'alarm'); }
+        break;
+      case 'RUN':
+        fuelOn = true; ref = e.speedRef;
+        if (e.n < 0.2) { this.setEngState('STOPPING'); Log.add(`${this.name} двигатель заглох`, 'alarm'); }
+        break;
+      case 'STOPPING':
+        if (e.n < 0.005) { e.n = 0; this.setEngState('STOPPED'); Log.add(`${this.name} D/G STOPPED`, 'info'); }
+        break;
+    }
+    let rackCmd = 0;
+    if (fuelOn) {
+      rackCmd = (ref - e.n) / E.droop - E.govKd * e.dn;
+      if (this.faults.gov === 'max') rackCmd = E.rackMax;
+      if (this.faults.gov === 'min') rackCmd = 0;
+      rackCmd = U.clamp(rackCmd, 0, rackLim);
+    }
+    e.rack = U.approach(e.rack, rackCmd, dt, E.tauAct);
+    this.fuelAvail = U.approach(this.fuelAvail, this.faults.fuel ? 0 : 1, dt, this.faults.fuel ? 1.5 : 3);
+    const comb = e.n > E.firingSpeed * 0.8 ? 1 : 0;
+    e.Tm = U.approach(e.Tm, e.rack * CONFIG.gen.PnPu * this.fuelAvail * comb, dt, E.tauEng);
+    this.crankT = crankT;
+  }
+
+  /* ---- AVR: ПИ-регулятор, статизм по Q, плавное возбуждение ---- */
+  stepAVR(dt) {
+    const A = CONFIG.avr, e = this.eng;
+    const ac = U.clamp(this.avrOp + this.avrAuto, -1, 1);
+    if (ac) this.avrSet = U.clamp(this.avrSet + ac * A.adjRate * dt, A.setMin, A.setMax);
+    const spinning = e.state === 'RUN' || e.state === 'ACCEL' || (e.state === 'STOPPING' && this.soft > 0 && e.n > 0.85 && this.acb.closed);
+    if (spinning && e.n >= A.buildSpeed) this.soft = Math.min(1, this.soft + dt / A.softStart);
+    else if (!spinning || e.n < 0.5) this.soft = Math.max(0, this.soft - dt / 0.5);
+    const vhz = Math.min(1, e.n / 0.95);
+    const Uref = (this.avrSet / CONFIG.gen.Un) * this.soft * vhz - (A.droopQ / 0.6) * this.Q;
+    const err = Uref - this.U;
+    let efd;
+    if (this.soft <= 0) { this.avrInt = 0; efd = 0; }
+    else {
+      let iNew = this.avrInt + A.Ki * err * dt;
+      efd = A.Kp * err + iNew;
+      if (efd > A.efdMax) { efd = A.efdMax; if (err > 0) iNew = this.avrInt; }
+      else if (efd < 0) { efd = 0; if (err < 0) iNew = this.avrInt; }
+      this.avrInt = iNew;
+    }
+    if (this.faults.avr === 'max' && this.soft > 0) efd = A.efdMax;
+    if (this.faults.avr === 'min' && this.soft > 0) efd = 0.15;
+    if (this.faults.loe) efd = 0;
+    this.efd = efd;
+    this.psi = U.approach(this.psi, efd, dt, this.faults.loe ? 0.9 : A.tauField);
+    this.E = this.psi * e.n + A.residual * e.n;
+  }
+
+  /* ---- уравнение движения ротора ---- */
+  stepRotor(dt, nCoi, nOnline) {
+    const G = CONFIG.gen, E = CONFIG.engine, e = this.eng, n = e.n;
+    let Tloss = n > 0.0005 ? G.PnPu * (E.lossA + E.lossB * n) : 0;
+    if (e.state === 'STOPPING' || e.state === 'STOPPED') Tloss += G.PnPu * E.stopLoss * Math.min(1, n / 0.05);   // компрессия без подачи топлива
+    const Te = this.acb.closed ? this.P / Math.max(n, 0.2) : 0;
+    const Td = (this.acb.closed && nOnline > 1) ? G.D * (n - nCoi) : 0;
+    let acc = (e.Tm + this.crankT - Te - Tloss - Td) / (2 * G.H);
+    if (n <= 0 && acc < 0) acc = 0;
+    e.dn = acc;
+    e.n = Math.max(0, n + acc * dt);
+    this.delta = U.wrapPi(this.delta + 2 * Math.PI * G.fn * (e.n - 1) * dt);
+  }
+
+  /* ---- медленные процессы: давление масла, температуры, изоляция, обогрев ---- */
+  stepSlow(dt) {
+    const E = CONFIG.engine, G = CONFIG.gen, e = this.eng;
+    // давление масла
+    if (this.faults.lo) this.oilHealth = Math.max(0.12, this.oilHealth - 0.035 * dt); else this.oilHealth = U.approach(this.oilHealth, 1, dt, 5);
+    let loT = 0;
+    if (e.state === 'PRELUB' || e.state === 'CRANK' || e.state === 'CRANK_WAIT') loT = E.lo.prelub;
+    if (e.n > 0.05) loT = Math.max(loT, E.lo.nominal * Math.min(1, Math.pow(e.n / 0.65, 2)) * this.oilHealth);
+    e.lo = U.approach(e.lo, loT, dt, loT > e.lo ? E.lo.tau : 2.5);
+    // охлаждающая вода
+    const load = Math.max(0, this.P / G.PnPu);
+    if (e.n > 0.3) {
+      if (this.faults.overheat) e.jw += 0.16 * dt * e.n;
+      else if (e.jw < E.jw.thermostat - 1) e.jw += (E.jw.warmRate * (0.25 + load)) * e.n * dt;
+      else e.jw = U.approach(e.jw, E.jw.thermostat + 4 * load, dt, 60);
+    } else {
+      const tgt = Model.bus.live ? E.jw.standby : E.jw.ambient;   // подогрев стоящего двигателя от ГРЩ
+      e.jw = U.approach(e.jw, tgt, dt, e.jw > tgt ? 900 : 1800);
+    }
+    // обмотка и подшипники генератора
+    this.heaterOn = this.heaterSw && e.n < 0.3 && Model.bus.live;
+    const twT = G.winding.amb + G.winding.rise * this.I * this.I + (this.heaterOn ? 8 : 0) + (e.n > 0.3 ? 5 : 0);
+    this.tw = U.approach(this.tw, twT, dt, G.winding.tau);
+    const tbT = G.bearing.base + G.bearing.rise * e.n + (this.faults.bearing ? G.bearing.fault : 0);
+    this.tb = U.approach(this.tb, tbT, dt, this.faults.bearing ? 90 : G.bearing.tau);
+    // изоляция обмотки: сохнет на ходу и с обогревом, сыреет без обогрева
+    const dry = e.n > 0.3 || this.heaterOn;
+    this.ins = U.approach(this.ins, dry ? G.insulation.dry : G.insulation.wet, dt, dry ? G.insulation.tauDry : G.insulation.tauWet);
+    // пружина АВ
+    if (this.acb.spring < 1) this.acb.spring = Math.min(1, this.acb.spring + dt / CONFIG.acb.springTime);
+  }
+
+  /* ---- АВ ---- */
+  cmdClose(src = 'OP') {
+    const a = this.acb;
+    if (a.closed || a.closing >= 0) return false;
+    const why = Model.closeBlock(this, src);
+    if (why) { Log.add(`${this.name} ACB CLOSE заблокировано: ${why}`, 'warn'); if (src === 'OP') UI.toast(`${this.name} ACB: ${why}`, 'warn'); return false; }
+    a.closing = CONFIG.acb.closeTime; a.src = src;
+    Log.add(`${this.name} ACB CLOSE (${src})`, src === 'OP' ? 'op' : 'pms');
+    return true;
+  }
+  cmdOpen(src = 'OP') {
+    const a = this.acb;
+    if (!a.closed) { a.closing = -1; return false; }
+    const kw = this.kW;
+    this.openACB();
+    Log.add(`${this.name} ACB OPEN (${src}), нагрузка в момент отключения ${Math.round(kw)} кВт`, src === 'OP' ? 'op' : 'pms');
+    return true;
+  }
+  openACB() { this.acb.closed = false; this.acb.closing = -1; this.Isub = 0; this.I1 = 0; Audio.clack(0.8); }
+  doClose() {
+    const a = this.acb; a.closing = -1; a.closed = true; a.closedAt = Sim.t; a.spring = 0; this.Ipeak = 0;
+    Model.onClose(this);
+  }
+}
+
+class Consumer {
+  constructor(c) {
+    this.c = c; this.id = c.id; this.sw = c.on ? 'ON' : 'OFF'; this.state = 'STOP'; this.t = 0;
+    this.lv = c.level ?? 1; this.noise = 0; this.y = { re: 0, im: 0 }; this.P = 0; this.Q = 0; this.I = 0;
+    this.uvT = 0; this.ocT = 0; this.uvDropped = false; this.fault = false;
+    this.kVA = c.kW / c.pf;
+    this.In = this.kVA * 1000 / (Math.sqrt(3) * (c.sys === '220' ? 220 : CONFIG.gen.Un));
+  }
+  get motor() { return !!this.c.motor; }
+  /* проводимость нагрузки (о.е. на базе Sг) до решения сети */
+  prepare(dt, busOK, fpu) {
+    const c = this.c, S = CONFIG.gen.ratedKVA;
+    // колебания нагрузки
+    this.noise = U.approach(this.noise, 0, dt, c.fluctT || 20) + (c.fluct || 0.03) * Math.sqrt(dt / (c.fluctT || 20)) * U.gauss() * 1.4;
+    this.noise = U.clamp(this.noise, -0.35, 0.35);
+    let on = this.sw === 'ON' && busOK;
+    if (c.cyclic === 'air') {          // компрессор пускового воздуха: работа по давлению
+      if (this.state === 'RUN' && Model.air.p >= CONFIG.air.compOff) this.state = 'IDLE';
+      if (this.state === 'IDLE' && Model.air.p < CONFIG.air.compOn) this.state = 'STOP';
+      if (this.state === 'IDLE') on = false;
+    }
+    if (!on) { if (this.state !== 'IDLE' || this.sw !== 'ON') this.state = this.sw === 'ON' && c.cyclic === 'air' && this.state === 'IDLE' ? 'IDLE' : 'STOP'; this.y = { re: 0, im: 0 }; return; }
+    let kVA, pf;
+    const lv = U.clamp(this.lv * (1 + this.noise), 0.05, 1.15);
+    if (this.motor) {
+      if (this.state === 'STOP') { this.state = 'START'; this.t = 0; }
+      if (this.state === 'START') {
+        this.t += dt; const fr = this.t / c.motor.t;
+        if (fr >= 1) this.state = 'RUN';
+        const m = fr < 0.7 ? 1 : Math.max(0, 1 - (fr - 0.7) / 0.3);
+        kVA = U.lerp(this.kVA * lv, this.kVA * c.motor.k, m); pf = U.lerp(c.pf, 0.35, m);
+      } else { kVA = this.kVA * lv; pf = c.pf; }
+    } else { this.state = 'RUN'; kVA = this.kVA * lv; pf = c.pf; }
+    const fk = this.motor ? Math.pow(U.clamp(fpu, 0.5, 1.2), 1.2) : 1;
+    const P = kVA * pf * fk / S, Q = kVA * Math.sqrt(1 - pf * pf) / S;
+    this.y = { re: P, im: -Q };
+  }
+  /* после решения сети */
+  measure(V) {
+    const S = CONFIG.gen.ratedKVA, v2 = V * V;
+    this.P = v2 * this.y.re * S; this.Q = -v2 * this.y.im * S;
+    const kva = Math.hypot(this.P, this.Q);
+    this.I = V > 0.01 ? kva * 1000 / (Math.sqrt(3) * (this.c.sys === '220' ? 220 : CONFIG.gen.Un) * V) : 0;
+  }
+}
+
+/* ---- сеть: узел шин, ЭДС генераторов за X'd ---- */
+Model.solve = function (dt) {
+  const G = CONFIG.gen, bus = this.bus, online = [];
+  for (const g of this.gens) if (g.acb.closed) online.push(g);
+  const fpu = online.length ? online.reduce((s, g) => s + g.eng.n, 0) / online.length : 1;
+  const busOK = bus.live || online.length > 0;
+  let YL = { re: 0, im: 0 };
+  for (const c of this.consumers) { c.prepare(dt, busOK, fpu); YL.re += c.y.re; YL.im += c.y.im; }
+  if (this.busFault) { YL.re += this.busFault.y.re; YL.im += this.busFault.y.im; }
+  for (const c of this.consumers) if (c.fault && c.sw === 'ON') { YL.re += 6.9; YL.im -= 17.2; }   // КЗ на фидере
+  let V = { re: 0, im: 0 };
+  if (online.length) {
+    let YE = { re: 0, im: 0 }, Ys = { re: 0, im: 0 };
+    for (const g of online) {
+      const y = { re: 0, im: -1 / G.Xd1 }, E = Cx.pol(g.E, g.delta);
+      YE = Cx.add(YE, Cx.mul(y, E)); Ys = Cx.add(Ys, y);
+    }
+    V = Cx.div(YE, Cx.add(Ys, YL));
+  }
+  bus.V = V; bus.U = Cx.abs(V); bus.ang = Cx.arg(V);
+  let Ptot = 0, Qtot = 0;
+  const gSub = G.Xd1 / G.Xd2 - 1, kSub = Math.exp(-dt / G.tauSub);
+  for (const g of this.gens) {
+    if (g.acb.closed) {
+      const y = { re: 0, im: -1 / G.Xd1 }, E = Cx.pol(g.E, g.delta);
+      const I = Cx.mul(y, Cx.sub(E, V)), S = Cx.mul(V, Cx.conj(I));
+      g.P = S.re; g.Q = S.im;
+      const I1 = Cx.abs(I);
+      g.Isub = g.Isub * kSub + gSub * (I1 - g.I1); g.I1 = I1;
+      g.I = Math.max(0, I1 + g.Isub);
+      g.U = bus.U; g.ang = bus.ang;
+      if (Sim.t - g.acb.closedAt < 0.6) g.Ipeak = Math.max(g.Ipeak, g.I);
+    } else {
+      g.P = 0; g.Q = 0; g.I = 0; g.I1 = 0; g.Isub = 0;
+      g.U = g.E; g.ang = g.delta;
+    }
+    g.f = g.eng.n * G.fn;
+    Ptot += g.P; Qtot += g.Q;
+  }
+  bus.P = Ptot * G.ratedKVA; bus.Q = Qtot * G.ratedKVA;
+  bus.n = online.length ? fpu : 0; bus.f = online.length && bus.U > 0.05 ? fpu * G.fn : 0;
+  bus.live = bus.U > 0.15;
+  if (bus.live) bus.everLive = true;
+  for (const c of this.consumers) c.measure(bus.U);
+  return online;
+};
+
+/* условия блокировки включения АВ (расширяется на этапах 2–3) */
+Model.closeBlock = function (g, src) {
+  if (g.acb.tripped) return 'АВ отключён защитой — нажмите RESET';
+  if (g.acb.spring < 1) return 'пружина АВ не взведена';
+  if (!g.running || g.eng.n < 0.9) return 'двигатель не работает';
+  if (g.U < 0.85) return 'напряжение генератора < 85 % (UV close block)';
+  if (this.bus.live) {
+    if (src === 'OP') {
+      if (Sync.bypass) return null;   // блокировка снята ключом BYPASS — последствия на совести оператора
+      if (Sync.selected !== g) return `шины под напряжением — ключ SYNC SELECT не на ${g.tag}`;
+      if (!Sync.check(g).permit) return 'реле контроля синхронизма: нет SYNC PERMIT';
+    } else if (!Sync.check(g).permit) return 'нет разрешения реле синхронизма';
+    return null;
+  }
+  for (const o of this.gens) if (o !== g && o.acb.closing >= 0) return 'включение другого АВ на обесточенные шины';
+  return null;
+};
+/* момент замыкания контактов АВ: фиксируем условия включения */
+Model.onClose = function (g) {
+  const bus = this.bus, live = bus.live;
+  let ev = null;
+  if (live) {
+    const phi = U.wrap180(U.deg(g.delta - bus.ang));
+    ev = { g, src: g.acb.src, t: Sim.t, clock: Sim.clockStr(), phi, df: g.f - bus.f, dU: (g.U - bus.U) * CONFIG.gen.Un,
+      dUp: (g.U - bus.U) / Math.max(bus.U, 0.01), bypass: Sync.bypass, Ipeak: 0, jw: g.eng.jw, done: false };
+    Sync.lastClose = ev; Sync.closeEvents.push(ev);
+  }
+  Audio.clack(live ? 1 + Math.min(1.5, Math.abs(ev.phi) / 25) : 1);
+  Log.add(`${g.name} ACB CLOSED${live ? ` (φ=${ev.phi.toFixed(1)}°, Δf=${ev.df.toFixed(2)} Гц, ΔU=${ev.dU.toFixed(0)} В)` : ' на обесточенные шины (dead bus)'}`, 'info');
+};
+
+/* ======================================================================
+   5. PROTECTION (этап 3)
+   ====================================================================== */
+const Protection = { step() {} };
+
+/* ======================================================================
+   6. AUTOMATION — реле синхронизма, автосинхронизатор, PMS (этап 4)
+   ====================================================================== */
+const Sync = {
+  selected: null,           // генератор на ключе SYNC SELECT
+  mode: 'MAN', lamps: 'DARK', bypass: false, relayFault: null,  // relayFault: 'stuck' | 'none'
+  scopeOnT: 0, lastClose: null, closeEvents: [],
+  /* реле контроля синхронизма (ANSI 25) */
+  check(g) {
+    const S = CONFIG.sync, bus = Model.bus;
+    const r = { live: bus.live && g.U > 0.5, dU: 0, df: 0, phi: 0, okU: false, okF: false, okP: false, permit: false };
+    if (!r.live) return r;
+    r.dU = (g.U - bus.U) / bus.U; r.df = g.f - bus.f; r.phi = U.wrap180(U.deg(g.delta - bus.ang));
+    r.okU = Math.abs(r.dU) <= S.dU; r.okF = Math.abs(r.df) <= S.df; r.okP = Math.abs(r.phi) <= S.dphi;
+    r.permit = r.okU && r.okF && r.okP && !g.acb.closed;
+    if (this.relayFault === 'stuck') r.permit = !g.acb.closed;
+    if (this.relayFault === 'none') r.permit = false;
+    return r;
+  },
+  select(g) {
+    if (this.selected === g) return;
+    if (this.mode === 'AUTO' && this.selected) this.selected.autoSync.stop('ключ SYNC SELECT');
+    this.selected = g; this.scopeOnT = g ? this.scopeOnT : 0;
+    Log.add(`SYNC SELECT → ${g ? g.tag : 'OFF'}`, 'op');
+    if (g && this.mode === 'AUTO') g.autoSync.start('SYNC PANEL');
+  },
+  setMode(m) {
+    this.mode = m; Log.add(`SYNC MODE → ${m}`, 'op');
+    if (!this.selected) return;
+    if (m === 'AUTO') this.selected.autoSync.start('SYNC PANEL'); else this.selected.autoSync.stop('ключ MAN');
+  },
+  step(dt) {
+    if (this.selected) this.scopeOnT += dt; else this.scopeOnT = 0;
+    const ev = this.lastClose;
+    if (ev && !ev.done) { ev.Ipeak = Math.max(ev.Ipeak, ev.g.Ipeak); if (Sim.t - ev.t > 0.6) { ev.done = true; Sync.onCloseDone(ev); } }
+  },
+  onCloseDone(ev) {
+    const G = CONFIG.sync.grade, a = Math.abs(ev.phi);
+    ev.result = a <= G.soft ? 'мягкое включение' : a <= G.jolt ? 'толчок, качания' : 'включение с большим углом';
+    const txt = `${ev.g.name} синхронизация: φ ${ev.phi.toFixed(1)}°, Δf ${ev.df >= 0 ? '+' : ''}${ev.df.toFixed(2)} Гц, ΔU ${ev.dU >= 0 ? '+' : ''}${ev.dU.toFixed(0)} В, бросок ${Math.round(ev.Ipeak * CONFIG.gen.In)} А (${Math.round(ev.Ipeak * 100)} % Iн) — ${ev.result}`;
+    Log.add(txt, a <= G.soft ? 'info' : 'warn');
+    if (typeof Assess !== 'undefined') Assess.onClose(ev); else UI.toast(txt, a <= G.soft ? 'ok' : 'warn', 6000);
+  },
+};
+
+/** Автосинхронизатор: подгонка U и f импульсами, команда на включение с упреждением, плавное нагружение */
+class AutoSync {
+  constructor(g) { this.g = g; this.active = false; this.phase = ''; this.t = 0; this.status = ''; }
+  start(src, opt = {}) {
+    const g = this.g;
+    if (this.active) return;
+    if (g.acb.closed) return;
+    this.active = true; this.phase = 'MATCH'; this.t = 0; this.src = src; this.softLoad = opt.softLoad !== false; this.onDone = opt.onDone || null;
+    Log.add(`${g.name} AUTO SYNC START (${src})`, 'pms');
+  }
+  stop(reason) {
+    if (!this.active) return;
+    this.active = false; this.g.govAuto = 0; this.g.avrAuto = 0; this.phase = ''; this.status = '';
+    if (reason) Log.add(`${this.g.name} AUTO SYNC STOP — ${reason}`, 'pms');
+  }
+  step(dt) {
+    if (!this.active) return;
+    const g = this.g, bus = Model.bus, S = CONFIG.sync;
+    this.t += dt;
+    if (g.acb.tripped || g.eng.shutdown) return this.stop('генератор недоступен');
+    if (this.phase === 'LOAD') return this.stepLoad(dt);
+    if (g.acb.closed) { this.phase = 'LOAD'; this.t = 0; g.avrAuto = 0; return; }
+    if (g.acb.closing >= 0) { g.govAuto = 0; g.avrAuto = 0; return; }
+    if (!g.ready) { this.status = 'WAIT READY'; g.govAuto = 0; g.avrAuto = 0; if (this.t > S.autoTimeout + 40) this.fail('генератор не готов'); return; }
+    if (!bus.live) { this.status = 'DEAD BUS'; g.cmdClose('AUTO'); return; }
+    const r = Sync.check(g);
+    // напряжение — импульсы на AVR
+    g.avrAuto = Math.abs(r.dU) > 0.006 ? -Math.sign(r.dU) * Math.min(1, Math.abs(r.dU) / 0.02) : 0;
+    // частота — держим скольжение +autoSlip
+    const fe = (S.autoSlip - r.df);
+    g.govAuto = Math.abs(fe) > 0.02 ? U.clamp(fe / 0.25, -1, 1) : 0;
+    this.status = `SYNC ΔU ${(r.dU * 100).toFixed(1)}% Δf ${r.df.toFixed(2)}`;
+    // команда на включение с упреждением на собственное время АВ
+    if (Math.abs(r.dU) <= S.autoDU && r.df > 0.02 && r.df <= Math.min(0.25, S.df)) {
+      const adv = 360 * r.df * CONFIG.acb.closeTime, pred = r.phi + adv;
+      if (r.phi < 0 && pred >= -S.autoWindow && pred <= S.autoWindow && r.permit) { g.govAuto = 0; g.avrAuto = 0; g.cmdClose('AUTO'); }
+    }
+    if (this.t > S.autoTimeout) this.fail('не достигнут синхронизм за ' + S.autoTimeout + ' с');
+  }
+  stepLoad(dt) {
+    const g = this.g, on = Model.gens.filter(x => x.acb.closed);
+    if (!this.softLoad || on.length < 2 || (typeof PMS !== 'undefined' && PMS.auto)) return this.finish();
+    const share = Model.bus.P / on.length / CONFIG.gen.ratedKVA;   // о.е.
+    const minOther = Math.min(...on.filter(x => x !== g).map(x => x.P));
+    this.status = 'SOFT LOADING';
+    if (g.P < share - 0.01 && minOther > 0.08) g.govAuto = CONFIG.sync.softLoadRate; else return this.finish();
+    if (this.t > 120) this.finish();
+  }
+  finish() { const cb = this.onDone; this.stop(); Log.add(`${this.g.name} AUTO SYNC: генератор включён${this.softLoad ? ' и нагружен' : ''}`, 'pms'); if (cb) cb(true); if (Sync.mode === 'AUTO' && Sync.selected === this.g) Log.add('Переведите ключ SYNC SELECT в OFF', 'info'); }
+  fail(why) { const cb = this.onDone; this.stop(); this.failed = Sim.t; Log.add(`${this.g.name} SYNCHRONIZING FAILURE — ${why}`, 'alarm'); if (cb) cb(false); }
+}
+
+const Automation = {
+  step(dt) {
+    Sync.step(dt);
+    for (const g of Model.gens) g.autoSync.step(dt);
+    if (typeof PMS !== 'undefined') PMS.step(dt);
+  },
+};
+
+/* ======================================================================
+   8. SIM — фиксированный шаг, ускорение, пауза
+   ====================================================================== */
+const Sim = {
+  t: 0, scale: 1, paused: false, acc: 0,
+  clockStr() { return U.fmtTime(CONFIG.clockStart + this.t); },
+  step(dt) {
+    const gens = Model.gens;
+    Automation.step(dt);
+    for (const g of gens) { g.stepEngine(dt); g.stepAVR(dt); }
+    // АВ: собственное время включения
+    for (const g of gens) if (g.acb.closing >= 0) { g.acb.closing -= dt; if (g.acb.closing < 0) g.doClose(); }
+    const online = Model.solve(dt);
+    let nCoi = 0; for (const g of online) nCoi += g.eng.n; nCoi = online.length ? nCoi / online.length : 0;
+    for (const g of gens) { g.stepRotor(dt, nCoi, online.length); g.stepSlow(dt); }
+    // пусковой воздух: компрессор
+    const comp = Model.consumers.find(c => c.c.cyclic === 'air');
+    if (comp && comp.state === 'RUN') Model.air.p = Math.min(CONFIG.air.max + 0.5, Model.air.p + CONFIG.air.compRate * dt);
+    Protection.step(dt);
+    Alarms.step(dt);
+    this.t += dt;
+  },
+  advance(sec) { const dt = CONFIG.sim.dt, n = Math.round(sec / dt); for (let i = 0; i < n; i++) this.step(dt); },
+  frame(realDt) {
+    if (this.paused) return;
+    const dt = CONFIG.sim.dt;
+    this.acc += realDt * this.scale;
+    let n = 0;
+    while (this.acc >= dt && n < CONFIG.sim.maxStepsPerFrame) { this.step(dt); this.acc -= dt; n++; }
+    if (n >= CONFIG.sim.maxStepsPerFrame) this.acc = 0;
+  },
+};
+
+/* ======================================================================
+   9. UI COMPONENTS — переиспользуемые приборы и органы управления
+   ====================================================================== */
+const GEOM = {
+  sector90: { px: 50, py: 86, R: 56, a0: -45, a1: 45 },   // ось внизу по центру, шкала 90°
+  quadrant: { px: 87, py: 87, R: 68, a0: -90, a1: 0 },    // ось в правом нижнем углу, шкала 90°
+};
+
+/**
+ * Стрелочный прибор (квадратный корпус, шкала 90°). Один компонент для всех приборов.
+ *  opts: min,max | map(v)->0..1 ; major/minor | ticks:[{v,label,major}] ; labels(v) ; red:[[a,b]] ; nominal ;
+ *        unit, title, cls, needles:[{color,label}], wn (рад/с), zeta, jitter, rest, hold, geometry, size
+ */
+class Gauge {
+  constructor(o) {
+    const S = CONFIG.gaugeStyle;
+    this.o = Object.assign({ size: 112, min: 0, max: 100, major: 10, minor: 2, unit: '', title: '', cls: S.cls, red: [], nominal: null,
+      needles: [{ color: S.needle }], wn: 6.5, zeta: 0.6, jitter: 0.0012, rest: null, hold: false, geometry: S.geometry,
+      font: S.font, labelFmt: v => String(Math.round(v * 100) / 100), legend: null, sym: '~' }, o);
+    this.g = GEOM[this.o.geometry];
+    this.svg = U.svg('svg', { viewBox: '0 0 100 100', class: 'gauge', width: this.o.size, height: this.o.size });
+    this.buildFace();
+    this.nd = this.o.needles.map(nd => ({ x: this.restFrac(), v: 0, target: NaN, noise: 0, el: this.buildNeedle(nd) }));
+    this.render();
+  }
+  frac(v) { const o = this.o; return o.map ? o.map(v) : (v - o.min) / (o.max - o.min); }
+  restFrac() { const o = this.o; return o.rest != null ? this.frac(o.rest) : U.clamp(this.frac(0), 0, 1); }
+  ang(f) { return this.g.a0 + (this.g.a1 - this.g.a0) * f; }
+  pt(a, r) { const q = a * Math.PI / 180; return [this.g.px + r * Math.sin(q), this.g.py - r * Math.cos(q)]; }
+  arc(f1, f2, r) {
+    const a1 = this.ang(f1), a2 = this.ang(f2), [x1, y1] = this.pt(a1, r), [x2, y2] = this.pt(a2, r);
+    return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 ${Math.abs(a2 - a1) > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+  }
+  buildFace() {
+    const o = this.o, S = CONFIG.gaugeStyle, s = this.svg, g = this.g, R = g.R;
+    U.svg('rect', { x: 0, y: 0, width: 100, height: 100, rx: 3.5, fill: S.bezel }, s);
+    U.svg('rect', { x: 1.2, y: 1.2, width: 97.6, height: 97.6, rx: 3, fill: 'none', stroke: '#3a3a3a', 'stroke-width': 0.8 }, s);
+    U.svg('rect', { x: 5, y: 5, width: 90, height: 90, rx: 1.5, fill: S.face }, s);
+    for (const [a, b] of o.red) U.svg('path', { d: this.arc(U.clamp(this.frac(a), 0, 1), U.clamp(this.frac(b), 0, 1), R + 2.4), stroke: S.red, 'stroke-width': 3.4, fill: 'none' }, s);
+    U.svg('path', { d: this.arc(0, 1, R), stroke: S.ink, 'stroke-width': 0.6, fill: 'none' }, s);
+    const ticks = o.ticks || this.autoTicks();
+    for (const t of ticks) {
+      const f = this.frac(t.v); if (f < -0.001 || f > 1.001) continue;
+      const a = this.ang(f), [x1, y1] = this.pt(a, R), [x2, y2] = this.pt(a, R + (t.major ? 6.5 : t.mid ? 5 : 3.5));
+      U.svg('line', { x1, y1, x2, y2, stroke: S.ink, 'stroke-width': t.major ? 0.8 : 0.45 }, s);
+      if (t.label != null) {
+        const [lx, ly] = this.pt(a, R - 7);
+        const tx = U.svg('text', { x: lx, y: ly, 'font-size': t.font || o.font, 'text-anchor': 'middle', 'dominant-baseline': 'middle', fill: S.ink, 'font-weight': 600 }, s);
+        tx.textContent = t.label;
+      }
+    }
+    if (o.nominal != null) {
+      const a = this.ang(this.frac(o.nominal)), [x1, y1] = this.pt(a, R - 2), [x2, y2] = this.pt(a, R + 8.5);
+      U.svg('line', { x1, y1, x2, y2, stroke: S.red, 'stroke-width': 1.5 }, s);
+    }
+    const ut = U.svg('text', { x: g.px - (o.geometry === 'quadrant' ? 22 : 0), y: g.py - (o.geometry === 'quadrant' ? 22 : 21), 'font-size': o.unitSize || 11, 'text-anchor': 'middle', fill: S.ink, 'font-weight': 700 }, s);
+    ut.textContent = o.unit;
+    if (o.title) { const tt = U.svg('text', { x: 50, y: 13, 'font-size': 5, 'text-anchor': 'middle', fill: '#444', 'letter-spacing': 0.4 }, s); tt.textContent = o.title; }
+    const cl = U.svg('text', { x: 9, y: 92, 'font-size': 4.6, fill: '#333' }, s); cl.textContent = o.sym + ' ⊥ ' + o.cls;
+    if (o.legend) {
+      o.legend.forEach((L, i) => {
+        U.svg('rect', { x: 62 + i * 0 - 0, y: 85.5 - i * 6, width: 3.2, height: 3.2, fill: L.color }, s);
+        const lt = U.svg('text', { x: 67, y: 88.3 - i * 6, 'font-size': 4.2, fill: '#222', 'font-weight': 700 }, s); lt.textContent = L.label;
+      });
+    }
+    // корпус оси
+    U.svg('circle', { cx: g.px, cy: g.py, r: 8, fill: '#151515' }, s);
+    this.needleLayer = U.svg('g', {}, s);
+    U.svg('circle', { cx: g.px, cy: g.py, r: 2.6, fill: '#333', stroke: '#000', 'stroke-width': 0.5 }, s);
+    U.svg('path', { d: 'M5 5 H72 Q40 30 5 58 Z', fill: '#fff', opacity: 0.09 }, s);   // блик стекла
+  }
+  autoTicks() {
+    const o = this.o, t = [], eps = 1e-9;
+    const lab = o.labelStep || o.major;
+    for (let v = o.min; v <= o.max + eps; v += o.minor) {
+      const vv = Math.round(v / o.minor) * o.minor;
+      const isMaj = Math.abs(vv / o.major - Math.round(vv / o.major)) < 1e-6;
+      const isLab = o.labels ? o.labels.some(l => Math.abs(l - vv) < 1e-6) : Math.abs(vv / lab - Math.round(vv / lab)) < 1e-6;
+      const isMid = !isMaj && Math.abs((vv / o.major) * 2 - Math.round((vv / o.major) * 2)) < 1e-6;
+      t.push({ v: vv, major: isMaj, mid: isMid, label: isLab ? o.labelFmt(vv) : null });
+    }
+    return t;
+  }
+  buildNeedle(nd) {
+    const g = this.g, L = g.R + 5;
+    const grp = U.svg('g', {}, this.needleLayer);
+    U.svg('path', { d: `M${g.px - 1.0} ${g.py + 6} L${g.px - 0.32} ${g.py - L} L${g.px + 0.32} ${g.py - L} L${g.px + 1.0} ${g.py + 6} Z`, fill: nd.color || '#111' }, grp);
+    return grp;
+  }
+  set(v, i = 0) { this.nd[i].target = v; }
+  off(i = 0) { this.nd[i].target = NaN; }
+  update(dt) {
+    const o = this.o, wn = o.wn, z = o.zeta;
+    for (const n of this.nd) {
+      const live = Number.isFinite(n.target);
+      let tf = live ? this.frac(n.target) : (o.hold ? n.x : this.restFrac());
+      if (live) { n.noise += -n.noise * dt * 4 + U.gauss() * Math.sqrt(dt) * o.jitter * 6; tf += n.noise; }
+      const steps = Math.max(1, Math.ceil(dt / 0.006)), h = dt / steps;
+      for (let k = 0; k < steps; k++) {
+        const a = wn * wn * (tf - n.x) - 2 * z * wn * n.v;
+        n.v += a * h; n.x += n.v * h;
+        if (n.x < -0.035) { n.x = -0.035; if (n.v < 0) n.v = -n.v * 0.3; }
+        if (n.x > 1.05) { n.x = 1.05; if (n.v > 0) n.v = -n.v * 0.3; }
+      }
+    }
+    this.render();
+  }
+  render() { for (const n of this.nd) n.el.setAttribute('transform', `rotate(${this.ang(n.x).toFixed(2)} ${this.g.px} ${this.g.py})`); }
+}
+
+/** Многопозиционный переключатель (рукоятка «пистолет» или ключ). positions:[{label,a}] */
+class Rotary {
+  constructor(o) {
+    this.o = Object.assign({ size: 64, value: 0, kind: 'pistol', onChange: null, labelR: 36, font: 9 }, o);
+    this.value = this.o.value;
+    const s = this.svg = U.svg('svg', { viewBox: '-50 -50 100 100', class: 'ctl', width: this.o.size, height: this.o.size });
+    this.o.positions.forEach((p, i) => {
+      const q = p.a * Math.PI / 180, r = this.o.labelR;
+      const tx = U.svg('text', { x: r * Math.sin(q), y: -r * Math.cos(q) + 3, 'font-size': p.font || this.o.font, 'text-anchor': 'middle', fill: p.color || '#111', 'font-weight': 700 }, s);
+      tx.textContent = p.label;
+      const hit = U.svg('circle', { cx: r * Math.sin(q), cy: -r * Math.cos(q), r: 13, fill: 'transparent' }, s);
+      hit.addEventListener('click', ev => { ev.stopPropagation(); this.set(i, true); });
+      const [x1, y1, x2, y2] = [25 * Math.sin(q), -25 * Math.cos(q), 29 * Math.sin(q), -29 * Math.cos(q)];
+      U.svg('line', { x1, y1, x2, y2, stroke: '#222', 'stroke-width': 1.5 }, s);
+    });
+    U.svg('circle', { r: 23, fill: '#cfd2cd', stroke: '#777', 'stroke-width': 1 }, s);
+    U.svg('circle', { r: 17, fill: '#2b2b2b', stroke: '#000', 'stroke-width': 1 }, s);
+    this.h = U.svg('g', {}, s);
+    if (this.o.kind === 'key') {
+      U.svg('rect', { x: -5, y: -21, width: 10, height: 42, rx: 3, fill: '#c9a227', stroke: '#6b5410', 'stroke-width': 1 }, this.h);
+      U.svg('circle', { cy: -15, r: 2, fill: '#6b5410' }, this.h);
+    } else {
+      U.svg('path', { d: 'M-6 14 L-4.5 -26 Q0 -31 4.5 -26 L6 14 Q0 18 -6 14 Z', fill: '#1a1a1a', stroke: '#000', 'stroke-width': 0.8 }, this.h);
+      U.svg('line', { x1: 0, y1: -24, x2: 0, y2: -8, stroke: '#fff', 'stroke-width': 2 }, this.h);
+    }
+    this.h.addEventListener('click', ev => { ev.stopPropagation(); this.set((this.value + 1) % this.o.positions.length, true); });
+    this.render();
+  }
+  set(i, user) { if (i === this.value) return; this.value = i; this.render(); if (user && this.o.onChange) this.o.onChange(i, this.o.positions[i]); }
+  get pos() { return this.o.positions[this.value]; }
+  render() { this.h.setAttribute('transform', `rotate(${this.o.positions[this.value].a})`); }
+}
+
+/** Ключ с самовозвратом LOWER / RAISE (регулятор оборотов, напряжение) */
+class SpringKey {
+  constructor(o) {
+    this.o = Object.assign({ size: 72, left: 'LOWER', right: 'RAISE', onChange: null }, o);
+    this.value = 0;
+    const s = this.svg = U.svg('svg', { viewBox: '-50 -50 100 100', class: 'ctl', width: this.o.size, height: this.o.size });
+    const lab = (t, a) => { const q = a * Math.PI / 180; const x = U.svg('text', { x: 37 * Math.sin(q), y: -37 * Math.cos(q) + 3, 'font-size': 8.5, 'text-anchor': 'middle', fill: '#111', 'font-weight': 700 }, s); x.textContent = t; };
+    lab(this.o.left, -48); lab(this.o.right, 48);
+    U.svg('path', { d: 'M-26 -10 A28 28 0 0 1 -12 -25', stroke: '#222', 'stroke-width': 1.3, fill: 'none', 'marker-end': '' }, s);
+    U.svg('path', { d: 'M26 -10 A28 28 0 0 0 12 -25', stroke: '#222', 'stroke-width': 1.3, fill: 'none' }, s);
+    U.svg('circle', { r: 23, fill: '#cfd2cd', stroke: '#777', 'stroke-width': 1 }, s);
+    U.svg('circle', { r: 17, fill: '#2b2b2b', stroke: '#000' }, s);
+    this.h = U.svg('g', {}, s);
+    U.svg('path', { d: 'M-7 13 L-5 -27 Q0 -32 5 -27 L7 13 Q0 17 -7 13 Z', fill: '#111', stroke: '#000' }, this.h);
+    U.svg('line', { x1: 0, y1: -25, x2: 0, y2: -9, stroke: '#ffcc00', 'stroke-width': 2.2 }, this.h);
+    const zone = (x, v) => {
+      const r = U.svg('rect', { x, y: -50, width: 50, height: 100, fill: 'transparent' }, s);
+      const down = ev => { ev.preventDefault(); try { r.setPointerCapture(ev.pointerId); } catch (e) {} this.set(v); };
+      const up = () => this.set(0);
+      r.addEventListener('pointerdown', down); r.addEventListener('pointerup', up);
+      r.addEventListener('pointercancel', up); r.addEventListener('lostpointercapture', up);
+    };
+    zone(-50, -1); zone(0, 1);
+    this.render();
+  }
+  set(v) { if (v === this.value) return; this.value = v; this.render(); if (this.o.onChange) this.o.onChange(v); }
+  render() { this.h.setAttribute('transform', `rotate(${this.value * 40})`); }
+}
+
+/** Потенциометр (уставка напряжения AVR): перетаскивание / колесо */
+class Knob {
+  constructor(o) {
+    this.o = Object.assign({ size: 64, min: 0, max: 1, get: () => 0, set: () => {}, sens: 0.004 }, o);
+    const s = this.svg = U.svg('svg', { viewBox: '-50 -50 100 100', class: 'ctl', width: this.o.size, height: this.o.size });
+    for (let i = 0; i <= 10; i++) {
+      const a = (-135 + 27 * i) * Math.PI / 180;
+      U.svg('line', { x1: 27 * Math.sin(a), y1: -27 * Math.cos(a), x2: (i % 5 ? 31 : 34) * Math.sin(a), y2: -(i % 5 ? 31 : 34) * Math.cos(a), stroke: '#111', 'stroke-width': i % 5 ? 1 : 1.8 }, s);
+    }
+    const t1 = U.svg('text', { x: -34, y: 38, 'font-size': 11, 'font-weight': 700, 'text-anchor': 'middle', fill: '#111' }, s); t1.textContent = '−';
+    const t2 = U.svg('text', { x: 34, y: 38, 'font-size': 11, 'font-weight': 700, 'text-anchor': 'middle', fill: '#111' }, s); t2.textContent = '+';
+    this.h = U.svg('g', {}, s);
+    U.svg('circle', { r: 22, fill: '#1c1c1c', stroke: '#000' }, this.h);
+    for (let i = 0; i < 24; i++) { const a = i * 15 * Math.PI / 180; U.svg('line', { x1: 19 * Math.sin(a), y1: 19 * Math.cos(a), x2: 22 * Math.sin(a), y2: 22 * Math.cos(a), stroke: '#555', 'stroke-width': 1.2 }, this.h); }
+    U.svg('circle', { r: 15, fill: '#2a2a2a' }, this.h);
+    U.svg('line', { x1: 0, y1: -20, x2: 0, y2: -6, stroke: '#fff', 'stroke-width': 2.5 }, this.h);
+    let last = null;
+    s.addEventListener('pointerdown', ev => { ev.preventDefault(); last = [ev.clientX, ev.clientY]; try { s.setPointerCapture(ev.pointerId); } catch (e) {} });
+    s.addEventListener('pointermove', ev => {
+      if (!last) return; const dx = ev.clientX - last[0], dy = ev.clientY - last[1]; last = [ev.clientX, ev.clientY];
+      this.bump((dx - dy) * this.o.sens * (this.o.max - this.o.min));
+    });
+    const end = () => { last = null; };
+    s.addEventListener('pointerup', end); s.addEventListener('pointercancel', end);
+    s.addEventListener('wheel', ev => { ev.preventDefault(); this.bump(-Math.sign(ev.deltaY) * 0.01 * (this.o.max - this.o.min)); }, { passive: false });
+    this.render();
+  }
+  bump(d) { this.o.set(U.clamp(this.o.get() + d, this.o.min, this.o.max)); this.render(); }
+  render() { const f = (this.o.get() - this.o.min) / (this.o.max - this.o.min); this.h.setAttribute('transform', `rotate(${-135 + 270 * f})`); }
+}
+
+/** Стрелочный синхроноскоп (шкала 360°): по часовой — входящий быстрее (FAST) */
+class Synchroscope {
+  constructor(o) {
+    this.o = Object.assign({ size: 160, wn: 2 * Math.PI * 2.4, zeta: 0.8 }, o);
+    const S = CONFIG.gaugeStyle, s = this.svg = U.svg('svg', { viewBox: '0 0 100 100', class: 'gauge', width: this.o.size, height: this.o.size });
+    U.svg('rect', { x: 0, y: 0, width: 100, height: 100, rx: 3.5, fill: S.bezel }, s);
+    U.svg('rect', { x: 4, y: 4, width: 92, height: 92, rx: 1.5, fill: S.face }, s);
+    const cx = 50, cy = 53, R = 33;
+    this.c = [cx, cy];
+    const pt = (a, r) => [cx + r * Math.sin(a * Math.PI / 180), cy - r * Math.cos(a * Math.PI / 180)];
+    const arc = (a1, a2, r) => { const [x1, y1] = pt(a1, r), [x2, y2] = pt(a2, r); return `M${x1} ${y1} A${r} ${r} 0 0 1 ${x2} ${y2}`; };
+    U.svg('path', { d: arc(-CONFIG.sync.dphi, CONFIG.sync.dphi, R + 2.5), stroke: S.red, 'stroke-width': 5, fill: 'none' }, s);
+    U.svg('circle', { cx, cy, r: R, fill: 'none', stroke: S.ink, 'stroke-width': 0.6 }, s);
+    for (let a = 0; a < 360; a += 10) {
+      const [x1, y1] = pt(a, R), [x2, y2] = pt(a, R + (a % 30 ? 3 : 6));
+      U.svg('line', { x1, y1, x2, y2, stroke: S.ink, 'stroke-width': a % 30 ? 0.5 : 0.9 }, s);
+    }
+    const [tx1, ty1] = pt(0, R + 6), [tx2, ty2] = pt(0, R - 4);
+    U.svg('line', { x1: tx1, y1: ty1, x2: tx2, y2: ty2, stroke: S.ink, 'stroke-width': 1.6 }, s);
+    const T = (x, y, t, fs = 5.2, w = 700) => { const e = U.svg('text', { x, y, 'font-size': fs, 'text-anchor': 'middle', fill: S.ink, 'font-weight': w }, s); e.textContent = t; return e; };
+    T(50, 10.5, 'SYNCHROSCOPE', 4.6, 600);
+    T(27, 63, 'SLOW', 5.6); T(73, 63, 'FAST', 5.6);
+    // стрелки направления
+    U.svg('path', { d: arc(-62, -34, R - 9), stroke: S.ink, 'stroke-width': 1, fill: 'none' }, s);
+    U.svg('path', { d: arc(34, 62, R - 9), stroke: S.ink, 'stroke-width': 1, fill: 'none' }, s);
+    const head = (a, dir) => { const [x, y] = pt(a, R - 9), q = (a + 90 * dir) * Math.PI / 180, b = a * Math.PI / 180;
+      const p1 = [x + 3 * Math.sin(q), y - 3 * Math.cos(q)], p2 = [x + 1.6 * Math.sin(b), y - 1.6 * Math.cos(b)], p3 = [x - 1.6 * Math.sin(b), y + 1.6 * Math.cos(b)];
+      U.svg('path', { d: `M${p1} L${p2} L${p3} Z`, fill: S.ink }, s); };
+    head(-62, -1); head(62, 1);
+    T(50, 90, 'INCOMING vs RUNNING', 3.8, 500);
+    const cl = U.svg('text', { x: 8, y: 92, 'font-size': 4.2, fill: '#333' }, s); cl.textContent = '~ ⊥ 60Hz';
+    this.ptr = U.svg('g', {}, s);
+    U.svg('path', { d: `M${cx - 1.4} ${cy + 14} L${cx - 0.6} ${cy - R + 1} L${cx} ${cy - R - 2} L${cx + 0.6} ${cy - R + 1} L${cx + 1.4} ${cy + 14} Z`, fill: S.needle }, this.ptr);
+    U.svg('rect', { x: cx - 3, y: cy + 10, width: 6, height: 5, rx: 1, fill: S.needle }, this.ptr);
+    U.svg('circle', { cx, cy, r: 4.5, fill: '#1a1a1a', stroke: '#000', 'stroke-width': 0.5 }, s);
+    U.svg('path', { d: 'M4 4 H72 Q40 30 4 58 Z', fill: '#fff', opacity: 0.08 }, s);
+    this.x = 0; this.v = 0; this.target = NaN;
+    this.render();
+  }
+  set(phiDeg) { this.target = phiDeg; }
+  off() { this.target = NaN; }
+  update(dt) {
+    if (Number.isFinite(this.target)) {
+      const tgt = this.x + U.wrap180(this.target - this.x), wn = this.o.wn, z = this.o.zeta;
+      const steps = Math.max(1, Math.ceil(dt / 0.005)), h = dt / steps;
+      for (let k = 0; k < steps; k++) { const a = wn * wn * (tgt - this.x) - 2 * z * wn * this.v; this.v += a * h; this.x += this.v * h; }
+    } else { this.v *= Math.exp(-dt * 3); this.x += this.v * dt; }   // обесточен — стрелка свободна
+    if (Math.abs(this.x) > 3600) this.x = U.wrap180(this.x);
+    this.render();
+  }
+  render() { this.ptr.setAttribute('transform', `rotate(${this.x.toFixed(2)} ${this.c[0]} ${this.c[1]})`); }
+}
+
+const UIK = {   // фабрики простых элементов
+  lamp(parent, color, x, y, label, cls = '') {
+    const l = U.el('div', 'lamp ' + color + ' ' + cls, parent); U.place(l, x, y);
+    if (label) { const w = Math.max(44, label.length * 5.2); const p = U.el('div', 'plate', parent, label); U.place(p, x + (l.offsetWidth || 24) / 2 - w / 2 + (cls.includes('big') ? 5 : 0) - (cls.includes('sm') ? 4 : 0), y - 14, w); }
+    return l;
+  },
+  button(parent, color, x, y, label, onClick, cls = '', inner = '') {
+    const b = U.el('button', 'pb ' + color + ' ' + cls, parent); U.place(b, x, y);
+    if (inner) U.el('span', 't', b, inner);
+    if (label) { const w = Math.max(46, label.length * 5.2); const p = U.el('div', 'plate', parent, label); U.place(p, x + 17 - w / 2 + (cls.includes('sm') ? -4 : 0), y - 14, w); }
+    b.addEventListener('click', ev => { ev.stopPropagation(); Audio.init(); onClick(ev); });
+    return b;
+  },
+  plate(parent, text, x, y, w, cls = '') { const p = U.el('div', 'plate ' + cls, parent, text); U.place(p, x, y, w); return p; },
+  ctl(parent, comp, x, y) { parent.appendChild(comp.svg); comp.svg.style.left = x + 'px'; comp.svg.style.top = y + 'px'; return comp; },
+  gauge(parent, g, x, y) { parent.appendChild(g.svg); g.svg.style.left = x + 'px'; g.svg.style.top = y + 'px'; return g; },
+  setLamp(l, on, blink = false, dim = false) {
+    const show = on && (!blink || UI.blinkFast);
+    l.classList.toggle('on', !!show && !dim); l.classList.toggle('dim', !!show && dim);
+  },
+};
+
+/* ======================================================================
+   10. UI PANELS
+   ====================================================================== */
+function cosPhiMeter(extra) {   // cos φ: шкала линейна по углу φ, LEAD слева, LAG справа
+  const ticks = [];
+  for (const c of [0.5, 0.6, 0.7, 0.8, 0.9, 1]) {
+    const d = Math.acos(c) * 180 / Math.PI, lab = [0.5, 0.7, 0.9, 1].includes(c) ? (c === 1 ? '1' : String(c)) : null;
+    ticks.push({ v: -d, major: true, label: lab });
+    if (c !== 1) ticks.push({ v: d, major: true, label: lab });
+  }
+  for (const c of [0.55, 0.65, 0.75, 0.85, 0.95, 0.98]) { const d = Math.acos(c) * 180 / Math.PI; ticks.push({ v: -d }, { v: d }); }
+  const g = new Gauge(Object.assign({ min: -60, max: 60, ticks, unit: 'cos φ', unitSize: 9, hold: true, wn: 5, zeta: 0.7, font: 5.6 }, extra));
+  for (const [x, t] of [[20, 'LEAD'], [80, 'LAG']]) { const tx = U.svg('text', { x, y: 60, 'font-size': 4.6, 'text-anchor': 'middle', fill: '#333', 'font-weight': 700 }, g.svg); tx.textContent = t; }
+  return g;
+}
+
+class GenPanel {
+  constructor(g, board) {
+    this.g = g; const M = CONFIG.meters;
+    const p = this.el = U.el('div', 'panel gen snapA', board); p.dataset.panel = g.tag;
+    U.el('div', 'nameplate', p, `${g.name} GENERATOR`);
+    const sp = U.el('div', 'subplate', p, `${CONFIG.gen.ratedKVA} kVA · ${CONFIG.gen.Un} V · ${CONFIG.gen.fn} Hz · cos φ ${CONFIG.gen.pf}`); sp.style.right = '22px';
+    const st = this.state = U.el('div', 'subplate', p, ''); st.style.left = '22px'; st.style.fontWeight = '700';
+    // приборы
+    this.mV = UIK.gauge(p, new Gauge(Object.assign({}, M.genV, { title: 'VOLTMETER' })), 14, 30);
+    this.mA = UIK.gauge(p, new Gauge(Object.assign({}, M.genA, { title: 'AMMETER', font: 5.6 })), 134, 30);
+    this.mP = UIK.gauge(p, new Gauge(Object.assign({}, M.genKW, { title: 'WATTMETER', font: 5.4, wn: 7.5, zeta: 0.55 })), 254, 30);
+    this.mF = UIK.gauge(p, new Gauge(Object.assign({}, M.genHz, { title: 'FREQUENCY', font: 5, rest: 55, wn: 5, zeta: 0.75, labelStep: 1 })), 374, 30);
+    this.mPF = UIK.gauge(p, cosPhiMeter({ title: 'POWER FACTOR' }), 494, 30);
+    // переключатели приборов
+    UIK.plate(p, 'VOLTMETER', 14, 150, 64);
+    this.vs = UIK.ctl(p, new Rotary({ size: 64, value: 1, positions: [{ label: 'OFF', a: -90 }, { label: 'RS', a: -35 }, { label: 'ST', a: 35 }, { label: 'TR', a: 90 }] }), 14, 162);
+    UIK.plate(p, 'AMMETER', 86, 150, 64);
+    this.as = UIK.ctl(p, new Rotary({ size: 64, value: 1, positions: [{ label: 'OFF', a: -90 }, { label: 'R', a: -35 }, { label: 'S', a: 35 }, { label: 'T', a: 90 }] }), 86, 162);
+    UIK.plate(p, 'GOVERNOR', 158, 150, 72);
+    this.gov = UIK.ctl(p, new SpringKey({ size: 72, onChange: v => { g.govOp = v; if (v) Log.add(`${g.name} GOVERNOR ${v > 0 ? 'RAISE' : 'LOWER'}`, 'op'); } }), 158, 160);
+    UIK.plate(p, 'VOLTAGE ADJ.', 238, 150, 70);
+    this.avr = UIK.ctl(p, new Knob({ size: 66, min: CONFIG.avr.setMin, max: CONFIG.avr.setMax, get: () => g.avrSet, set: v => { g.avrSet = v; } }), 240, 162);
+    UIK.plate(p, 'SPACE HEATER', 316, 150, 70);
+    this.heat = UIK.ctl(p, new Rotary({ size: 64, value: g.heaterSw ? 1 : 0, positions: [{ label: 'OFF', a: -45 }, { label: 'ON', a: 45 }],
+      onChange: i => { g.heaterSw = i === 1; Log.add(`${g.name} SPACE HEATER ${i ? 'ON' : 'OFF'}`, 'op'); } }), 319, 162);
+    // ЖКИ-монитор двигателя
+    this.lcd = U.el('div', 'lcd', p); U.place(this.lcd, 396, 150, 210, 78);
+    // лампы и кнопки
+    const L = 248, B = 306;
+    this.lRun = UIK.lamp(p, 'white', 26, L, 'RUNNING');
+    this.lReady = UIK.lamp(p, 'green', 100, L, 'READY');
+    this.lHeat = UIK.lamp(p, 'amber', 150, L, 'HEATER ON');
+    this.lTrip = UIK.lamp(p, 'amber', 236, L, 'ACB TRIPPED');
+    this.lClosed = UIK.lamp(p, 'red', 318, L, 'ACB CLOSED');
+    this.lOpen = UIK.lamp(p, 'green', 380, L, 'ACB OPEN');
+    UIK.button(p, 'green', 21, B, 'ENGINE START', () => g.cmdStart('OP'), '', 'START');
+    UIK.button(p, 'red', 95, B, 'ENGINE STOP', () => g.cmdStop('OP'), '', 'STOP');
+    UIK.button(p, 'blue', 231, B, 'RESET', () => Model.genReset(g), '', 'RST');
+    UIK.button(p, 'red', 313, B, 'ACB CLOSE', () => g.cmdClose('OP'), '', 'ON');
+    UIK.button(p, 'green', 375, B, 'ACB OPEN', () => g.cmdOpen('OP'), '', 'OFF');
+    this.info = U.el('div', 'lcd', p); U.place(this.info, 436, 238, 170, 106);
+  }
+  update(dt) {
+    const g = this.g, In = CONFIG.gen.In;
+    const vsel = this.vs.value, asel = this.as.value;
+    if (vsel === 0) this.mV.off(); else this.mV.set(g.volts * g.phaseV[vsel - 1]);
+    if (asel === 0) this.mA.off(); else this.mA.set(g.amps * g.phaseI[asel - 1]);
+    this.mP.set(g.kW);
+    if (g.U > 0.25) this.mF.set(g.f); else this.mF.off();
+    if (g.I > 0.015) this.mPF.set(U.clamp(U.deg(Math.atan2(g.Q, g.P)), -75, 75)); else this.mPF.off();
+    for (const m of [this.mV, this.mA, this.mP, this.mF, this.mPF]) m.update(dt);
+  }
+  updateSlow() {
+    const g = this.g, e = g.eng, E = CONFIG.engine;
+    UIK.setLamp(this.lRun, g.running);
+    UIK.setLamp(this.lReady, g.ready);
+    UIK.setLamp(this.lHeat, g.heaterOn);
+    UIK.setLamp(this.lTrip, !!g.acb.tripped, true);
+    UIK.setLamp(this.lClosed, g.acb.closed);
+    UIK.setLamp(this.lOpen, !g.acb.closed);
+    this.avr.render();
+    const stText = { STOPPED: 'STOPPED', PRELUB: 'PRE-LUBRICATING', CRANK: `CRANKING ${e.attempts}/${E.startAttempts}`, CRANK_WAIT: `START RETRY ${e.attempts}/${E.startAttempts}`, ACCEL: 'ACCELERATING', RUN: 'RUNNING', STOPPING: 'STOPPING' }[e.state];
+    this.state.textContent = (e.shutdown ? 'SHUTDOWN · ' : '') + (e.startFail ? 'START FAIL · ' : '') + stText;
+    this.state.style.color = e.shutdown || e.startFail ? '#b00' : '#222';
+    const w = (c, s) => `<span class="${c}">${s}</span>`;
+    const lo = e.lo.toFixed(1).padStart(4), jw = e.jw.toFixed(0).padStart(3);
+    this.lcd.innerHTML =
+      `${g.tag} ENGINE ${w('d', '·')} ${String(Math.round(e.n * CONFIG.gen.rpm)).padStart(4)} rpm\n` +
+      `L.O.  ${e.lo < 2.5 && e.n > 0.3 ? w('a', lo) : lo} bar  J.W. ${e.jw > 90 ? w('a', jw) : (e.jw < E.jw.coldLoad ? w('w', jw) : jw)}°C\n` +
+      `WDG ${g.tw.toFixed(0).padStart(4)}°C  BRG ${g.tb > 85 ? w('a', g.tb.toFixed(0).padStart(3)) : g.tb.toFixed(0).padStart(3)}°C\n` +
+      `RACK ${String(Math.round(e.rack * 100)).padStart(3)}%  AIR ${Model.air.p.toFixed(1).padStart(4)} bar\n` +
+      `${w('d', 'SET')} ${((e.speedRef - E.droop * 0.08) * 60).toFixed(2)}Hz ${w('d', 'AVR')} ${g.avrSet.toFixed(0)}V`;
+    this.info.innerHTML =
+      `U   ${g.volts.toFixed(0).padStart(5)} V\n` +
+      `I   ${g.amps.toFixed(0).padStart(5)} A\n` +
+      `P   ${g.kW.toFixed(0).padStart(5)} kW\n` +
+      `Q   ${g.kvar.toFixed(0).padStart(5)} kvar\n` +
+      `f   ${g.f.toFixed(2).padStart(5)} Hz\n` +
+      `${w('d', 'INS')} ${g.ins.toFixed(1).padStart(4)} MΩ ${g.acb.tripped ? w('a', 'TRIP ' + g.acb.tripped.id) : ''}\n` +
+      `${g.acb.closing >= 0 ? w('w', 'ACB CLOSING…') : (g.acb.spring < 1 ? w('d', 'SPRING CHARGING') : w('d', 'SPRING CHARGED'))}`;
+  }
+}
+
+class SyncPanel {
+  constructor(board) {
+    const M = CONFIG.syncMeters, p = this.el = U.el('div', 'panel sync snapA', board); p.dataset.panel = 'SYNC';
+    const np = U.el('div', 'nameplate', p, 'SYNCHRONIZING PANEL'); np.style.left = '400px';
+    this.scope = UIK.gauge(p, new Synchroscope({ size: 156 }), 32, 62);
+    // синхронизирующие лампы: L1 вверху, L3 справа-внизу, L2 слева-внизу (по часовой: L1 → L3 → L2)
+    this.sl = [[98, 26, 'L1'], [190, 196, 'L3'], [6, 196, 'L2']].map(([x, y, t]) => {
+      const d = U.el('div', 'slamp', p); U.place(d, x, y); U.el('i', '', d); U.el('b', '', d, t); return d; });
+    this.mV = UIK.gauge(p, new Gauge(Object.assign({}, M.dualV, { title: 'DOUBLE VOLTMETER', needles: [{ color: CONFIG.gaugeStyle.needle }, { color: CONFIG.gaugeStyle.needle2 }], legend: [{ color: CONFIG.gaugeStyle.needle2, label: 'INC' }, { color: CONFIG.gaugeStyle.needle, label: 'BUS' }] })), 230, 32);
+    this.mF = UIK.gauge(p, new Gauge(Object.assign({}, M.dualHz, { title: 'DOUBLE FREQ. METER', font: 5, rest: 55, wn: 5, zeta: 0.75, needles: [{ color: CONFIG.gaugeStyle.needle }, { color: CONFIG.gaugeStyle.needle2 }], legend: [{ color: CONFIG.gaugeStyle.needle2, label: 'INC' }, { color: CONFIG.gaugeStyle.needle, label: 'BUS' }] })), 350, 32);
+    // реле контроля синхронизма
+    const rl = U.el('div', 'relay', p); U.place(rl, 470, 32, 138, 112);
+    U.el('div', 'hd', rl, 'SYNC CHECK RELAY  (25)');
+    const row = (y, t, cls = '') => { const r = U.el('div', 'row', rl); r.style.top = y + 'px'; const l = U.el('div', 'led ' + cls, r); U.el('span', '', r, t); return l; };
+    this.ledBus = row(22, 'BUS LIVE'); this.ledInc = row(36, 'INCOMING LIVE');
+    this.ledU = row(52, `ΔU ≤ ${CONFIG.sync.dU * 100} %`); this.ledF = row(66, `Δf ≤ ${CONFIG.sync.df} Hz`); this.ledP = row(80, `Δφ ≤ ±${CONFIG.sync.dphi}°`);
+    this.ledByp = row(96, 'BYPASSED', 'r');
+    // ключи
+    UIK.plate(p, 'SYNC LAMPS', 18, 244, 64);
+    this.kLamps = UIK.ctl(p, new Rotary({ size: 62, value: 0, font: 7.5, positions: [{ label: 'DARK', a: -45 }, { label: 'ROTAT.', a: 45 }],
+      onChange: i => { Sync.lamps = i ? 'ROT' : 'DARK'; Log.add(`SYNC LAMPS → ${i ? 'ROTATING' : 'DARK'}`, 'op'); } }), 19, 256);
+    UIK.plate(p, 'SYNC MODE', 96, 244, 64);
+    this.kMode = UIK.ctl(p, new Rotary({ size: 62, value: 0, positions: [{ label: 'MAN', a: -45 }, { label: 'AUTO', a: 45 }], onChange: i => Sync.setMode(i ? 'AUTO' : 'MAN') }), 97, 256);
+    UIK.plate(p, 'SYNC SELECT', 236, 150, 74);
+    const pos = [{ label: 'OFF', a: -90 }]; Model.gens.forEach((g, i) => pos.push({ label: g.tag, a: -90 + (i + 1) * (180 / Model.gens.length) }));
+    this.kSel = UIK.ctl(p, new Rotary({ size: 72, value: 0, positions: pos, onChange: i => Sync.select(i ? Model.gens[i - 1] : null) }), 237, 162);
+    this.lPermit = UIK.lamp(p, 'green', 330, 178, 'SYNC PERMIT', 'big');
+    this.lAuto = UIK.lamp(p, 'white', 404, 182, 'AUTO SYNC');
+    UIK.plate(p, 'SYNC CHECK BYPASS', 462, 150, 92, 'red');
+    this.kByp = UIK.ctl(p, new Rotary({ size: 64, value: 0, kind: 'key', font: 7.5, positions: [{ label: 'NORMAL', a: -45 }, { label: 'BYPASS', a: 45, color: '#a00' }],
+      onChange: i => { Sync.bypass = i === 1; Log.add(`SYNC CHECK ${i ? 'BYPASSED — блокировка снята!' : 'NORMAL'}`, i ? 'warn' : 'op'); } }), 476, 162);
+    this.lcd = U.el('div', 'lcd', p); U.place(this.lcd, 548, 156, 62, 54); this.lcd.style.fontSize = '8px'; this.lcd.style.lineHeight = '10px';
+    // органы управления выбранным генератором (дублируют панель генератора)
+    UIK.plate(p, 'SELECTED GENERATOR', 236, 236, 372, 'wht');
+    UIK.plate(p, 'GOVERNOR', 240, 256, 72);
+    this.kGov = UIK.ctl(p, new SpringKey({ size: 72, onChange: v => { const g = Sync.selected; if (g) { g.govOp = v; if (v) Log.add(`${g.name} GOVERNOR ${v > 0 ? 'RAISE' : 'LOWER'} (SYNC PANEL)`, 'op'); } } }), 240, 266);
+    UIK.plate(p, 'VOLTAGE ADJ.', 322, 256, 72);
+    this.kAvr = UIK.ctl(p, new SpringKey({ size: 72, onChange: v => { const g = Sync.selected; if (g) g.avrOp = v; } }), 322, 266);
+    this.lClosed = UIK.lamp(p, 'red', 418, 272, 'ACB CLOSED');
+    this.lOpen = UIK.lamp(p, 'green', 482, 272, 'ACB OPEN');
+    UIK.button(p, 'red', 413, 308, '', () => { const g = Sync.selected; if (g) g.cmdClose('OP'); else UI.toast('Ключ SYNC SELECT в положении OFF', 'warn'); }, '', 'ON');
+    UIK.button(p, 'green', 477, 308, '', () => { const g = Sync.selected; if (g) g.cmdOpen('OP'); }, '', 'OFF');
+    this.lcd2 = U.el('div', 'lcd', p); U.place(this.lcd2, 530, 258, 78, 88); this.lcd2.style.fontSize = '8.5px'; this.lcd2.style.lineHeight = '10.5px';
+    this.sel = null;
+  }
+  update(dt) {
+    const g = Sync.selected, bus = Model.bus, V = CONFIG.gen.Un;
+    if (g) {
+      bus.live ? this.mV.set(bus.U * V, 0) : this.mV.off(0);
+      g.U > 0.03 ? this.mV.set(g.U * V, 1) : this.mV.off(1);
+      bus.live ? this.mF.set(bus.f, 0) : this.mF.off(0);
+      g.U > 0.25 ? this.mF.set(g.f, 1) : this.mF.off(1);
+    } else { this.mV.off(0); this.mV.off(1); this.mF.off(0); this.mF.off(1); }
+    // синхроноскоп и лампы
+    let b = [0, 0, 0];
+    if (g && bus.live && g.U > 0.25) {
+      const phi = g.delta - bus.ang, ui = g.U, ub = bus.U;
+      this.scope.set(U.deg(U.wrapPi(phi)));
+      const lv = (ai, ab) => Cx.abs(Cx.sub(Cx.pol(ui, phi + ai), Cx.pol(ub, ab))) / 2;
+      const k = 2 * Math.PI / 3;
+      const v = Sync.lamps === 'DARK' ? [lv(0, 0), lv(-k, -k), lv(k, k)] : [lv(0, 0), lv(-k, k), lv(k, -k)];
+      b = v.map(x => Math.pow(U.clamp(x, 0, 1), 2.2));
+    } else this.scope.off();
+    // L1 — R-R', L2 (слева) — S-T', L3 (справа) — T-S': при вращении по часовой тёмная точка идёт L1 → L3 → L2
+    this.sl[0].style.setProperty('--b', b[0].toFixed(3));
+    this.sl[1].style.setProperty('--b', b[2].toFixed(3));
+    this.sl[2].style.setProperty('--b', b[1].toFixed(3));
+    this.scope.update(dt); this.mV.update(dt); this.mF.update(dt);
+  }
+  updateSlow() {
+    const g = Sync.selected, r = g ? Sync.check(g) : null;
+    UIK.setLamp(this.ledBus, Model.bus.live); UIK.setLamp(this.ledInc, r && r.live);
+    UIK.setLamp(this.ledU, r && r.live && r.okU); UIK.setLamp(this.ledF, r && r.live && r.okF); UIK.setLamp(this.ledP, r && r.live && r.okP);
+    UIK.setLamp(this.ledByp, Sync.bypass, true);
+    UIK.setLamp(this.lPermit, r && r.permit);
+    UIK.setLamp(this.lAuto, g && g.autoSync.active, g && g.autoSync.phase === 'LOAD');
+    UIK.setLamp(this.lClosed, g && g.acb.closed); UIK.setLamp(this.lOpen, g && !g.acb.closed);
+    this.kSel.set(g ? g.i + 1 : 0);
+    const m = Math.floor(Sync.scopeOnT / 60), sec = Math.floor(Sync.scopeOnT % 60);
+    this.lcd.innerHTML = g ? `INC ${g.tag}\nON ${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}\n${Sync.scopeOnT > CONFIG.sync.scopeMaxTime ? '<span class="a">>15 MIN</span>' : '<span class="d">SCOPE</span>'}\n${Sync.mode}` : 'SYNC\nOFF\n\n' + Sync.mode;
+    if (g) {
+      const as = g.autoSync;
+      this.lcd2.innerHTML = `${g.name}\nU ${g.volts.toFixed(0).padStart(4)} V\nf ${g.f.toFixed(2)}\nP ${g.kW.toFixed(0).padStart(5)}\n${as.active ? '<span class="w">' + (as.phase === 'LOAD' ? 'LOADING' : 'AUTO SYNC') + '</span>' : (g.acb.closed ? 'ON BUS' : '<span class="d">MANUAL</span>')}\n<span class="d">${g.eng.state}</span>`;
+    } else this.lcd2.innerHTML = '—\n\nSELECT\nGEN.';
+  }
+}
+
+Model.genReset = function (g) {
+  let done = [];
+  if (g.acb.tripped) { if (g.faults.diff) { UI.toast(`${g.name}: дифзащита — неисправность не устранена`, 'err'); } else { done.push('ACB TRIP ' + g.acb.tripped.id); g.acb.tripped = null; } }
+  if (g.eng.shutdown) { if (g.eng.n > 0.02) UI.toast(`${g.name}: сброс аварийной остановки возможен только на остановленном двигателе`, 'warn'); else { done.push('SHUTDOWN'); g.eng.shutdown = null; } }
+  if (g.eng.startFail) { done.push('START FAIL'); g.eng.startFail = false; g.eng.attempts = 0; }
+  Log.add(`${g.name} RESET${done.length ? ': ' + done.join(', ') : ''}`, 'op');
+};
+
+/* ======================================================================
+   11. UI ROOT, LAYOUT, MAIN LOOP
+   ====================================================================== */
+const UI = {
+  panels: [], genPanels: [], blinkFast: true, blinkSlow: true, slowAcc: 0,
+  toast(text, type = 'info', ms = 3500) {
+    const t = U.el('div', 'toast ' + type, document.getElementById('toasts'), text);
+    setTimeout(() => t.remove(), ms);
+    const all = document.querySelectorAll('#toasts .toast'); if (all.length > 4) all[0].remove();
+  },
+  build() {
+    const board = document.getElementById('board');
+    for (const g of Model.gens) { const gp = new GenPanel(g, board); this.genPanels.push(gp); this.panels.push(gp); }
+    this.sync = new SyncPanel(board); this.panels.push(this.sync);
+    Layout.init();
+    this.keys();
+    // верхняя панель
+    document.querySelectorAll('#tbSpeed button').forEach(b => b.addEventListener('click', () => {
+      const s = +b.dataset.speed; if (s === 0) Sim.paused = !Sim.paused; else { Sim.scale = s; Sim.paused = false; }
+      UI.syncSpeedButtons();
+    }));
+    document.getElementById('tbSound').addEventListener('click', ev => { ev.currentTarget.textContent = Audio.toggle() ? '🔊' : '🔇'; });
+    document.addEventListener('pointerdown', () => Audio.init(), { once: true });
+  },
+  keys() {   // клавиатура: ←/→ регулятор, ↓/↑ напряжение выбранного на SYNC SELECT генератора
+    const map = { ArrowLeft: ['govOp', -1], ArrowRight: ['govOp', 1], ArrowDown: ['avrOp', -1], ArrowUp: ['avrOp', 1] };
+    document.addEventListener('keydown', ev => { const m = map[ev.key], g = Sync.selected; if (!m || !g || ev.repeat) return; ev.preventDefault(); g[m[0]] = m[1]; });
+    document.addEventListener('keyup', ev => { const m = map[ev.key], g = Sync.selected; if (!m || !g) return; g[m[0]] = 0; });
+  },
+  syncSpeedButtons() {
+    document.querySelectorAll('#tbSpeed button').forEach(b => {
+      const s = +b.dataset.speed; b.classList.toggle('act', s === 0 ? Sim.paused : (!Sim.paused && Sim.scale === s));
+    });
+  },
+  update(dt) {
+    for (const p of this.panels) p.update(dt);
+    this.slowAcc += dt;
+    if (this.slowAcc >= 0.1) {
+      this.slowAcc = 0;
+      const ms = performance.now();
+      this.blinkFast = (ms % 500) < 280; this.blinkSlow = (ms % 1600) < 900;
+      for (const p of this.panels) p.updateSlow();
+      document.getElementById('tbClock').textContent = Sim.clockStr();
+      const b = Model.bus;
+      document.getElementById('tbStatus').textContent = b.live ? `BUS ${(b.U * 440).toFixed(0)} V  ${b.f.toFixed(2)} Hz  ${b.P.toFixed(0)} kW` : 'BUS DEAD';
+    }
+  },
+};
+
+const Layout = {
+  PW: 620, PH: 360, GAP: 12, PAD: 12, zoom: 1, userZoom: null, forceFit: false,
+  init() {
+    window.addEventListener('resize', () => this.apply());
+    window.addEventListener('orientationchange', () => setTimeout(() => this.apply(), 250));
+    document.getElementById('tbZoomIn').addEventListener('click', () => { this.userZoom = Math.min(2.2, (this.userZoom || this.zoom) * 1.15); this.apply(); });
+    document.getElementById('tbZoomOut').addEventListener('click', () => { this.userZoom = Math.max(0.3, (this.userZoom || this.zoom) / 1.15); this.apply(); });
+    document.getElementById('tbFit').addEventListener('click', () => { this.userZoom = null; this.forceFit = !this.forceFit; this.apply(); });
+    this.apply();
+  },
+  units() { return UI.panels.map(p => p.el.classList.contains('span2') ? 2 : 1); },
+  rowsFor(c) { // число строк при c колонках (с учётом панелей двойной ширины)
+    let rows = 1, used = 0;
+    for (const u of this.units()) { const uu = Math.min(u, c); if (used + uu > c) { rows++; used = 0; } used += uu; }
+    return rows;
+  },
+  apply() {
+    const vp = document.getElementById('viewport'), board = document.getElementById('board');
+    const W = vp.clientWidth, H = vp.clientHeight, P = this.PW + this.GAP, Q = this.PH + this.GAP;
+    const total = this.units().reduce((a, b) => a + b, 0);
+    let best = { z: 0, c: 1 };
+    for (let c = 1; c <= total; c++) {
+      const r = this.rowsFor(c), w = c * P + this.PAD * 2, h = r * Q + this.PAD * 2;
+      const z = Math.min(W / w, H / h);
+      if (z > best.z + 1e-6) best = { z, c };
+    }
+    let c = best.c, z = best.z, snap = false;
+    if (!this.forceFit && z < 0.75) {
+      let r = Math.max(1, Math.floor(H / ((this.PH + this.GAP) * 0.88)));
+      r = Math.min(r, 3);
+      c = Math.max(2, Math.ceil(total / r));
+      while (this.rowsFor(c) > r) c++;
+      z = Math.min(1.25, (H - 2) / (this.rowsFor(c) * Q + this.PAD * 2));
+      snap = true;
+    }
+    if (this.userZoom) { z = this.userZoom; snap = false; }
+    this.zoom = z;
+    board.style.gridTemplateColumns = `repeat(${c}, ${this.PW}px)`;
+    board.style.zoom = z;
+    vp.classList.toggle('snap', snap && W < 1100);
+    this.cols = c;
+  },
+};
+
+/* ---------- сценарий по умолчанию (этап 1) ---------- */
+function buildModel() {
+  Model.gens = []; for (let i = 0; i < CONFIG.gen.count; i++) { const g = new GenSet(i); g.autoSync = new AutoSync(g); Model.gens.push(g); }
+  Model.consumers = (CONFIG.consumers || [
+    { id: 'BASE', name: 'TEST LOAD', kW: 600, pf: 0.82, on: true },
+  ]).map(c => new Consumer(c));
+}
+
+let lastFrame = 0;
+function loop(ts) {
+  const dt = Math.min(0.1, (ts - (lastFrame || ts)) / 1000); lastFrame = ts;
+  Sim.frame(dt);
+  UI.update(dt);
+  requestAnimationFrame(loop);
+}
+buildModel();
+UI.build();
+requestAnimationFrame(loop);
+window.SIM = { CONFIG, Model, Sim, UI, U, Log, Layout, Sync };
+</script>
+</body>
+</html>
