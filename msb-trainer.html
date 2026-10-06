@@ -43,7 +43,7 @@ button{font-family:inherit}
 .tb-nav{display:flex;gap:2px}
 .tb-nav button{min-width:26px!important;padding:0 4px!important;font-size:11px!important}
 @media (max-width:900px){.hide-s{display:none}}
-@media (max-width:700px){.tb-status{display:none}}
+@media (max-width:1000px){.tb-status{display:none}}
 /* ---------- viewport / board ---------- */
 #viewport{position:fixed;top:40px;left:0;right:0;bottom:0;overflow:auto;-webkit-overflow-scrolling:touch}
 #viewport.snap{scroll-snap-type:x mandatory}
@@ -163,10 +163,38 @@ svg.mimic text{font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif}
 .flow{stroke-dasharray:5 5}
 /* ---------- toasts ---------- */
 #toasts{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;max-width:94vw}
-.toast{background:#202529ee;color:#eee;border:1px solid #555;border-left:4px solid #999;padding:7px 12px;border-radius:4px;font-size:13px;
-  box-shadow:0 4px 14px #000a;max-width:640px;pointer-events:auto;white-space:pre-line}
+.toast{background:#202529e8;color:#eee;border:1px solid #555;border-left:4px solid #999;padding:7px 12px;border-radius:4px;font-size:13px;
+  box-shadow:0 4px 14px #000a;max-width:640px;pointer-events:none;white-space:pre-line}
+@media (max-height:500px){#toasts{left:8px;transform:none;align-items:flex-start;bottom:6px;max-width:52vw}.toast{font-size:11px;padding:4px 8px;opacity:.9}}
 .toast.warn{border-left-color:#ffb300}.toast.err{border-left-color:#ff3322}.toast.ok{border-left-color:#2ee65a}
+/* ---------- instructor drawer ---------- */
+#instructor{position:fixed;top:40px;right:0;bottom:0;width:min(400px,94vw);background:#1b2024f5;color:#dde3e8;z-index:30;
+  border-left:1px solid #000;box-shadow:-6px 0 18px #000a;display:flex;flex-direction:column;font-size:13px;
+  -webkit-user-select:text;user-select:text;padding-right:env(safe-area-inset-right)}
+#instructor .hd{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#2a3036;font-weight:700;letter-spacing:.5px}
+#instructor .bd{overflow-y:auto;padding:6px 12px 30px;flex:1;touch-action:pan-y}
+#instructor h4{margin:14px 0 6px;font-size:12px;color:#9fd0ff;letter-spacing:.6px;text-transform:uppercase;border-bottom:1px solid #3a434b;padding-bottom:3px}
+#instructor button{background:#343c44;color:#e6ebef;border:1px solid #111;border-radius:4px;padding:6px 8px;margin:2px 2px 2px 0;font-size:12px;cursor:pointer;touch-action:manipulation}
+#instructor button.on{background:#a8321f;color:#fff;border-color:#f86}
+#instructor button.sel{background:#3d6b2a;color:#fff}
+#instructor button.wide{display:block;width:100%;text-align:left}
+#instructor select{background:#2a3036;color:#eee;border:1px solid #111;border-radius:4px;padding:5px;font-size:12px}
+#instructor .muted{color:#8f9aa3;font-size:11.5px;line-height:1.35}
+#instructor .task{background:#262d33;border-left:3px solid #6aa8ff;padding:6px 8px;font-size:12.5px;line-height:1.4;margin:4px 0}
+#instructor .live{font-family:"Consolas","Courier New",monospace;font-size:12px;background:#0d1113;padding:6px 8px;border-radius:3px;white-space:pre;color:#9effb0}
+#instructor .ev{background:#232a30;border-radius:4px;padding:6px 8px;margin:5px 0;font-size:12px;line-height:1.4}
+#instructor .ev b.g{color:#7dff9a}#instructor .ev b.w{color:#ffd24a}#instructor .ev b.r{color:#ff7a6a}
+#instructor .jr{font-family:"Consolas","Courier New",monospace;font-size:11px;color:#c9b6ff;white-space:pre-wrap}
 /* ---------- overlays ---------- */
+.overlay{position:fixed;inset:0;background:#000b;z-index:50;display:flex;align-items:center;justify-content:center;padding:12px}
+.ov-box{background:#1f2428;color:#e3e7ea;max-width:900px;max-height:100%;overflow-y:auto;border-radius:6px;padding:16px 20px;font-size:14px;line-height:1.45;
+  box-shadow:0 10px 40px #000;-webkit-user-select:text;user-select:text;touch-action:pan-y}
+.ov-box h2{margin:0 0 8px;font-size:18px;color:#fff}.ov-box h3{margin:14px 0 4px;font-size:14.5px;color:#9fd0ff}
+.ov-box ol,.ov-box ul{margin:4px 0 4px 20px;padding:0}.ov-box li{margin:2px 0}
+.ov-box code{background:#0d1113;padding:1px 5px;border-radius:3px;color:#ffd27a}
+.ov-box button{background:#3d6b2a;color:#fff;border:none;border-radius:4px;padding:8px 18px;font-size:14px;cursor:pointer;margin-top:10px}
+.ov-box .cols{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px}
+@media (max-width:700px){.ov-box .cols{grid-template-columns:1fr}}
 .hidden{display:none!important}
 </style>
 </head>
@@ -189,9 +217,52 @@ svg.mimic text{font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif}
     <button id="tbZoomIn" title="Увеличить">+</button>
   </div>
   <button id="tbSound" title="Звук">🔇</button>
+  <button id="tbHelp" title="Справка">?</button>
+  <button id="tbInstr" title="Пульт инструктора">ИНСТР<span class="hide-s">УКТОР</span></button>
 </div>
 <div id="viewport"><div id="board"></div></div>
 <div id="toasts"></div>
+<div id="instructor" class="hidden"><div class="hd">ПУЛЬТ ИНСТРУКТОРА <button id="instrClose">✕</button></div><div class="bd" id="instrBody"></div></div>
+<div id="help" class="overlay hidden"><div class="ov-box">
+  <button id="helpX" style="float:right;margin:0;padding:4px 12px;background:#444">✕</button>
+  <h2>Тренажёр ГРЩ: ввод генератора в параллель</h2>
+  <div class="cols">
+  <div>
+  <h3>Ввод генератора в параллель (MAN)</h3>
+  <ol>
+    <li>Проверьте готовность ДГ: лампа <b>READY</b>, давление пускового воздуха, нет аварий.</li>
+    <li><b>ENGINE START</b> — прокачка масла, проворачивание воздухом, разгон до 900 об/мин, возбуждение.</li>
+    <li>Ключ <b>SYNC SELECT</b> на синхронизирующей панели — на входящий генератор.</li>
+    <li><b>VOLTAGE ADJ.</b> — подгоните напряжение к шинам (двойной вольтметр, ΔU ≤ 5 %).</li>
+    <li><b>GOVERNOR RAISE/LOWER</b> — входящий чуть быстрее шин: стрелка синхроноскопа медленно идёт по часовой (FAST), один оборот за 5–10 с.</li>
+    <li>Когда горит <b>SYNC PERMIT</b>, нажмите <b>ACB CLOSE</b> с упреждением — около «без пяти 12» (собственное время АВ ≈ 80 мс).</li>
+    <li>Распределите нагрузку: RAISE на входящем, LOWER на работающем — до равных кВт; поддерживайте 60 Гц. Уравняйте cos φ уставками AVR.</li>
+    <li>Ключ SYNC SELECT — в OFF (синхроноскоп рассчитан на кратковременную работу).</li>
+  </ol>
+  <h3>Вывод генератора</h3>
+  <ol><li>LOWER на выводимом и RAISE на остающихся, частота 60 Гц.</li><li>При нагрузке ≈ 0 (не допуская обратной мощности) — ACB OPEN.</li><li>Охлаждение на холостом ходу 1–5 мин, ENGINE STOP. Обогрев включается автоматически.</li></ol>
+  </div>
+  <div>
+  <h3>Что важно</h3>
+  <ul>
+    <li>Угол ≤ 10° — мягкое включение; 10–30° — толчок, качания; > 30° — отключение защитой; ≈ 180° — авария обоих, блэкаут.</li>
+    <li>Входящий медленнее шин → после включения берёт <b>обратную мощность</b> (reverse power 8 %, 5 с → отключение).</li>
+    <li>Разные уставки AVR → уравнительные реактивные токи и разный cos φ.</li>
+    <li>Ключ <b>SYNC CHECK BYPASS</b> снимает блокировку реле синхронизма — для демонстрации ошибок.</li>
+    <li><b>PMS AUTO</b> — автопуск резервного (> 85 % 30 с), вывод лишнего (< 30 % 5 мин), распределение кВт, 60 Гц, блокировка тяжёлых потребителей, восстановление после блэкаута.</li>
+    <li>Режим <b>SYNC MODE AUTO</b> — автосинхронизатор сам подгонит U и f, включит АВ и плавно нагрузит генератор.</li>
+  </ul>
+  <h3>Управление</h3>
+  <ul>
+    <li>Переключатели — нажатие на подпись положения или на рукоятку; ключ LOWER/RAISE — удерживать левую/правую половину.</li>
+    <li>Потенциометр VOLTAGE ADJ. — перетаскивание или колесо мыши.</li>
+    <li>Клавиатура (генератор на SYNC SELECT): ←/→ — регулятор оборотов, ↓/↑ — напряжение.</li>
+    <li>Телефон: держите в альбомной ориентации, листайте панели или выбирайте их кнопками вверху; −/⤢/+ — масштаб.</li>
+    <li>🔇 — включить звук (ревун, щелчки АВ). Табло: ACK, SILENCE, RESET, LAMP TEST.</li>
+  </ul>
+  </div></div>
+  <button id="helpClose">Начать</button>
+</div></div>
 
 <script>
 'use strict';
@@ -233,11 +304,12 @@ const CONFIG = {
     stopLoss: 0.07,                 // доп. торможение компрессией при остановке (выбег ≈ 35 с)
     lo: { nominal: 4.6, prelub: 0.9, tau: 0.8 },         // бар
     jw: { thermostat: 80, standby: 55, ambient: 30, warmRate: 0.06, coldLoad: 50 }, // °C
+    cold: { T: 40, rack: 0.80 },    // непрогретый двигатель (ОЖ < 40 °C): ограничение рейки 80 %
     shutdownTripsACB: true,
     cooldown: 60,                   // охлаждение на х.х. перед остановкой (PMS), с
   },
 
-  air: { init: 28, max: 30, crankUse: 1.2, compOn: 25, compOff: 30, compRate: 0.05, low: 15, block: 10 }, // бар
+  air: { init: 28, max: 30, crankUse: 0.6, compOn: 25, compOff: 30, compRate: 0.05, low: 15, block: 10 }, // бар
 
   avr: {
     droopQ: 0.03,                   // статизм по реактивной мощности 3 % при Qном
@@ -283,7 +355,7 @@ const CONFIG = {
 
   /* ---- PMS (Power Management System) ---- */
   pms: {
-    priority: [[0, 1, 2], [1, 2, 0], [2, 0, 1]],   // варианты очерёдности резерва (ключ STBY PRIORITY)
+    priority: null,                      // очерёдность резерва: null — циклические варианты 1-2-3 / 2-3-1 / 3-1-2 (ключ STBY PRIORITY)
     startLoad: 0.85, startDelay: 30,     // автопуск резервного при нагрузке > 85 % 30 с
     overload: 1.00, overloadDelay: 2,    // немедленный пуск при перегрузке
     stopLoad: 0.30, stopDelay: 300,      // вывод лишнего при < 30 % 5 мин …
@@ -359,6 +431,7 @@ const CONFIG = {
     geometry: 'sector90',           // 'sector90' (ось внизу по центру) | 'quadrant' (ось в правом нижнем углу)
     bezel: '#151515', face: '#f5f2e8', ink: '#141414', red: '#d0140c', needle: '#121212', needle2: '#c8100a',
     font: 6.2, cls: '1.5',
+    faceImages: {},                 // { 'V': 'data:image/png;base64,…', 'kW': 'img/kw.png' } — фото циферблатов по единице измерения
   },
 };
 CONFIG.gen.In = CONFIG.gen.ratedKVA * 1000 / (Math.sqrt(3) * CONFIG.gen.Un);   // ≈1968 А
@@ -569,7 +642,7 @@ class GenSet {
   cmdStop(src = 'OP') {
     const e = this.eng;
     if (e.state === 'STOPPED' || e.state === 'STOPPING') return false;
-    if (this.acb.closed) Log.add(`${this.name} STOP при включённом АВ! Генератор перейдёт в двигательный режим`, 'warn');
+    if (this.acb.closed) { Log.add(`${this.name} STOP при включённом АВ! Генератор перейдёт в двигательный режим`, 'warn'); if (src === 'OP') Assess.note(`${this.name}: STOP при включённом АВ — двигательный режим, обратная мощность`, 15); }
     this.setEngState('STOPPING');
     Log.add(`${this.name} D/G STOP (${src})`, src === 'OP' ? 'op' : 'pms');
     return true;
@@ -616,6 +689,7 @@ class GenSet {
         break;
       case 'RUN':
         fuelOn = true; ref = e.speedRef;
+        if (e.jw < E.cold.T) rackLim = E.cold.rack;
         if (e.n < 0.2) { this.setEngState('STOPPING'); Log.add(`${this.name} двигатель заглох`, 'alarm'); }
         break;
       case 'STOPPING':
@@ -676,7 +750,7 @@ class GenSet {
   stepRotor(dt, nCoi, nOnline) {
     const G = CONFIG.gen, E = CONFIG.engine, e = this.eng, n = e.n;
     let Tloss = n > 0.0005 ? G.PnPu * (E.lossA + E.lossB * n) : 0;
-    if (e.state === 'STOPPING' || e.state === 'STOPPED') Tloss += G.PnPu * E.stopLoss * Math.min(1, n / 0.05);   // компрессия без подачи топлива
+    if (e.state === 'STOPPING' || e.state === 'STOPPED' || e.state === 'CRANK_WAIT') Tloss += G.PnPu * E.stopLoss * Math.min(1, n / 0.05);   // компрессия без подачи топлива
     const Te = this.acb.closed ? this.P / Math.max(n, 0.2) : 0;
     const Td = (this.acb.closed && nOnline > 1) ? G.D * (n - nCoi) : 0;
     let acc = (e.Tm + this.crankT - Te - Tloss - Td) / (2 * G.H);
@@ -732,7 +806,11 @@ class GenSet {
   cmdOpen(src = 'OP') {
     const a = this.acb;
     if (!a.closed) { a.closing = -1; return false; }
-    const kw = this.kW;
+    const kw = this.kW, last = !Model.gens.some(o => o !== this && o.acb.closed);
+    if (src === 'OP') {
+      if (last && Model.bus.P > 30) Assess.note(`${this.name}: отключён последний генератор на шинах — БЛЭКАУТ`, 30);
+      else if (Math.abs(kw) > 0.1 * CONFIG.gen.ratedKW) Assess.note(`${this.name}: АВ отключён под нагрузкой ${Math.round(kw)} кВт без разгрузки`, 10);
+    }
     this.openACB();
     Log.add(`${this.name} ACB OPEN (${src}), нагрузка в момент отключения ${Math.round(kw)} кВт`, src === 'OP' ? 'op' : 'pms');
     return true;
@@ -858,6 +936,7 @@ Model.switchConsumer = function (c, on, src = 'OP') {
   if (c.sw === 'WAIT') { c.sw = 'OFF'; Log.add(`${n}: запрос на пуск отменён`, 'op'); return; }
   if (!this.bus.live && (c.motor || c.c.uv)) { if (src === 'OP') UI.toast(`${n}: нет напряжения на шинах — пускатель не включается`, 'warn'); return; }
   if (c.c.cat === 'heavy' && PMS.auto && src === 'OP') { PMS.requestHeavy(c); return; }
+  if (c.c.cat === 'heavy' && src === 'OP' && PMS.reserveKW() < c.c.kW * CONFIG.pms.heavyMargin) Assess.note(`Пуск ${n} без резерва мощности (резерв ${Math.round(PMS.reserveKW())} кВт)`, 10);
   c.sw = 'ON'; c.uvDropped = false;
   Log.add(`${n} ON (${src})${c.motor ? ' — пуск двигателя' : ''}`, src === 'OP' ? 'op' : 'pms');
 };
@@ -1082,7 +1161,7 @@ const Sync = {
     if (tripped.length) ev.result += ev.blackout ? ' → отключены ' + ev.tripped.join(', ') + ', БЛЭКАУТ' : ' → защита отключила ' + ev.tripped.join(', ');
     const txt = `${ev.g.name} синхронизация: φ ${ev.phi.toFixed(1)}°, Δf ${ev.df >= 0 ? '+' : ''}${ev.df.toFixed(2)} Гц, ΔU ${ev.dU >= 0 ? '+' : ''}${ev.dU.toFixed(0)} В, бросок ${Math.round(ev.Ipeak * CONFIG.gen.In)} А (${Math.round(ev.Ipeak * 100)} % Iн) — ${ev.result}`;
     Log.add(txt, a <= G.soft ? 'info' : 'warn');
-    if (typeof Assess !== 'undefined') Assess.onClose(ev); else UI.toast(txt, a <= G.soft ? 'ok' : 'warn', 6000);
+    Assess.onClose(ev);
   },
 };
 
@@ -1099,6 +1178,7 @@ class AutoSync {
   }
   stop(reason) {
     if (!this.active) return;
+    if (this.phase === 'LOAD' && !(PMS.auto)) for (const x of Model.gens) if (x.acb.closed) x.govAuto = 0;
     this.active = false; this.g.govAuto = 0; this.g.avrAuto = 0; this.phase = ''; this.status = '';
     if (reason) Log.add(`${this.g.name} AUTO SYNC STOP — ${reason}`, 'pms');
   }
@@ -1132,7 +1212,11 @@ class AutoSync {
     const share = Model.bus.P / on.length / CONFIG.gen.ratedKVA;   // о.е.
     const minOther = Math.min(...on.filter(x => x !== g).map(x => x.P));
     this.status = 'SOFT LOADING';
-    if (g.P < share - 0.01 && minOther > 0.08) g.govAuto = CONFIG.sync.softLoadRate; else return this.finish();
+    const others = on.filter(x => x !== g), r = CONFIG.sync.softLoadRate;
+    if (g.P < share - 0.01 && minOther > 0.08) {   // нагружаем входящий и разгружаем работающие — частота сохраняется
+      g.govAuto = r; const fc = U.clamp((Model.bus.f - 60) / 0.3, -1, 1) * 0.5;
+      for (const x of others) x.govAuto = U.clamp(-r / others.length - fc, -1, 1);
+    } else { for (const x of others) x.govAuto = 0; return this.finish(); }
     if (this.t > 120) this.finish();
   }
   finish() { const cb = this.onDone; this.stop(); Log.add(`${this.g.name} AUTO SYNC: генератор включён${this.softLoad ? ' и нагружен' : ''}`, 'pms'); if (cb) cb(true); if (Sync.mode === 'AUTO' && Sync.selected === this.g) Log.add('Переведите ключ SYNC SELECT в OFF', 'info'); }
@@ -1142,7 +1226,8 @@ class AutoSync {
 /** PMS: автопуск/вывод резервного, распределение кВт и 60 Гц, тяжёлые потребители, восстановление после блэкаута */
 const PMS = {
   auto: false, prioIdx: 0, starting: [], stopSeq: null, timers: {}, restartList: [], restartT: 0, msg: 'MANUAL', acc: 0, blackoutT: 0,
-  get prio() { return CONFIG.pms.priority[this.prioIdx].filter(i => i < Model.gens.length).map(i => Model.gens[i]); },
+  prioList() { const n = Model.gens.length; return CONFIG.pms.priority || Array.from({ length: n }, (_, k) => Array.from({ length: n }, (_, j) => (k + j) % n)); },
+  get prio() { return (this.prioList()[this.prioIdx] || this.prioList()[0]).map(i => Model.gens[i]); },
   setAuto(on) {
     this.auto = on; Log.add(`PMS → ${on ? 'AUTO' : 'MANUAL'}`, 'op');
     if (!on) {
@@ -1268,11 +1353,202 @@ const Automation = {
 };
 
 /* ======================================================================
+   7. INSTRUCTOR — неисправности, сценарии, оценка действий
+   ====================================================================== */
+/** Оценка ввода в параллель и действий оператора */
+const Assess = {
+  list: [], notes: [], once: {},
+  reset() { this.list = []; this.notes = []; this.once = {}; UI.instrDirty = true; },
+  note(text, pen = 5, key = null) {
+    if (key) { if (this.once[key]) return; this.once[key] = true; }
+    this.notes.push({ clock: Sim.clockStr(), text, pen }); Log.add('ОЦЕНКА: ' + text, 'instr'); UI.instrDirty = true;
+  },
+  grade(sc) { return sc >= 90 ? 'ОТЛИЧНО' : sc >= 75 ? 'ХОРОШО' : sc >= 60 ? 'УДОВЛ.' : 'НЕУД.'; },
+  onClose(ev) {
+    const a = Math.abs(ev.phi), n = [], S = CONFIG.sync; let sc = 100;
+    const pen = (p, t) => { sc -= p; n.push(`−${p} ${t}`); };
+    if (a > 30) pen(60, `угол ${a.toFixed(0)}° > 30° — включение не в фазе`);
+    else if (a > 20) pen(35, `угол ${a.toFixed(0)}° — сильный толчок`);
+    else if (a > 10) pen(20, `угол ${a.toFixed(0)}° > 10° — толчок и качания`);
+    else if (a > 5) pen(5, `угол ${a.toFixed(1)}° — допустимо`);
+    if (ev.df < -0.01) pen(15, `входящий медленнее шин (Δf ${ev.df.toFixed(2)} Гц) — риск обратной мощности`);
+    if (Math.abs(ev.df) > S.df) pen(15, `|Δf| ${Math.abs(ev.df).toFixed(2)} Гц > ${S.df} Гц`);
+    else if (ev.df > 0.2) pen(5, `скольжение ${ev.df.toFixed(2)} Гц велико (оптимум 0,05–0,15 Гц)`);
+    if (Math.abs(ev.dUp) > S.dU) pen(10, `ΔU ${(ev.dUp * 100).toFixed(1)} % > 5 %`);
+    else if (Math.abs(ev.dUp) > 0.02) pen(3, `ΔU ${(ev.dUp * 100).toFixed(1)} %`);
+    if (ev.bypass) pen(10, 'включение с ключом BYPASS (блокировка снята)');
+    if (ev.jw < CONFIG.engine.jw.coldLoad) pen(5, `двигатель не прогрет (${ev.jw.toFixed(0)} °C)`);
+    if (ev.blackout) pen(30, 'БЛЭКАУТ');
+    else if (ev.tripped.length) pen(20, 'отключение защитой: ' + ev.tripped.join(', '));
+    ev.score = Math.max(0, sc); ev.notes = n; ev.follow = { until: ev.t + 180, rpT: 0, shared: null, scopeOff: null };
+    this.list.push(ev); UI.instrDirty = true;
+    const auto = ev.src !== 'OP';
+    UI.toast(`${ev.g.name} ${auto ? '(авто) ' : ''}включён: φ ${ev.phi.toFixed(1)}°, Δf ${ev.df >= 0 ? '+' : ''}${ev.df.toFixed(2)} Гц, ΔU ${ev.dU >= 0 ? '+' : ''}${ev.dU.toFixed(0)} В\nБросок ${Math.round(ev.Ipeak * CONFIG.gen.In)} А (${Math.round(ev.Ipeak * 100)} % Iн) — ${ev.result}\nОценка: ${ev.score} — ${this.grade(ev.score)}`,
+      ev.score >= 75 ? 'ok' : ev.score >= 60 ? 'warn' : 'err', 8000);
+  },
+  step(dt) {
+    for (const ev of this.list) {
+      const f = ev.follow; if (!f || Sim.t > f.until) { if (f && !f.done) this.finish(ev); continue; }
+      const g = ev.g, on = Model.gens.filter(x => x.acb.closed);
+      if (g.acb.closed && g.P < -0.02) f.rpT += dt;
+      if (f.shared == null && on.length > 1 && g.acb.closed) {
+        const avg = Model.bus.P / on.length;
+        if (on.every(x => Math.abs(x.kW - avg) < 0.08 * CONFIG.gen.ratedKW) && Math.abs(Model.bus.f - 60) < 0.3) f.shared = Sim.t - ev.t;
+      }
+      if (f.scopeOff == null && Sync.selected !== g) f.scopeOff = Sim.t - ev.t;
+      if (!g.acb.closed && Sim.t - ev.t > 1) { this.finish(ev); }
+    }
+  },
+  finish(ev) {
+    const f = ev.follow; if (f.done) return; f.done = true;
+    const pen = (p, t) => { ev.score = Math.max(0, ev.score - p); ev.notes.push(`−${p} ${t}`); };
+    if (f.rpT > 2) pen(10, `обратная мощность после включения (${f.rpT.toFixed(0)} с)`);
+    if (ev.src === 'OP' && !PMS.auto && !ev.tripped.length) {
+      if (f.shared == null) pen(10, 'нагрузка не распределена / частота не восстановлена за 3 мин');
+      else ev.notes.push(`+ нагрузка распределена через ${f.shared.toFixed(0)} с`);
+      if (f.scopeOff == null || f.scopeOff > 120) pen(5, 'синхроноскоп не выключен в течение 2 мин');
+      const on = Model.gens.filter(x => x.acb.closed);
+      if (on.length > 1) { const q = on.map(x => x.Q); if (Math.max(...q) - Math.min(...q) > 0.15) pen(5, 'реактивная нагрузка не выровнена (разные cos φ — подстройте AVR)'); }
+    }
+    UI.instrDirty = true;
+  },
+};
+
+const Instructor = {
+  scenario: null, events: [], journal: [],
+  FAULTS: [
+    ['fuel', 'Срыв подачи топлива', true], ['gov', 'Регулятор: заброс (рейка на упор)', 'max'], ['gov', 'Регулятор: падение (рейка в ноль)', 'min'],
+    ['avr', 'AVR: отказ на максимум', 'max'], ['avr', 'AVR: отказ на минимум', 'min'], ['loe', 'Потеря возбуждения', true],
+    ['lo', 'Падение давления масла', true], ['overheat', 'Перегрев охлаждающей воды', true], ['bearing', 'Перегрев подшипника генератора', true],
+    ['diff', 'Внутреннее КЗ генератора (дифзащита)', true], ['unb', 'Небаланс фаз (плохой контакт)', 0.25],
+  ],
+  setFault(g, key, val) {
+    const cur = g.faults[key];
+    g.faults[key] = (cur === val) ? (typeof val === 'number' ? 0 : (typeof val === 'string' ? null : false)) : val;
+    if (key === 'unb') { const u = g.faults.unb; g.phaseI = [1.004 + u, 0.997 - u / 2, 0.999 - u / 2]; g.phaseV = [1.0015 + u * 0.06, 0.999 - u * 0.03, 1.0006 - u * 0.03]; }
+    this.jr(`${g.name}: ${this.FAULTS.find(f => f[0] === key && f[2] === val)[1]} — ${g.faults[key] ? 'ВВЕДЕНА' : 'снята'}`);
+  },
+  clearAll() {
+    for (const g of Model.gens) { for (const k in g.faults) g.faults[k] = k === 'unb' ? 0 : (k === 'gov' || k === 'avr') ? null : false; g.phaseI = [1.004, 0.997, 0.999]; g.phaseV = [1.0015, 0.999, 1.0006]; }
+    for (const c of Model.consumers) c.fault = false;
+    Model.busFault = null; Model.ins.earth = null; Model.airLeak = false; Sync.relayFault = null;
+    this.jr('Все неисправности сняты');
+  },
+  jr(t) { this.journal.unshift(Sim.clockStr() + '  ' + t); if (this.journal.length > 60) this.journal.pop(); UI.instrDirty = true; },
+  at(t, fn) { this.events.push({ t: Sim.t + t, fn }); },
+  step() { for (const e of this.events) if (!e.done && Sim.t >= e.t) { e.done = true; e.fn(); } },
+
+  /* мгновенный вывод агрегата на номинальный режим (для сценариев) */
+  runGen(g, closed, delta = 0) {
+    const e = g.eng, E = CONFIG.engine;
+    e.state = 'RUN'; e.n = 1; e.dn = 0; e.rack = E.lossA + E.lossB; e.Tm = e.rack * CONFIG.gen.PnPu; e.speedRef = E.speedRefDefault; e.rampRef = e.speedRef;
+    e.lo = E.lo.nominal; e.jw = 79; e.firedAt = Sim.t - 1000; e.startedAt = Sim.t - 1000; e.attempts = 0;
+    g.soft = 1; g.psi = 0.97; g.efd = 0.97; g.avrInt = 0.97; g.E = 1; g.Es = { re: 1, im: 0 }; g.U = 1; g.tw = 80; g.tb = 60; g.delta = delta;
+    if (closed) { g.acb.closed = true; g.acb.closedAt = Sim.t - 1000; g.acb.spring = 1; }
+  },
+  /* тихая установка режима: распределение нагрузки и 60 Гц без записи в журнал */
+  settle(sec) {
+    const dt = CONFIG.sim.dt, E = CONFIG.engine;
+    for (let i = 0, n = Math.round(sec / dt); i < n; i++) {
+      Sim.step(dt);
+      if (i % 5) continue;
+      const on = Model.gens.filter(g => g.acb.closed); if (!on.length) continue;
+      const avg = Model.bus.P / on.length, df = 60 - Model.bus.f;
+      for (const g of on) g.eng.speedRef += 0.3 * (E.droop * (avg - g.kW) / CONFIG.gen.ratedKW + df / 60);
+    }
+  },
+  SCEN: {
+    one2two: {
+      title: 'Один на шинах — ввести второй',
+      task: 'ДГ1 работает на шинах, нагрузка ≈ 80 % и растёт (рефконтейнеры). Запустите ДГ2, синхронизируйте вручную (MAN), включите АВ, распределите нагрузку поровну и восстановите 60 Гц. Выключите синхроноскоп.',
+      setup() {
+        Instructor.runGen(Model.gens[0], true);
+        for (const c of Model.consumers) { c.sw = c.c.on ? 'ON' : 'OFF'; if (c.sw === 'ON') c.state = 'RUN'; }
+        Model.consumers.find(c => c.id === 'REEF').lv = 0.8;
+        Instructor.settle(12);
+        Instructor.at(90, () => { Model.consumers.find(c => c.id === 'REEF').lv = 0.95; Instructor.jr('Нагрузка рефконтейнеров выросла'); });
+        Instructor.at(240, () => { const c = Model.consumers.find(c => c.id === 'HV'); if (c.sw === 'OFF' && Model.bus.live) { c.sw = 'ON'; Log.add('HOLD VENTILATION ON (мостик) — пуск двигателя', 'info'); } });
+      },
+    },
+    three2one: {
+      title: 'Три в параллель — вывести один',
+      task: 'Три ДГ работают в параллели при малой нагрузке (≈ 35 %). Разгрузите ДГ3 (LOWER на ДГ3, RAISE на ДГ1/ДГ2 с поддержанием 60 Гц), отключите АВ при нагрузке близкой к нулю (без обратной мощности), дайте поработать на холостом ходу и остановите.',
+      setup() {
+        Model.gens.forEach(g => Instructor.runGen(g, true, 0.3));
+        for (const c of Model.consumers) { c.sw = c.c.on ? 'ON' : 'OFF'; if (c.sw === 'ON') c.state = 'RUN'; }
+        Model.consumers.find(c => c.id === 'REEF').lv = 0.75; Model.consumers.find(c => c.id === 'HV').sw = 'ON';
+        Model.consumers.find(c => c.id === 'HV').state = 'RUN';
+        Model.gens.forEach((g, i) => { g.avrSet = 440 + [0, 2, -3, 1][i % 4]; });   // разные уставки AVR — уравнительные токи
+        Instructor.settle(15);
+      },
+    },
+    blackout: {
+      title: 'Блэкаут',
+      task: 'ДГ1 один на шинах под большой нагрузкой. Через 20 с произойдёт неисправность и блэкаут. Восстановите питание: пуск резервного, включение на обесточенные шины, ступенчатый пуск ответственных потребителей. Определите причину по журналу. (Можно перевести PMS в AUTO и наблюдать автоматическое восстановление.)',
+      setup() {
+        Instructor.runGen(Model.gens[0], true);
+        for (const c of Model.consumers) { c.sw = c.c.on ? 'ON' : 'OFF'; if (c.sw === 'ON') c.state = 'RUN'; }
+        Model.consumers.find(c => c.id === 'REEF').lv = 0.9;
+        Instructor.settle(12);
+        Instructor.at(20, () => { Model.gens[0].faults.fuel = true; Instructor.jr('No.1: срыв подачи топлива (сценарий)'); });
+      },
+    },
+    cold: {
+      title: 'Холодное судно',
+      task: 'Все ДГ остановлены и холодные, шины обесточены. Запустите ДГ1, включите на обесточенные шины, поэтапно включите ответственных потребителей, затем остальных. При росте нагрузки введите ДГ2 в параллель. Не нагружайте непрогретый двигатель сразу полностью.',
+      setup() {
+        for (const g of Model.gens) { g.eng.jw = CONFIG.engine.jw.ambient; g.tw = 30; g.tb = 30; }
+        Model.air.p = 26;
+        for (const c of Model.consumers) { c.sw = (c.c.kind === 'tr' || c.c.sys === '220') ? 'ON' : 'OFF'; }
+        Model.bus.everLive = false;
+      },
+    },
+    free: {
+      title: 'Свободная работа',
+      task: 'ДГ1 на шинах с умеренной нагрузкой, ДГ2 и ДГ3 в резерве. Отрабатывайте любые операции; неисправности вводятся с пульта инструктора.',
+      setup() {
+        Instructor.runGen(Model.gens[0], true);
+        for (const c of Model.consumers) { c.sw = c.c.on ? 'ON' : 'OFF'; if (c.sw === 'ON') c.state = 'RUN'; }
+        Instructor.settle(12);
+      },
+    },
+  },
+  load(id) {
+    const sc = this.SCEN[id]; if (!sc) return;
+    Audio.hornOff();
+    document.getElementById('toasts').innerHTML = '';
+    Sim.t = 0; Sim.t0 = 0; Sim.acc = 0; U._seed = 4242;
+    Object.assign(Sync, { selected: null, mode: 'MAN', lamps: 'DARK', bypass: false, relayFault: null, scopeOnT: 0, lastClose: null, closeEvents: [] });
+    Object.assign(PMS, { auto: false, prioIdx: 0, starting: [], stopSeq: null, timers: {}, restartList: [], restartT: 0, blackoutT: 0, msg: 'MANUAL' });
+    Automation.lsFail = false; Automation.busLockout = false;
+    Model.busFault = null; Model.ins.earth = null; Model.airLeak = false; Model.air.p = CONFIG.air.init; Protection.bt = {};
+    this.events = []; this.journal = [];
+    buildModel();
+    Model.bus = { V: { re: 0, im: 0 }, U: 0, ang: 0, f: 0, n: 0, live: false, everLive: true, P: 0, Q: 0, deadT: 0 };
+    sc.setup();
+    Model.solve(CONFIG.sim.dt, false); Model.stepInsulation();
+    // старт с «чистого листа»: журнал, табло и оценка
+    Sim.t0 = Sim.t; Log.items = []; Log.dirty = true;
+    for (const k in Alarms.conds) Alarms.conds[k].active = false;
+    for (const id2 of Alarms.order) { Alarms.wins[id2].n = 0; Alarms.wins[id2].state = 'OFF'; }
+    Protection.step(0); Alarms.step();
+    for (const id2 of Alarms.order) if (Alarms.wins[id2].state === 'ALM') Alarms.wins[id2].state = 'ACK';
+    Assess.reset();
+    this.scenario = id;
+    UI.buildBoard();
+    Log.add(`СЦЕНАРИЙ: ${sc.title}`, 'instr');
+    Log.add(`ЗАДАНИЕ: ${sc.task}`, 'instr');
+    this.jr(`Загружен сценарий «${sc.title}»`);
+    UI.toast(window.innerHeight < 500 ? `${sc.title} — задание в журнале событий (ALM) и пульте инструктора` : `${sc.title}\n${sc.task}`, 'info', window.innerHeight < 500 ? 5000 : 9000);
+  },
+};
+
+/* ======================================================================
    8. SIM — фиксированный шаг, ускорение, пауза
    ====================================================================== */
 const Sim = {
-  t: 0, scale: 1, paused: false, acc: 0,
-  clockStr() { return U.fmtTime(CONFIG.clockStart + this.t); },
+  t: 0, t0: 0, scale: 1, paused: false, acc: 0,
+  clockStr() { return U.fmtTime(CONFIG.clockStart + this.t - this.t0); },
   step(dt) {
     const gens = Model.gens;
     Automation.step(dt);
@@ -1291,6 +1567,8 @@ const Sim = {
     Protection.step(dt);
     for (const g of gens) g.stepSub(dt);
     Alarms.step(dt);
+    Instructor.step(dt);
+    Assess.step(dt);
     this.t += dt;
   },
   advance(sec) { const dt = CONFIG.sim.dt, n = Math.round(sec / dt); for (let i = 0; i < n; i++) this.step(dt); },
@@ -1323,7 +1601,7 @@ class Gauge {
     this.o = Object.assign({ size: 112, min: 0, max: 100, major: 10, minor: 2, unit: '', title: '', cls: S.cls, red: [], nominal: null,
       needles: [{ color: S.needle }], wn: 6.5, zeta: 0.6, jitter: 0.0012, rest: null, hold: false, geometry: S.geometry,
       font: S.font, labelFmt: v => String(Math.round(v * 100) / 100), legend: null, sym: '~' }, o);
-    this.g = GEOM[this.o.geometry];
+    this.g = typeof this.o.geometry === 'object' ? this.o.geometry : GEOM[this.o.geometry];
     this.svg = U.svg('svg', { viewBox: '0 0 100 100', class: 'gauge', width: this.o.size, height: this.o.size });
     this.buildFace();
     this.nd = this.o.needles.map(nd => ({ x: this.restFrac(), v: 0, target: NaN, noise: 0, el: this.buildNeedle(nd) }));
@@ -1342,6 +1620,10 @@ class Gauge {
     U.svg('rect', { x: 0, y: 0, width: 100, height: 100, rx: 3.5, fill: S.bezel }, s);
     U.svg('rect', { x: 1.2, y: 1.2, width: 97.6, height: 97.6, rx: 3, fill: 'none', stroke: '#3a3a3a', 'stroke-width': 0.8 }, s);
     U.svg('rect', { x: 5, y: 5, width: 90, height: 90, rx: 1.5, fill: S.face }, s);
+    // фото реального циферблата: CONFIG.gaugeStyle.faceImages[unit] или opts.faceImage (url / data:), drawScale:false — не рисовать шкалу
+    const img = o.faceImage || (S.faceImages && S.faceImages[o.unit]);
+    if (img) U.svg('image', { href: img, x: 5, y: 5, width: 90, height: 90, preserveAspectRatio: 'none' }, s);
+    if (img && o.drawScale === false) { this.buildPivot(); return; }
     for (const [a, b] of o.red) U.svg('path', { d: this.arc(U.clamp(this.frac(a), 0, 1), U.clamp(this.frac(b), 0, 1), R + 2.4), stroke: S.red, 'stroke-width': 3.4, fill: 'none' }, s);
     U.svg('path', { d: this.arc(0, 1, R), stroke: S.ink, 'stroke-width': 0.6, fill: 'none' }, s);
     const ticks = o.ticks || this.autoTicks();
@@ -1369,11 +1651,14 @@ class Gauge {
         const lt = U.svg('text', { x: 67, y: 88.3 - i * 6, 'font-size': 4.2, fill: '#222', 'font-weight': 700 }, s); lt.textContent = L.label;
       });
     }
-    // корпус оси
+    this.buildPivot();
+  }
+  buildPivot() {   // корпус оси, слой стрелок, блик стекла
+    const s = this.svg, g = this.g;
     U.svg('circle', { cx: g.px, cy: g.py, r: 8, fill: '#151515' }, s);
     this.needleLayer = U.svg('g', {}, s);
     U.svg('circle', { cx: g.px, cy: g.py, r: 2.6, fill: '#333', stroke: '#000', 'stroke-width': 0.5 }, s);
-    U.svg('path', { d: 'M5 5 H72 Q40 30 5 58 Z', fill: '#fff', opacity: 0.09 }, s);   // блик стекла
+    U.svg('path', { d: 'M5 5 H72 Q40 30 5 58 Z', fill: '#fff', opacity: 0.09 }, s);
   }
   autoTicks() {
     const o = this.o, t = [], eps = 1e-9;
@@ -1668,7 +1953,7 @@ class GenPanel {
       `${g.tag} ENGINE ${w('d', '·')} ${String(Math.round(e.n * CONFIG.gen.rpm)).padStart(4)} rpm\n` +
       `L.O.  ${e.lo < 2.5 && e.n > 0.3 ? w('a', lo) : lo} bar  J.W. ${e.jw > 90 ? w('a', jw) : (e.jw < E.jw.coldLoad ? w('w', jw) : jw)}°C\n` +
       `WDG ${g.tw.toFixed(0).padStart(4)}°C  BRG ${g.tb > 85 ? w('a', g.tb.toFixed(0).padStart(3)) : g.tb.toFixed(0).padStart(3)}°C\n` +
-      `RACK ${String(Math.round(e.rack * 100)).padStart(3)}%  AIR ${Model.air.p.toFixed(1).padStart(4)} bar\n` +
+      `RACK ${String(Math.round(e.rack * 100)).padStart(3)}%${e.n > 0.3 && e.jw < E.cold.T ? w('w', 'C') : ' '} AIR ${Model.air.p.toFixed(1).padStart(4)} bar\n` +
       `${w('d', 'SET')} ${((e.speedRef - E.droop * (E.lossA + E.lossB)) * 60).toFixed(2)}Hz ${w('d', 'AVR')} ${g.avrSet.toFixed(0)}V`;
     this.info.innerHTML =
       `U   ${g.volts.toFixed(0).padStart(5)} V\n` +
@@ -1796,7 +2081,7 @@ class BusPanel {
     UIK.plate(p, 'PMS MODE', 248, 150, 66, 'red');
     this.kPms = UIK.ctl(p, new Rotary({ size: 64, value: 0, kind: 'key', font: 7.5, positions: [{ label: 'MANUAL', a: -45 }, { label: 'AUTO', a: 45 }], onChange: i => PMS.setAuto(i === 1) }), 249, 162);
     UIK.plate(p, 'STBY PRIORITY', 324, 150, 80);
-    const pp = CONFIG.pms.priority.map((o, i) => ({ label: o.filter(k => k < Model.gens.length).map(k => k + 1).join('-'), a: -60 + i * 60, font: 7 }));
+    const pl = PMS.prioList(), pp = pl.map((o, i) => ({ label: o.map(k => k + 1).join(''), a: pl.length > 1 ? -60 + i * 120 / (pl.length - 1) : 0, font: 7 }));
     this.kPrio = UIK.ctl(p, new Rotary({ size: 74, value: 0, positions: pp, onChange: i => PMS.setPrio(i) }), 327, 160);
     this.lAuto = UIK.lamp(p, 'green', 424, 176, 'PMS AUTO');
     this.lStby = UIK.lamp(p, 'white', 486, 176, 'STBY START');
@@ -1884,7 +2169,7 @@ class MimicPanel {
     const BY = 140, bx0 = 26, bx1 = 600;
     this.BY = BY;
     this.gs = Model.gens.map((g, i) => {
-      const x = 70 + i * 100;
+      const x = 60 + i * Math.min(100, 330 / Model.gens.length);
       const line1 = U.svg('line', { x1: x, y1: 62, x2: x, y2: 94, stroke: '#555', 'stroke-width': 3 }, s);
       const flow1 = U.svg('line', { x1: x, y1: 62, x2: x, y2: 94, stroke: '#ffd27a', 'stroke-width': 1.5, class: 'flow', opacity: 0 }, s);
       const line2 = U.svg('line', { x1: x, y1: 110, x2: x, y2: BY, stroke: '#555', 'stroke-width': 3 }, s);
@@ -1985,14 +2270,15 @@ class AlarmPanel {
     U.el('div', 'nameplate', p, 'ALARM MONITORING PANEL');
     this.w = {};
     const groups = [...Model.gens.map(g => [g.tag, `${g.name} GENERATOR`, 3]), ['COM', 'COMMON', 5]];
+    const tc = groups.reduce((a, gr) => a + gr[2], 0), ww = Math.min(92, Math.floor((1192 - (groups.length - 1) * 14) / tc) - 4);
     let x = 30;
     for (const [gr, title, cols] of groups) {
       const ids = Alarms.order.filter(id => Alarms.wins[id].group === gr);
-      const bw = cols * 80 + (cols - 1) * 4;
+      const bw = cols * ww + (cols - 1) * 4;
       UIK.plate(p, title, x, 32, bw);
       ids.forEach((id, k) => {
-        const d = U.el('div', 'win ' + Alarms.wins[id].sev, p, Alarms.wins[id].text.replace(/^No\.\d GEN |^No\.\d /, ''));
-        U.place(d, x + (k % cols) * 84, 48 + Math.floor(k / cols) * 42);
+        const d = U.el('div', 'win ' + Alarms.wins[id].sev, p, Alarms.wins[id].text.replace(/^No\.\d+ GEN |^No\.\d+ /, ''));
+        U.place(d, x + (k % cols) * (ww + 4), 48 + Math.floor(k / cols) * 42, ww);
         this.w[id] = d;
       });
       x += bw + 14;
@@ -2051,23 +2337,37 @@ const UI = {
   toast(text, type = 'info', ms = 3500) {
     const t = U.el('div', 'toast ' + type, document.getElementById('toasts'), text);
     setTimeout(() => t.remove(), ms);
-    const all = document.querySelectorAll('#toasts .toast'); if (all.length > 4) all[0].remove();
+    const all = document.querySelectorAll('#toasts .toast'); if (all.length > 3) all[0].remove();
   },
-  build() {
+  buildBoard() {
     const board = document.getElementById('board');
+    board.innerHTML = ''; this.panels = []; this.genPanels = [];
     for (const g of Model.gens) { const gp = new GenPanel(g, board); this.genPanels.push(gp); this.panels.push(gp); }
     this.sync = new SyncPanel(board); this.panels.push(this.sync);
     this.bus = new BusPanel(board); this.panels.push(this.bus);
     this.feeders = new FeederPanel(board); this.panels.push(this.feeders);
     this.mimic = new MimicPanel(board); this.panels.push(this.mimic);
     this.alarms = new AlarmPanel(board); this.panels.push(this.alarms);
+    document.getElementById('tbNav').innerHTML = '';
     this.nav();
-    Layout.init();
+    if (Layout.ready) Layout.apply();
+    this.instrDirty = true; Log.dirty = true;
+  },
+  build() {
+    this.buildBoard();
+    Layout.init(); Layout.ready = true;
     this.keys();
+    InstrUI.init();
+    const help = document.getElementById('help');
+    document.getElementById('tbHelp').addEventListener('click', () => help.classList.remove('hidden'));
+    const hideHelp = () => { help.classList.add('hidden'); try { localStorage.setItem('msbHelpSeen', '1'); } catch (e) {} };
+    document.getElementById('helpClose').addEventListener('click', hideHelp);
+    document.getElementById('helpX').addEventListener('click', hideHelp);
+    let seen = null; try { seen = localStorage.getItem('msbHelpSeen'); } catch (e) {}
+    if (!seen) help.classList.remove('hidden');
     // верхняя панель
     document.querySelectorAll('#tbSpeed button').forEach(b => b.addEventListener('click', () => {
-      const s = +b.dataset.speed; if (s === 0) Sim.paused = !Sim.paused; else { Sim.scale = s; Sim.paused = false; }
-      UI.syncSpeedButtons();
+      UI.setSpeed(+b.dataset.speed);
     }));
     document.getElementById('tbSound').addEventListener('click', ev => { ev.currentTarget.textContent = Audio.toggle() ? '🔊' : '🔇'; });
     document.addEventListener('pointerdown', () => Audio.init(), { once: true });
@@ -2085,10 +2385,12 @@ const UI = {
     document.addEventListener('keydown', ev => { const m = map[ev.key], g = Sync.selected; if (!m || !g || ev.repeat) return; ev.preventDefault(); g[m[0]] = m[1]; });
     document.addEventListener('keyup', ev => { const m = map[ev.key], g = Sync.selected; if (!m || !g) return; g[m[0]] = 0; });
   },
+  setSpeed(s) { if (s === 0) Sim.paused = !Sim.paused; else { Sim.scale = s; Sim.paused = false; } this.syncSpeedButtons(); },
   syncSpeedButtons() {
     document.querySelectorAll('#tbSpeed button').forEach(b => {
       const s = +b.dataset.speed; b.classList.toggle('act', s === 0 ? Sim.paused : (!Sim.paused && Sim.scale === s));
     });
+    document.querySelectorAll('#instrBody [data-speed]').forEach(b => { const s = +b.dataset.speed; b.classList.toggle('sel', s === 0 ? Sim.paused : (!Sim.paused && Sim.scale === s)); });
   },
   update(dt) {
     for (const p of this.panels) p.update(dt);
@@ -2098,6 +2400,7 @@ const UI = {
       const ms = performance.now();
       this.blinkFast = (ms % 500) < 280; this.blinkSlow = (ms % 1600) < 900;
       for (const p of this.panels) p.updateSlow();
+      InstrUI.update();
       document.getElementById('tbClock').textContent = Sim.clockStr();
       const b = Model.bus;
       const ac = Alarms.counts(), ta = document.getElementById('tbAlarm');
@@ -2105,6 +2408,91 @@ const UI = {
       ta.classList.toggle('on', ac.unack > 0 && this.blinkFast); ta.classList.toggle('steady', ac.unack === 0 && ac.active > 0);
       document.getElementById('tbStatus').textContent = b.live ? `BUS ${(b.U * 440).toFixed(0)} V  ${b.f.toFixed(2)} Hz  ${b.P.toFixed(0)} kW` : 'BUS DEAD';
     }
+  },
+};
+
+/** Пульт инструктора (сворачиваемая панель) */
+const InstrUI = {
+  gi: 0,
+  init() {
+    const dr = document.getElementById('instructor');
+    document.getElementById('tbInstr').addEventListener('click', () => { dr.classList.toggle('hidden'); this.render(); });
+    document.getElementById('instrClose').addEventListener('click', () => dr.classList.add('hidden'));
+    this.render();
+  },
+  open() { return !document.getElementById('instructor').classList.contains('hidden'); },
+  render() {
+    const b = document.getElementById('instrBody'), I = Instructor, g = Model.gens[this.gi] || Model.gens[0];
+    const sc = I.SCEN[I.scenario];
+    const btn = (label, cls, act) => `<button class="${cls || ''}" data-act="${act}">${label}</button>`;
+    let h = '';
+    h += `<h4>Время</h4>` + [['❚❚ пауза', 0], ['×1', 1], ['×5', 5], ['×10', 10]].map(([l, v]) => `<button data-speed="${v}">${l}</button>`).join('') + btn('⟲ сброс сценария', '', 'reset');
+    h += `<h4>Сценарии</h4>` + Object.entries(I.SCEN).map(([id, s]) => btn(s.title, 'wide' + (id === I.scenario ? ' sel' : ''), 'scen:' + id)).join('');
+    if (sc) h += `<div class="task"><b>Задание:</b> ${sc.task}</div>`;
+    h += `<h4>Момент синхронизации (только инструктору)</h4><div class="live" id="instrLive"></div>`;
+    h += `<h4>Неисправности генератора</h4>` + Model.gens.map((x, i) => `<button class="${i === this.gi ? 'sel' : ''}" data-act="gsel:${i}">${x.tag}</button>`).join('');
+    h += I.FAULTS.map(([k, l, v], j) => btn(l, 'wide' + (g.faults[k] === v || (k === 'unb' && v && g.faults.unb === v) ? ' on' : ''), 'f:' + j)).join('');
+    h += `<h4>Сеть</h4>`;
+    h += btn('КЗ на главных шинах', 'wide' + (Model.busFault ? ' on' : ''), 'busfault');
+    h += `<div><select id="instrFeeder">${Model.consumers.filter(c => c.c.kind !== 'tr').map(c => `<option value="${c.id}">${c.c.name}</option>`).join('')}</select> ${btn('КЗ на фидере', '', 'feederfault')}</div>`;
+    const fl = Model.consumers.filter(c => c.fault); if (fl.length) h += `<div class="muted">КЗ: ${fl.map(c => c.c.name).join(', ')} ${btn('снять', '', 'feederclear')}</div>`;
+    const e = Model.ins.earth;
+    h += `<div><select id="instrEsys"><option value="440">440 V</option><option value="220">220 V</option></select> <select id="instrEph"><option value="0">R</option><option value="1">S</option><option value="2">T</option></select> <select id="instrER"><option value="0.5">0,5 МОм</option><option value="0.05">50 кОм</option><option value="0.002">металл.</option></select> ${btn(e ? 'снять замыкание на землю' : 'замыкание на землю', e ? 'on' : '', 'earth')}</div>`;
+    h += btn('Утечка пускового воздуха', 'wide' + (Model.airLeak ? ' on' : ''), 'airleak');
+    h += `<div class="muted">Реле контроля синхронизма:</div>` + [['исправно', null], ['ложное разрешение', 'stuck'], ['нет разрешения', 'none']].map(([l, v]) => btn(l, Sync.relayFault === v ? 'sel' : '', 'relay:' + v)).join('');
+    h += btn('✓ снять все неисправности', 'wide', 'clearall');
+    h += `<h4>Оценка ввода в параллель</h4><div id="instrAssess"></div>`;
+    h += `<h4>Журнал инструктора</h4><div class="jr" id="instrJr"></div>`;
+    b.innerHTML = h;
+    b.querySelectorAll('[data-speed]').forEach(x => x.addEventListener('click', () => UI.setSpeed(+x.dataset.speed)));
+    b.querySelectorAll('[data-act]').forEach(x => x.addEventListener('click', () => this.act(x.dataset.act)));
+    UI.syncSpeedButtons();
+    UI.instrDirty = true; this.update(true);
+  },
+  act(a) {
+    const I = Instructor, g = Model.gens[this.gi];
+    const [k, v] = a.split(':');
+    if (k === 'reset') I.load(I.scenario || 'free');
+    else if (k === 'scen') I.load(v);
+    else if (k === 'gsel') this.gi = +v;
+    else if (k === 'f') { const [key, , val] = I.FAULTS[+v]; I.setFault(g, key, val); }
+    else if (k === 'busfault') { Model.busFault = Model.busFault ? null : { y: { re: 4, im: -24 } }; I.jr(`КЗ на шинах ${Model.busFault ? 'ВВЕДЕНО' : 'снято'}`); }
+    else if (k === 'feederfault') { const c = Model.consumers.find(x => x.id === document.getElementById('instrFeeder').value); c.fault = true; I.jr(`КЗ на фидере ${c.c.name} ВВЕДЕНО`); }
+    else if (k === 'feederclear') { for (const c of Model.consumers) c.fault = false; I.jr('КЗ на фидерах сняты'); }
+    else if (k === 'earth') {
+      if (Model.ins.earth) { Model.ins.earth = null; I.jr('Замыкание на землю снято'); }
+      else { const sys = document.getElementById('instrEsys').value, ph = +document.getElementById('instrEph').value, R = +document.getElementById('instrER').value; Model.ins.earth = { sys, phase: ph, R }; I.jr(`Замыкание на землю ${sys} V фаза ${'RST'[ph]} (${R} МОм)`); }
+    }
+    else if (k === 'airleak') { Model.airLeak = !Model.airLeak; I.jr(`Утечка пускового воздуха ${Model.airLeak ? 'ВВЕДЕНА' : 'снята'}`); }
+    else if (k === 'relay') { Sync.relayFault = v === 'null' ? null : v; I.jr(`Реле синхронизма: ${v === 'null' ? 'исправно' : v === 'stuck' ? 'ложное разрешение' : 'нет разрешения'}`); }
+    else if (k === 'clearall') I.clearAll();
+    this.render();
+  },
+  update(force) {
+    if (!this.open() && !force) return;
+    const live = document.getElementById('instrLive');
+    if (live) {
+      const g = Sync.selected;
+      if (g && Model.bus.live && !g.acb.closed) {
+        const r = Sync.check(g);
+        live.textContent = `${g.tag}  Δφ ${r.phi >= 0 ? '+' : ''}${r.phi.toFixed(1).padStart(6)}°   Δf ${r.df >= 0 ? '+' : ''}${r.df.toFixed(3)} Гц\n    ΔU ${(r.dU * 100).toFixed(2)} %   PERMIT ${r.permit ? 'YES' : 'no'}   ${r.df > 0 ? 'FAST ↻' : 'SLOW ↺'} ${Math.abs(r.df) > 0.001 ? (1 / Math.abs(r.df)).toFixed(1) + ' с/об' : ''}`;
+      } else live.textContent = g ? `${g.tag}: ${g.acb.closed ? 'на шинах' : 'шины обесточены'}` : 'SYNC SELECT = OFF';
+    }
+    if (!UI.instrDirty && !force) return;
+    UI.instrDirty = false;
+    const as = document.getElementById('instrAssess');
+    if (as) {
+      const In = CONFIG.gen.In;
+      let h = Assess.list.slice().reverse().map(ev => {
+        const c = ev.score >= 75 ? 'g' : ev.score >= 60 ? 'w' : 'r';
+        return `<div class="ev"><b>${ev.clock} ${ev.g.name}</b> ${ev.src === 'OP' ? 'ручная' : 'автосинхронизация'} — <b class="${c}">${ev.score} · ${Assess.grade(ev.score)}</b><br>` +
+          `φ ${ev.phi.toFixed(1)}° · Δf ${ev.df >= 0 ? '+' : ''}${ev.df.toFixed(2)} Гц · ΔU ${ev.dU >= 0 ? '+' : ''}${ev.dU.toFixed(0)} В · бросок ${Math.round(ev.Ipeak * In)} А (${Math.round(ev.Ipeak * 100)} %)<br>` +
+          `${ev.result}${ev.follow && !ev.follow.done ? ' · <i>наблюдение…</i>' : ''}<br><span class="muted">${(ev.notes || []).join('<br>')}</span></div>`;
+      }).join('') || '<div class="muted">Включений на шины под напряжением ещё не было.</div>';
+      if (Assess.notes.length) h += `<div class="ev"><b>Действия оператора</b> (−${Assess.notes.reduce((a, n) => a + n.pen, 0)})<br><span class="muted">${Assess.notes.map(n => n.clock + ' −' + n.pen + ' ' + n.text).join('<br>')}</span></div>`;
+      as.innerHTML = h;
+    }
+    const jr = document.getElementById('instrJr'); if (jr) jr.textContent = Instructor.journal.join('\n');
   },
 };
 
@@ -2173,8 +2561,9 @@ function loop(ts) {
 }
 buildModel();
 UI.build();
+Instructor.load('one2two');
 requestAnimationFrame(loop);
-window.SIM = { CONFIG, Model, Sim, UI, U, Log, Layout, Sync, Alarms, Protection, Automation, PMS };
+window.SIM = { CONFIG, Model, Sim, UI, U, Log, Layout, Sync, Alarms, Protection, Automation, PMS, Instructor, Assess };
 </script>
 </body>
 </html>
