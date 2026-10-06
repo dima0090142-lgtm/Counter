@@ -142,6 +142,25 @@ svg text{font-family:"Arial Narrow","Roboto Condensed","Helvetica Neue",Arial,sa
 .alog .warn{color:#ffd77a}.alog .pms{color:#d6a8ff}.alog .instr{color:#ff9ad6}.alog .info{color:#d0d6d0}
 body.lamptest .lamp::after{background:radial-gradient(circle at 45% 40%,#fff 0 12%,var(--lc,#f33) 45%,var(--lc2,#a00) 100%)!important;box-shadow:0 0 10px 3px var(--lc,#f33)!important}
 body.lamptest .led{background:#4dff7a}
+/* ---------- feeders ---------- */
+.ftile{position:absolute;width:72px;height:154px;border-radius:3px;background:linear-gradient(#cbcec9,#b5b8b3);box-shadow:inset 0 0 0 1px #8a8e89,inset 0 0 0 2px #e6e8e4}
+.ftile .nm{position:absolute;left:3px;right:3px;top:4px;height:23px;background:var(--plate);color:#fff;font-size:6.6px;font-weight:700;text-align:center;
+  display:flex;align-items:center;justify-content:center;line-height:7.6px;border-radius:1.5px;padding:0 2px;letter-spacing:.2px}
+.ftile .cat{position:absolute;top:31px;left:4px;font-size:6.5px;font-weight:700;padding:1px 3px;border-radius:2px;background:#444;color:#fff;letter-spacing:.3px}
+.cat.ess{background:#1d5e2b}.cat.pt1{background:#a36d00}.cat.pt2{background:#a84800}.cat.heavy{background:#7a1a1a}.cat.v220{background:#2a4f8a}
+.cb{position:absolute;left:18px;top:50px;width:36px;height:54px;border-radius:3px;background:linear-gradient(#333,#121212);
+  box-shadow:inset 0 0 0 1px #000,0 2px 3px #0008;cursor:pointer;touch-action:manipulation}
+.cb .slot{position:absolute;left:13px;top:9px;width:10px;height:36px;background:#000;border-radius:2px}
+.cb .hdl{position:absolute;left:9px;width:18px;height:14px;border-radius:2px;background:linear-gradient(#f4f4f4,#b9b9b9);box-shadow:0 1px 2px #000;transition:top .12s}
+.cb.on .hdl{top:6px}.cb.off .hdl{top:34px}.cb.trip .hdl{top:20px;background:linear-gradient(#ffd27a,#c98a00)}.cb.wait .hdl{top:34px}
+.cb i{position:absolute;right:2px;font-size:5.5px;color:#bbb;font-style:normal;font-weight:700}
+.ftile .amp{position:absolute;left:5px;right:5px;top:110px;height:16px;background:#1a0500;color:#ff6a34;font-family:"Consolas","Courier New",monospace;
+  font-size:10.5px;line-height:14px;text-align:right;padding:1px 4px;border-radius:2px;text-shadow:0 0 4px #f40;box-shadow:inset 0 0 0 1px #400}
+.ftile .kw{position:absolute;left:3px;right:3px;top:130px;font-size:7.5px;text-align:center;color:#111;font-weight:700}
+.ftile .st{position:absolute;left:3px;right:3px;top:141px;font-size:6.4px;text-align:center;color:#444;font-weight:700;letter-spacing:.3px}
+/* ---------- mimic ---------- */
+svg.mimic text{font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif}
+.flow{stroke-dasharray:5 5}
 /* ---------- toasts ---------- */
 #toasts{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;max-width:94vw}
 .toast{background:#202529ee;color:#eee;border:1px solid #555;border-left:4px solid #999;padding:7px 12px;border-radius:4px;font-size:13px;
@@ -240,6 +259,43 @@ const CONFIG = {
     grade: { soft: 10, jolt: 30 },   // оценка по углу: до 10° мягко, 10–30° толчок
   },
 
+  /* ---- ПОТРЕБИТЕЛИ: kW, cos φ, категория (ess — ответственный, pt1/pt2 — ступени preferential trip,
+     heavy — тяжёлый с пуском, блокируется PMS при нехватке резерва), motor: {k — кратность пускового тока, t — время пуска, с},
+     level — загрузка, fluct/fluctT — колебания нагрузки, uv — нулевая защита (отпадание при блэкауте) ---- */
+  consumers: [
+    { id: 'STEER', name: 'STEERING GEAR',        kW: 55,  pf: 0.84, cat: 'ess', motor: { k: 6, t: 1.0 }, on: true, level: 0.75, fluct: 0.18, fluctT: 6 },
+    { id: 'SWP',   name: 'S.W. COOLING PUMP',    kW: 75,  pf: 0.86, cat: 'ess', motor: { k: 6, t: 1.2 }, on: true, level: 0.9 },
+    { id: 'FWP',   name: 'F.W. COOLING PUMP',    kW: 55,  pf: 0.85, cat: 'ess', motor: { k: 6, t: 1.0 }, on: true, level: 0.9 },
+    { id: 'LOP',   name: 'L.O. PUMP',            kW: 45,  pf: 0.85, cat: 'ess', motor: { k: 6, t: 1.0 }, on: true, level: 0.9 },
+    { id: 'FIRE',  name: 'FIRE PUMP',            kW: 90,  pf: 0.86, cat: 'ess', motor: { k: 6, t: 1.5 }, on: false, level: 0.95 },
+    { id: 'ERF',   name: 'E/R VENT. FAN',        kW: 60,  pf: 0.84, cat: 'ess', motor: { k: 6, t: 1.5 }, on: true, level: 0.85 },
+    { id: 'TR',    name: 'TRANSFORMER 440/220V', kind: 'tr', kVA: 150, cat: 'ess', on: true, uv: false },
+    { id: 'LTG',   name: 'LIGHTING 220 V',       kW: 45,  pf: 0.95, cat: 'ess', sys: '220', on: true, uv: false, level: 0.85, fluct: 0.02 },
+    { id: 'NAV',   name: 'NAV. & RADIO 220 V',   kW: 15,  pf: 0.90, cat: 'ess', sys: '220', on: true, uv: false, fluct: 0.02 },
+    { id: 'GAL',   name: 'GALLEY',               kW: 110, pf: 0.98, cat: 'pt1', on: true, uv: true, level: 0.6, fluct: 0.25, fluctT: 30 },
+    { id: 'AC',    name: 'AIR CONDITIONING',     kW: 180, pf: 0.82, cat: 'pt1', motor: { k: 5, t: 2.0 }, on: true, level: 0.8 },
+    { id: 'HV',    name: 'HOLD VENTILATION',     kW: 80,  pf: 0.80, cat: 'pt2', motor: { k: 6, t: 1.5 }, on: false, level: 0.9 },
+    { id: 'REEF',  name: 'REEFER CONTAINERS',    kW: 420, pf: 0.85, cat: 'pt2', on: true, uv: true, level: 0.65, fluct: 0.12, fluctT: 40 },
+    { id: 'BT',    name: 'BOW THRUSTER',         kW: 600, pf: 0.85, cat: 'heavy', motor: { k: 3, t: 6 }, on: false, level: 0.85, fluct: 0.1, fluctT: 8 },
+    { id: 'BAL',   name: 'BALLAST PUMP',         kW: 150, pf: 0.86, cat: 'heavy', motor: { k: 6, t: 2.5 }, on: false, level: 0.9 },
+    { id: 'COMP',  name: 'START AIR COMPRESSOR', kW: 75,  pf: 0.85, cat: 'heavy', motor: { k: 6, t: 1.5 }, cyclic: 'air', on: true },
+  ],
+
+  /* ---- PMS (Power Management System) ---- */
+  pms: {
+    priority: [[0, 1, 2], [1, 2, 0], [2, 0, 1]],   // варианты очерёдности резерва (ключ STBY PRIORITY)
+    startLoad: 0.85, startDelay: 30,     // автопуск резервного при нагрузке > 85 % 30 с
+    overload: 1.00, overloadDelay: 2,    // немедленный пуск при перегрузке
+    stopLoad: 0.30, stopDelay: 300,      // вывод лишнего при < 30 % 5 мин …
+    stopCheck: 0.70,                     // … если оставшиеся будут загружены < 70 %
+    unloadTo: 0.04,                      // разгрузка до 4 % Pном перед отключением АВ
+    shareDB: 0.02, fDB: 0.04,            // зоны нечувствительности: 2 % Pном, 0,04 Гц
+    heavyMargin: 1.10,                   // резерв ≥ 110 % мощности тяжёлого потребителя
+    heavyTimeout: 180,
+    restartInterval: 3,                  // ступенчатое восстановление ответственных после блэкаута, с
+    secondStartDelay: 15,                // пуск следующего резервного, если первый не готов
+  },
+
   /* ---- ЗАЩИТЫ: единая таблица уставок и выдержек ----
      q: измеряемая величина; pickup — в о.е. (P — от Pном, I — от Iном, U — от Uном, Q — от Sном) или в Гц/°C/бар;
      act: trip — отключение АВ; trip+stop — АВ + остановка двигателя; pref1/pref2 — ступени preferential trip;
@@ -247,8 +303,8 @@ const CONFIG = {
   protection: {
     gen: [
       { id: 'RP',  name: 'REVERSE POWER',             q: 'P',    cmp: '<', pickup: -0.08, delay: 5,    act: 'trip',  win: 'RP' },
-      { id: 'PT1', name: 'OVERLOAD — PREF. TRIP 1',   q: 'I',    cmp: '>', pickup: 1.00,  delay: 5,    act: 'pref1', win: 'OL' },
-      { id: 'PT2', name: 'OVERLOAD — PREF. TRIP 2',   q: 'I',    cmp: '>', pickup: 1.00,  delay: 10,   act: 'pref2', win: 'OL' },
+      { id: 'PT1', name: 'OVERLOAD — PREF. TRIP 1',   q: 'IP',   cmp: '>', pickup: 1.00,  delay: 5,    act: 'pref1', win: 'OL', integ: true },  // max(I/Iном, P/Pном, рейка на упоре), интегрирующий таймер
+      { id: 'PT2', name: 'OVERLOAD — PREF. TRIP 2',   q: 'IP',   cmp: '>', pickup: 1.00,  delay: 10,   act: 'pref2', win: 'OL', integ: true },
       { id: 'OCL', name: 'OVERCURRENT LONG TIME',     q: 'I',    cmp: '>', pickup: 1.15,  delay: 20,   act: 'trip',  win: 'OC' },
       { id: 'SCS', name: 'SHORT CIRCUIT SHORT TIME',  q: 'I',    cmp: '>', pickup: 2.50,  delay: 0.4,  act: 'trip',  win: 'OC' },
       { id: 'SCI', name: 'SHORT CIRCUIT INSTANTANEOUS', q: 'I',  cmp: '>', pickup: 5.00,  delay: 0,    act: 'trip',  win: 'OC' },
@@ -288,6 +344,12 @@ const CONFIG = {
     genA:  { min: 0, max: 2500, major: 500, minor: 100, nominal: 1968, unit: 'A', red: [[2265, 2500]] },
     genKW: { min: -300, max: 1500, major: 300, minor: 60, nominal: 1200, unit: 'kW', red: [[-300, 0]] },
     genHz: { min: 55, max: 65, major: 1, minor: 0.2, nominal: 60, unit: 'Hz', red: [[55, 57], [63, 65]], labels: [55, 57, 60, 63, 65] },
+  },
+  busMeters: {
+    V: { min: 0, max: 600, major: 100, minor: 20, nominal: 440, unit: 'V' },
+    Hz: { min: 55, max: 65, major: 1, minor: 0.2, nominal: 60, unit: 'Hz', red: [[55, 57], [63, 65]], labels: [55, 57, 60, 63, 65] },
+    kW: { min: 0, max: 4000, major: 1000, minor: 100, nominal: 3600, unit: 'kW', red: [[3600, 4000]] },
+    V220: { min: 0, max: 300, major: 50, minor: 10, nominal: 220, unit: 'V', labelStep: 100 },
   },
   syncMeters: {
     dualV: { min: 0, max: 600, major: 100, minor: 20, nominal: 440, unit: 'V' },
@@ -485,6 +547,11 @@ class GenSet {
     return false;
   }
 
+  /* готов к включению АВ: двигатель на ходу, напряжение и частота в норме */
+  get readyToClose() {
+    const e = this.eng;
+    return e.state === 'RUN' && !e.shutdown && !this.acb.tripped && e.n >= CONFIG.engine.readySpeed && this.soft >= 1 && Math.abs(this.U - this.avrSet / CONFIG.gen.Un) < 0.05;
+  }
   setEngState(s) { this.eng.state = s; this.eng.t = 0; }
 
   cmdStart(src = 'OP') {
@@ -656,6 +723,7 @@ class GenSet {
     const a = this.acb;
     if (a.closed || a.closing >= 0) return false;
     const why = Model.closeBlock(this, src);
+    if (why && src !== 'OP') { if (Sim.t - (this._refT ?? -99) < 5) return false; this._refT = Sim.t; }
     if (why) { Log.add(`${this.name} ACB CLOSE заблокировано: ${why}`, 'warn'); if (src === 'OP') UI.toast(`${this.name} ACB: ${why}`, 'warn'); return false; }
     a.closing = CONFIG.acb.closeTime; a.src = src;
     Log.add(`${this.name} ACB CLOSE (${src})`, src === 'OP' ? 'op' : 'pms');
@@ -681,7 +749,7 @@ class Consumer {
     this.c = c; this.id = c.id; this.sw = c.on ? 'ON' : 'OFF'; this.state = 'STOP'; this.t = 0;
     this.lv = c.level ?? 1; this.noise = 0; this.y = { re: 0, im: 0 }; this.P = 0; this.Q = 0; this.I = 0;
     this.uvT = 0; this.ocT = 0; this.uvDropped = false; this.fault = false;
-    this.kVA = c.kW / c.pf;
+    this.kVA = c.kind === 'tr' ? c.kVA : c.kW / c.pf;
     this.In = this.kVA * 1000 / (Math.sqrt(3) * (c.sys === '220' ? 220 : CONFIG.gen.Un));
   }
   get motor() { return !!this.c.motor; }
@@ -692,6 +760,8 @@ class Consumer {
     this.noise = U.approach(this.noise, 0, dt, c.fluctT || 20) + (c.fluct || 0.03) * Math.sqrt(dt / (c.fluctT || 20)) * U.gauss() * 1.4;
     this.noise = U.clamp(this.noise, -0.35, 0.35);
     let on = this.sw === 'ON' && busOK;
+    if (c.sys === '220') on = on && Model.trOn();
+    if (c.kind === 'tr') { this.state = on ? 'RUN' : 'STOP'; this.y = on ? { re: 0.0006, im: -0.0018 } : { re: 0, im: 0 }; return; }
     if (c.cyclic === 'air') {          // компрессор пускового воздуха: работа по давлению
       if (this.state === 'RUN' && Model.air.p >= CONFIG.air.compOff) this.state = 'IDLE';
       if (this.state === 'IDLE' && Model.air.p < CONFIG.air.compOn) this.state = 'STOP';
@@ -721,6 +791,7 @@ class Consumer {
     if (this.fault && this.sw === 'ON') ym = Math.hypot(this.y.re + FAULT_Y.re, this.y.im + FAULT_Y.im);
     this.I = V * ym * CONFIG.gen.In * (this.c.sys === '220' ? CONFIG.gen.Un / 220 : 1);
   }
+  get kind() { return this.c.kind; }
   trip(why) {
     this.sw = 'TRIP'; this.state = 'STOP'; this.y = { re: 0, im: 0 }; this.ocT = 0;
     Log.add(`${this.c.name}: автомат фидера отключился — ${why}`, 'trip'); Audio.clack(0.6);
@@ -768,10 +839,30 @@ Model.solve = function (dt, prep = true) {
   bus.live = bus.U > 0.15;
   if (bus.live) bus.everLive = true;
   for (const c of this.consumers) c.measure(bus.U);
+  const tr = this.consumers.find(c => c.c.kind === 'tr');
+  if (tr && tr.sw === 'ON') {   // ток трансформатора со стороны 440 В = намагничивание + нагрузка 220 В
+    let y = { ...tr.y }; for (const c of this.consumers) if (c.c.sys === '220') { y.re += c.y.re; y.im += c.y.im; }
+    tr.P = bus.U * bus.U * y.re * G.ratedKVA; tr.Q = -bus.U * bus.U * y.im * G.ratedKVA; tr.I = bus.U * Math.hypot(y.re, y.im) * G.In;
+  }
   return online;
 };
 
-/* условия блокировки включения АВ (расширяется на этапах 2–3) */
+Model.trOn = function () { const tr = this.consumers.find(c => c.c.kind === 'tr'); return !tr || tr.sw === 'ON'; };
+Model.V220 = function () { const tr = this.consumers.find(c => c.c.kind === 'tr'); if (!tr || tr.sw !== 'ON' || !this.bus.live) return 0; return this.bus.U * 220 * (1 - 0.035 * tr.I / tr.In); };
+/* оператор: автомат / пускатель потребителя */
+Model.switchConsumer = function (c, on, src = 'OP') {
+  const n = c.c.name;
+  if (!on) { if (c.sw === 'OFF') return; c.sw = 'OFF'; c.uvDropped = false; c.state = 'STOP'; c.y = { re: 0, im: 0 }; Log.add(`${n} OFF (${src})`, src === 'OP' ? 'op' : 'pms'); return; }
+  if (c.sw === 'TRIP') { c.sw = 'OFF'; Log.add(`${n}: автомат взведён (RESET)`, 'op'); return; }
+  if (c.sw === 'ON') return;
+  if (c.sw === 'WAIT') { c.sw = 'OFF'; Log.add(`${n}: запрос на пуск отменён`, 'op'); return; }
+  if (!this.bus.live && (c.motor || c.c.uv)) { if (src === 'OP') UI.toast(`${n}: нет напряжения на шинах — пускатель не включается`, 'warn'); return; }
+  if (c.c.cat === 'heavy' && PMS.auto && src === 'OP') { PMS.requestHeavy(c); return; }
+  c.sw = 'ON'; c.uvDropped = false;
+  Log.add(`${n} ON (${src})${c.motor ? ' — пуск двигателя' : ''}`, src === 'OP' ? 'op' : 'pms');
+};
+
+/* условия блокировки включения АВ */
 Model.closeBlock = function (g, src) {
   if (g.acb.tripped) return 'АВ отключён защитой — нажмите RESET';
   if (g.eng.shutdown) return 'аварийная остановка двигателя';
@@ -809,7 +900,7 @@ Model.onClose = function (g) {
    ====================================================================== */
 const Protection = {
   Q: {
-    P: g => g.P / CONFIG.gen.PnPu, I: g => g.I, U: g => g.U, f: g => g.f, Q: g => g.Q,
+    P: g => g.P / CONFIG.gen.PnPu, I: g => g.I, IP: g => Math.max(g.I, g.P / CONFIG.gen.PnPu, g.eng.rack > 0.97 * CONFIG.engine.rackMax && g.f < 59 ? 1.01 : 0), U: g => g.U, f: g => g.f, Q: g => g.Q,
     diff: g => (g.faults.diff && g.U > 0.2) ? 1 : 0, unb: g => (g.I > 0.1 ? g.faults.unb : 0),
     lo: g => g.eng.lo, jw: g => g.eng.jw, n: g => g.eng.n, tw: g => g.tw, tb: g => g.tb,
   },
@@ -825,8 +916,8 @@ const Protection = {
       const v = this.Q[r.q](g);
       let c = r.cmp === '>' ? v > r.pickup : v < r.pickup;
       if (r.window) c = c && (Sim.t - g.acb.closedAt) <= r.window;
-      g.timers[r.id] = c ? (g.timers[r.id] || 0) + dt : 0;
-      if (c && g.timers[r.id] >= r.delay - 1e-9) {
+      g.timers[r.id] = c ? (g.timers[r.id] || 0) + dt : (r.integ ? Math.max(0, (g.timers[r.id] || 0) - dt * 0.5) : 0);
+      if ((c || r.integ) && g.timers[r.id] >= r.delay - 1e-9) {
         if (r.act === 'pref1') Model.prefTrip(1, g);
         else if (r.act === 'pref2') Model.prefTrip(2, g);
         else Model.tripACB(g, r);
@@ -1019,7 +1110,7 @@ class AutoSync {
     if (this.phase === 'LOAD') return this.stepLoad(dt);
     if (g.acb.closed) { this.phase = 'LOAD'; this.t = 0; g.avrAuto = 0; return; }
     if (g.acb.closing >= 0) { g.govAuto = 0; g.avrAuto = 0; return; }
-    if (!g.ready) { this.status = 'WAIT READY'; g.govAuto = 0; g.avrAuto = 0; if (this.t > S.autoTimeout + 40) this.fail('генератор не готов'); return; }
+    if (!g.readyToClose) { this.status = 'WAIT READY'; g.govAuto = 0; g.avrAuto = 0; if (this.t > S.autoTimeout + 40) this.fail('генератор не готов'); return; }
     if (!bus.live) { this.status = 'DEAD BUS'; g.cmdClose('AUTO'); return; }
     const r = Sync.check(g);
     // напряжение — импульсы на AVR
@@ -1047,6 +1138,123 @@ class AutoSync {
   finish() { const cb = this.onDone; this.stop(); Log.add(`${this.g.name} AUTO SYNC: генератор включён${this.softLoad ? ' и нагружен' : ''}`, 'pms'); if (cb) cb(true); if (Sync.mode === 'AUTO' && Sync.selected === this.g) Log.add('Переведите ключ SYNC SELECT в OFF', 'info'); }
   fail(why) { const cb = this.onDone; this.stop(); this.failed = Sim.t; Log.add(`${this.g.name} SYNCHRONIZING FAILURE — ${why}`, 'alarm'); if (cb) cb(false); }
 }
+
+/** PMS: автопуск/вывод резервного, распределение кВт и 60 Гц, тяжёлые потребители, восстановление после блэкаута */
+const PMS = {
+  auto: false, prioIdx: 0, starting: [], stopSeq: null, timers: {}, restartList: [], restartT: 0, msg: 'MANUAL', acc: 0, blackoutT: 0,
+  get prio() { return CONFIG.pms.priority[this.prioIdx].filter(i => i < Model.gens.length).map(i => Model.gens[i]); },
+  setAuto(on) {
+    this.auto = on; Log.add(`PMS → ${on ? 'AUTO' : 'MANUAL'}`, 'op');
+    if (!on) {
+      for (const g of Model.gens) { if (g.autoSync.src === 'PMS') g.autoSync.stop('PMS MANUAL'); g.govAuto = 0; }
+      this.starting = []; this.stopSeq = null; this.restartList = [];
+      for (const c of Model.consumers) if (c.sw === 'WAIT') { c.sw = 'OFF'; Log.add(`${c.c.name}: запрос отменён (PMS MANUAL)`, 'pms'); }
+    }
+  },
+  setPrio(i) { this.prioIdx = i; Log.add(`STBY PRIORITY → ${this.prio.map(g => g.tag).join('-')}`, 'op'); },
+  available(g) { return !g.eng.shutdown && !g.eng.startFail && !g.acb.tripped && !g.faults.diff && g.eng.state !== 'STOPPING'; },
+  online() { return Model.gens.filter(g => g.acb.closed); },
+  reserveKW() { return this.online().length * CONFIG.gen.ratedKW - Model.bus.P; },
+  startStandby(reason) {
+    const g = this.prio.find(x => this.available(x) && !x.acb.closed && !this.starting.includes(x) && !(this.stopSeq && this.stopSeq.g === x));
+    if (!g) { if (!this.timers.noStby || Sim.t - this.timers.noStby > 30) { this.timers.noStby = Sim.t; Log.add(`PMS: нет доступного резервного генератора (${reason})`, 'alarm'); } return null; }
+    this.starting.push(g); g.pmsT = Sim.t;
+    Log.add(`PMS: пуск резервного ${g.name} — ${reason}`, 'pms');
+    if (g.eng.state === 'STOPPED') g.cmdStart('PMS');
+    return g;
+  },
+  requestHeavy(c) {
+    const need = c.c.kW * CONFIG.pms.heavyMargin, res = this.reserveKW();
+    if (Model.bus.live && res >= need) { c.sw = 'ON'; c.uvDropped = false; Log.add(`PMS: пуск ${c.c.name} разрешён (резерв ${Math.round(res)} кВт)`, 'pms'); return; }
+    c.sw = 'WAIT'; c.waitT = Sim.t;
+    Log.add(`PMS: пуск ${c.c.name} заблокирован — резерв ${Math.round(res)} кВт < ${Math.round(need)} кВт`, 'warn');
+    if (!this.starting.length) this.startStandby('тяжёлый потребитель ' + c.c.name);
+  },
+  step(dt) {
+    if (!this.auto) { this.msg = 'MANUAL'; return; }
+    this.acc += dt; if (this.acc < 0.1) return;
+    const T = this.acc; this.acc = 0;
+    const P = CONFIG.pms, bus = Model.bus, on = this.online(), N = on.length, cap = N * CONFIG.gen.ratedKW;
+    const load = N ? bus.P / cap : 0;
+    const tm = (k, c) => (this.timers[k] = c ? (this.timers[k] || 0) + T : 0);
+    // --- запускаемые резервные: готов → синхронизация / dead bus
+    for (const g of [...this.starting]) {
+      if (g.acb.closed) { this.starting.splice(this.starting.indexOf(g), 1); continue; }
+      if (!this.available(g) || Sim.t - g.pmsT > 150) {
+        this.starting.splice(this.starting.indexOf(g), 1); g.autoSync.stop();
+        Log.add(`PMS: ${g.name} не введён — пуск следующего`, 'alarm'); this.startStandby('замена ' + g.name); continue;
+      }
+      if (g.readyToClose && !g.autoSync.active) {
+        if (bus.live) g.autoSync.start('PMS', { softLoad: false });
+        else if (!Automation.busLockout && !Model.gens.some(x => x.acb.closing >= 0)) g.cmdClose('PMS');
+      }
+    }
+    // --- блэкаут
+    if (!bus.live) {
+      this.blackoutT += T;
+      this.msg = Automation.busLockout ? 'BUS FAULT LOCKOUT' : 'BLACKOUT RECOVERY';
+      if (Automation.busLockout) return;
+      const ready = Model.gens.find(g => g.readyToClose && !g.acb.closed && this.available(g));
+      if (ready && !this.starting.includes(ready)) this.starting.push(Object.assign(ready, { pmsT: Sim.t }));
+      if (!this.starting.length) this.startStandby('BLACKOUT');
+      else if (this.blackoutT > P.secondStartDelay * (this.starting.length) && this.starting.length < 2) this.startStandby('BLACKOUT — второй резервный');
+      return;
+    }
+    if (this.blackoutT > 0) {   // шины восстановлены — ступенчатый пуск ответственных
+      this.restartList = Model.consumers.filter(c => c.uvDropped && c.c.cat === 'ess');
+      if (this.restartList.length) Log.add(`PMS: шины восстановлены, ступенчатый пуск ответственных: ${this.restartList.map(c => c.c.name).join(', ')}`, 'pms');
+      this.blackoutT = 0; this.restartT = 0;
+    }
+    if (this.restartList.length) {
+      this.restartT += T;
+      if (this.restartT >= P.restartInterval) { this.restartT = 0; const c = this.restartList.shift(); if (c.sw === 'OFF') Model.switchConsumer(c, true, 'PMS'); }
+    }
+    // --- автопуск по нагрузке
+    if (tm('hi', N && load > P.startLoad) > P.startDelay || tm('ol', N && load > P.overload) > P.overloadDelay) {
+      if (!this.starting.length && !(this.stopSeq)) this.startStandby(`нагрузка ${Math.round(load * 100)} %`);
+      this.timers.hi = 0; this.timers.ol = 0;
+    }
+    // --- тяжёлые потребители в ожидании
+    for (const c of Model.consumers) if (c.sw === 'WAIT') {
+      if (this.reserveKW() >= c.c.kW * P.heavyMargin) { c.sw = 'ON'; Log.add(`PMS: резерв достаточен — пуск ${c.c.name}`, 'pms'); }
+      else if (Sim.t - c.waitT > P.heavyTimeout) { c.sw = 'OFF'; Log.add(`PMS: ${c.c.name} — запрос снят по времени`, 'warn'); }
+      else if (!this.starting.length && Sim.t - c.waitT > 5 && this.prio.some(g => !g.acb.closed && this.available(g))) this.startStandby('тяжёлый потребитель ' + c.c.name);
+    }
+    // --- вывод лишнего генератора
+    const sq = this.stopSeq;
+    if (!sq && N >= 2 && !this.starting.length && tm('lo', load < P.stopLoad && bus.P / ((N - 1) * CONFIG.gen.ratedKW) < P.stopCheck) > P.stopDelay) {
+      const g = [...this.prio].reverse().find(x => x.acb.closed);
+      this.stopSeq = { g, phase: 'UNLOAD', t: 0 }; this.timers.lo = 0;
+      Log.add(`PMS: нагрузка ${Math.round(load * 100)} % — разгрузка и вывод ${g.name}`, 'pms');
+    }
+    if (sq) {
+      sq.t += T; const g = sq.g;
+      if (sq.phase === 'UNLOAD') {
+        if (!g.acb.closed) { sq.phase = 'COOL'; sq.t = 0; }
+        else if (bus.P / ((N - 1) * CONFIG.gen.ratedKW) > P.stopCheck + 0.1) { Log.add(`PMS: вывод ${g.name} отменён — нагрузка выросла`, 'pms'); this.stopSeq = null; g.govAuto = 0; }
+        else if (g.kW < P.unloadTo * CONFIG.gen.ratedKW || sq.t > 90) { g.govAuto = 0; g.cmdOpen('PMS'); sq.phase = 'COOL'; sq.t = 0; Log.add(`PMS: ${g.name} охлаждение на холостом ходу ${CONFIG.engine.cooldown} с`, 'pms'); }
+        else g.govAuto = -0.8;
+      } else if (sq.phase === 'COOL') {
+        if (sq.t > CONFIG.engine.cooldown) { g.cmdStop('PMS'); this.stopSeq = null; }
+      }
+    }
+    // --- распределение активной нагрузки и поддержание частоты
+    const share = on.filter(g => !(this.stopSeq && this.stopSeq.g === g && this.stopSeq.phase === 'UNLOAD') && !(g.autoSync.active && g.autoSync.phase === 'LOAD'));
+    if (share.length) {
+      const sP = share.reduce((a, g) => a + g.kW, 0) / share.length, df = 60 - bus.f, E = CONFIG.engine;
+      for (const g of share) {
+        const dP = (sP - g.kW) / CONFIG.gen.ratedKW;
+        let dRef = E.droop * dP + df / 60;
+        if (Math.abs(dP) < P.shareDB && Math.abs(df) < P.fDB) dRef = 0;
+        g.govAuto = U.clamp(dRef / (E.govRate * 1.5), -1, 1);
+        if (Math.abs(g.govAuto) < 0.06) g.govAuto = 0;
+      }
+      const dev = share.length > 1 ? Math.max(...share.map(g => Math.abs(g.kW - sP))) / CONFIG.gen.ratedKW : 0;
+      if (tm('lsf', dev > CONFIG.protection.bus.loadShare) > CONFIG.protection.bus.loadShareDelay && !Automation.lsFail) { Automation.lsFail = true; Log.add('PMS: LOAD SHARING FAILURE', 'alarm'); }
+    }
+    this.msg = this.stopSeq ? `STOP SEQ ${this.stopSeq.g.tag}` : this.starting.length ? `STARTING ${this.starting.map(g => g.tag).join(',')}` : this.restartList.length ? 'SEQ. RESTART' : 'AUTO';
+  },
+};
 
 const Automation = {
   lsFail: false, busLockout: false,
@@ -1560,6 +1768,216 @@ class SyncPanel {
   }
 }
 
+function insulationMeter(extra) {   // мегомметр изоляции: 0 … ∞ МОм, 1 МОм — в середине шкалы
+  const ticks = [];
+  for (const v of [0, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20]) ticks.push({ v, major: true, label: String(v) });
+  for (const v of [0.05, 0.15, 0.3, 0.4, 0.7, 1.5, 3, 4, 7, 15, 50]) ticks.push({ v });
+  ticks.push({ v: 1e9, major: true, label: '∞' });
+  return new Gauge(Object.assign({ map: v => v / (v + 1), ticks, unit: 'MΩ', red: [[0, 1]], rest: 0, wn: 4, zeta: 0.8, font: 5.4, sym: '=' }, extra));
+}
+
+class BusPanel {
+  constructor(board) {
+    const M = CONFIG.busMeters, p = this.el = U.el('div', 'panel bus snapA', board); p.dataset.panel = 'BUS';
+    U.el('div', 'nameplate', p, 'BUS & PMS PANEL');
+    this.mV = UIK.gauge(p, new Gauge(Object.assign({}, M.V, { title: 'BUS VOLTMETER' })), 14, 30);
+    this.mF = UIK.gauge(p, new Gauge(Object.assign({}, M.Hz, { title: 'BUS FREQUENCY', font: 5, rest: 55, wn: 5, zeta: 0.75 })), 134, 30);
+    this.mP = UIK.gauge(p, new Gauge(Object.assign({}, M.kW, { title: 'TOTAL kW', font: 5.4, labelFmt: v => String(v), wn: 6, zeta: 0.6 })), 254, 30);
+    this.mR = UIK.gauge(p, insulationMeter({ title: 'INSULATION MONITOR' }), 374, 30);
+    this.m220 = UIK.gauge(p, new Gauge(Object.assign({}, M.V220, { title: '220 V BUS' })), 494, 30);
+    // лампы контроля изоляции
+    UIK.plate(p, 'EARTH LAMPS', 14, 150, 150);
+    this.el1 = ['R', 'S', 'T'].map((t, k) => { const d = U.el('div', 'slamp', p); U.place(d, 18 + k * 40, 166); U.el('i', '', d); U.el('b', '', d, t); return d; });
+    this.btnTest = UIK.button(p, 'white', 134, 182, '', () => {}, 'sm', 'TEST');
+    const td = () => { this.earthTest = true; }, tu = () => { this.earthTest = false; };
+    this.btnTest.addEventListener('pointerdown', td); for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) this.btnTest.addEventListener(ev, tu);
+    UIK.plate(p, 'INSUL. MON.', 176, 150, 62);
+    this.kIns = UIK.ctl(p, new Rotary({ size: 62, value: 0, font: 7.5, positions: [{ label: '440V', a: -45 }, { label: '220V', a: 45 }], onChange: () => {} }), 176, 162);
+    UIK.plate(p, 'PMS MODE', 248, 150, 66, 'red');
+    this.kPms = UIK.ctl(p, new Rotary({ size: 64, value: 0, kind: 'key', font: 7.5, positions: [{ label: 'MANUAL', a: -45 }, { label: 'AUTO', a: 45 }], onChange: i => PMS.setAuto(i === 1) }), 249, 162);
+    UIK.plate(p, 'STBY PRIORITY', 324, 150, 80);
+    const pp = CONFIG.pms.priority.map((o, i) => ({ label: o.filter(k => k < Model.gens.length).map(k => k + 1).join('-'), a: -60 + i * 60, font: 7 }));
+    this.kPrio = UIK.ctl(p, new Rotary({ size: 74, value: 0, positions: pp, onChange: i => PMS.setPrio(i) }), 327, 160);
+    this.lAuto = UIK.lamp(p, 'green', 424, 176, 'PMS AUTO');
+    this.lStby = UIK.lamp(p, 'white', 486, 176, 'STBY START');
+    this.lHeavy = UIK.lamp(p, 'amber', 550, 176, 'HEAVY BLOCK');
+    this.lcd = U.el('div', 'lcd', p); U.place(this.lcd, 14, 228, 592, 120); this.lcd.style.fontSize = '10.5px'; this.lcd.style.lineHeight = '13.5px';
+    this.earthTest = false;
+  }
+  update(dt) {
+    const b = Model.bus, I = Model.ins;
+    b.live ? this.mV.set(b.U * 440) : this.mV.off();
+    b.live ? this.mF.set(b.f) : this.mF.off();
+    b.live ? this.mP.set(Math.max(0, b.P)) : this.mP.off();
+    const sys = this.kIns.value ? '220' : '440';
+    const powered = b.live && (sys === '440' || I.on220);
+    powered ? this.mR.set(Math.min(1e6, sys === '440' ? I.r440 : I.r220)) : this.mR.off();
+    const v220 = Model.V220(); v220 > 5 ? this.m220.set(v220) : this.m220.off();
+    for (const m of [this.mV, this.mF, this.mP, this.mR, this.m220]) m.update(dt);
+    const pv = sys === '440' ? I.phaseV440 : I.phaseV220;
+    this.el1.forEach((d, k) => { const on = this.earthTest && powered; const v = on ? pv[k] * b.U / Math.sqrt(3) : 0; d.style.setProperty('--b', (Math.pow(U.clamp(v, 0, 1), 1.6)).toFixed(3)); });
+  }
+  updateSlow() {
+    const b = Model.bus, on = PMS.online(), cap = on.length * CONFIG.gen.ratedKW;
+    UIK.setLamp(this.lAuto, PMS.auto);
+    UIK.setLamp(this.lStby, PMS.starting.length > 0, true);
+    UIK.setLamp(this.lHeavy, Model.consumers.some(c => c.sw === 'WAIT'), true);
+    this.kPms.set(PMS.auto ? 1 : 0);
+    const w = (c, t) => `<span class="${c}">${t}</span>`;
+    let rows = '';
+    for (const g of Model.gens) {
+      const pct = g.kW / CONFIG.gen.ratedKW * 100;
+      rows += `${g.tag} ${g.acb.closed ? 'ON ' : w('d', 'OFF')} ${g.kW.toFixed(0).padStart(5)} kW ${pct.toFixed(0).padStart(4)}%  ${g.kvar.toFixed(0).padStart(5)} kvar  ${g.eng.state.padEnd(10)} ${g.acb.tripped ? w('a', 'TRIP ' + g.acb.tripped.id) : (g.eng.shutdown ? w('a', 'SHUTDOWN') : '')}\n`;
+    }
+    const load = cap ? b.P / cap * 100 : 0;
+    this.lcd.innerHTML = rows +
+      `BUS ${b.live ? (b.U * 440).toFixed(0) + ' V ' + b.f.toFixed(2) + ' Hz' : w('a', 'DEAD')}   LOAD ${b.P.toFixed(0)} kW ${b.live ? '(' + load.toFixed(0) + ' %)' : ''}   RESERVE ${b.live ? PMS.reserveKW().toFixed(0) : 0} kW\n` +
+      `PMS ${PMS.auto ? w('w', 'AUTO') : 'MANUAL'}  ${PMS.auto ? PMS.msg : ''}   STBY ${PMS.prio.filter(g => !g.acb.closed && PMS.available(g)).map(g => g.tag).join(',') || '—'}\n` +
+      `INS 440V ${Model.ins.r440.toFixed(1)} MΩ  220V ${Model.ins.r220.toFixed(1)} MΩ   AIR ${Model.air.p.toFixed(1)} bar`;
+  }
+}
+
+class FeederPanel {
+  constructor(board) {
+    const p = this.el = U.el('div', 'panel feeders snapA', board); p.dataset.panel = 'FEED';
+    U.el('div', 'nameplate', p, 'FEEDER PANEL  440 V / 220 V');
+    this.t = Model.consumers.map((c, k) => {
+      const x = 12 + (k % 8) * 75.5, y = k < 8 ? 30 : 198;
+      const d = U.el('div', 'ftile', p); U.place(d, x, y);
+      U.el('div', 'nm', d, c.c.name);
+      const cat = c.c.sys === '220' ? ['v220', '220V'] : { ess: ['ess', 'ESS'], pt1: ['pt1', 'PT-1'], pt2: ['pt2', 'PT-2'], heavy: ['heavy', 'HEAVY'] }[c.c.cat];
+      U.el('div', 'cat ' + cat[0], d, cat[1]);
+      const l = U.el('div', 'lamp sm red', d); U.place(l, 50, 29);
+      const cb = U.el('div', 'cb off', d); U.el('div', 'slot', cb); U.el('div', 'hdl', cb);
+      const on = U.el('i', '', cb, 'ON'); on.style.top = '2px'; const of = U.el('i', '', cb, 'OFF'); of.style.bottom = '2px';
+      cb.addEventListener('click', ev => { ev.stopPropagation(); Audio.init(); Model.switchConsumer(c, !(c.sw === 'ON'), 'OP'); this.updateSlow(); });
+      const amp = U.el('div', 'amp', d, '0 A'), kw = U.el('div', 'kw', d, ''), st = U.el('div', 'st', d, '');
+      return { c, d, l, cb, amp, kw, st };
+    });
+  }
+  update() {}
+  updateSlow() {
+    for (const t of this.t) {
+      const c = t.c, sw = c.sw;
+      t.cb.className = 'cb ' + { ON: 'on', OFF: 'off', TRIP: 'trip', PT: 'off', WAIT: 'wait' }[sw];
+      const lc = sw === 'ON' ? 'red' : sw === 'TRIP' || sw === 'PT' ? 'amber' : sw === 'WAIT' ? 'white' : 'green';
+      if (!t.l.classList.contains(lc)) { t.l.classList.remove('red', 'green', 'amber', 'white'); t.l.classList.add(lc); }
+      UIK.setLamp(t.l, true, sw === 'TRIP' || sw === 'WAIT');
+      const live = sw === 'ON' && c.I > 0.5;
+      t.amp.textContent = (live ? Math.round(c.I) : 0) + ' A';
+      t.kw.textContent = live ? `${Math.round(c.P)} kW` : (c.c.kW ? `${c.c.kW} kW` : `${c.c.kVA} kVA`);
+      const stt = sw === 'ON' ? ({ START: 'STARTING', RUN: 'RUNNING', IDLE: 'AUTO STOP', STOP: Model.bus.live ? 'ON' : 'NO VOLTAGE' }[c.state] || '') : { OFF: c.uvDropped ? 'DROPPED (UV)' : 'OFF', TRIP: 'TRIPPED', PT: 'PREF. TRIPPED', WAIT: 'WAIT PMS' }[sw];
+      t.st.textContent = stt; t.st.style.color = sw === 'TRIP' || sw === 'PT' ? '#a30' : sw === 'WAIT' ? '#036' : '#444';
+    }
+  }
+}
+
+/** Мнемосхема (однолинейная): состояние АВ, шины под напряжением, потоки мощности */
+class MimicPanel {
+  constructor(board) {
+    const p = this.el = U.el('div', 'panel mimic snapA', board); p.dataset.panel = 'MIMIC';
+    U.el('div', 'nameplate', p, 'SINGLE LINE DIAGRAM');
+    const s = this.svg = U.svg('svg', { viewBox: '0 0 620 330', width: 620, height: 330, class: 'mimic' }); s.style.position = 'absolute'; s.style.left = '0'; s.style.top = '28px'; p.appendChild(s);
+    U.svg('rect', { x: 8, y: 2, width: 604, height: 322, rx: 3, fill: '#20262b', stroke: '#0b0d0e', 'stroke-width': 2 }, s);
+    const T = (x, y, t, o = {}) => { const e = U.svg('text', Object.assign({ x, y, 'font-size': 9, fill: '#cfd6dc', 'text-anchor': 'middle' }, o), s); e.textContent = t; return e; };
+    this.T = T;
+    const BY = 140, bx0 = 26, bx1 = 600;
+    this.BY = BY;
+    this.gs = Model.gens.map((g, i) => {
+      const x = 70 + i * 100;
+      const line1 = U.svg('line', { x1: x, y1: 62, x2: x, y2: 94, stroke: '#555', 'stroke-width': 3 }, s);
+      const flow1 = U.svg('line', { x1: x, y1: 62, x2: x, y2: 94, stroke: '#ffd27a', 'stroke-width': 1.5, class: 'flow', opacity: 0 }, s);
+      const line2 = U.svg('line', { x1: x, y1: 110, x2: x, y2: BY, stroke: '#555', 'stroke-width': 3 }, s);
+      const flow2 = U.svg('line', { x1: x, y1: 110, x2: x, y2: BY, stroke: '#ffd27a', 'stroke-width': 1.5, class: 'flow', opacity: 0 }, s);
+      const circ = U.svg('circle', { cx: x, cy: 42, r: 19, fill: '#2b3238', stroke: '#888', 'stroke-width': 2.5 }, s);
+      T(x, 46, g.tag, { 'font-size': 12, 'font-weight': 700 });
+      const brk = U.svg('rect', { x: x - 8, y: 94, width: 16, height: 16, fill: 'none', stroke: '#3bff6a', 'stroke-width': 2.5 }, s);
+      const kw = T(x + 26, 30, '', { 'text-anchor': 'start', 'font-size': 9.5, fill: '#ffd27a' });
+      const st = T(x + 26, 42, '', { 'text-anchor': 'start', 'font-size': 8, fill: '#9aa4ad' });
+      const br = T(x + 14, 106, '', { 'text-anchor': 'start', 'font-size': 7.5, fill: '#9aa4ad' });
+      return { g, x, line1, line2, flow1, flow2, circ, brk, kw, st, br };
+    });
+    this.bus = U.svg('line', { x1: bx0, y1: BY, x2: bx1, y2: BY, stroke: '#555', 'stroke-width': 7, 'stroke-linecap': 'round' }, s);
+    this.busT = T(530, BY - 9, 'MAIN BUS 440 V', { 'text-anchor': 'end', 'font-size': 9, 'font-weight': 700 });
+    // фидеры 440 В вниз от шин; трансформатор — вверх к шинам 220 В
+    const f440 = Model.consumers.filter(c => c.c.sys !== '220' && c.c.kind !== 'tr'), tr = Model.consumers.find(c => c.c.kind === 'tr');
+    const f220 = Model.consumers.filter(c => c.c.sys === '220');
+    this.fs = [];
+    const step = (bx1 - bx0 - 30) / (f440.length - 1);
+    f440.forEach((c, k) => {
+      const x = bx0 + 15 + k * step;
+      const ln = U.svg('line', { x1: x, y1: BY, x2: x, y2: 214, stroke: '#555', 'stroke-width': 2 }, s);
+      const fl = U.svg('line', { x1: x, y1: BY + 4, x2: x, y2: 214, stroke: '#ffd27a', 'stroke-width': 1.2, class: 'flow', opacity: 0 }, s);
+      const brk = U.svg('rect', { x: x - 5.5, y: 162, width: 11, height: 11, fill: 'none', stroke: '#3bff6a', 'stroke-width': 2 }, s);
+      const ld = c.motor ? U.svg('circle', { cx: x, cy: 222, r: 8, fill: '#2b3238', stroke: '#888', 'stroke-width': 1.5 }, s) : U.svg('rect', { x: x - 7, y: 214, width: 14, height: 15, fill: '#2b3238', stroke: '#888', 'stroke-width': 1.5 }, s);
+      T(x, 225, c.motor ? 'M' : '', { 'font-size': 8, 'font-weight': 700 });
+      const nm = T(0, 0, c.c.name, { 'font-size': 7.6, 'text-anchor': 'start', transform: `translate(${x + 3},236) rotate(90)` });
+      const kw = T(0, 0, '', { 'font-size': 7.2, 'text-anchor': 'end', fill: '#ffd27a', transform: `translate(${x + 3},158) rotate(-90)` });
+      this.fs.push({ c, x, ln, fl, brk, ld, kw });
+    });
+    if (tr) {
+      const x = 562;
+      const ln = U.svg('line', { x1: x, y1: BY, x2: x, y2: 104, stroke: '#555', 'stroke-width': 2 }, s);
+      const brk = U.svg('rect', { x: x - 5.5, y: 112, width: 11, height: 11, fill: 'none', stroke: '#3bff6a', 'stroke-width': 2 }, s);
+      U.svg('circle', { cx: x, cy: 96, r: 8, fill: 'none', stroke: '#9aa4ad', 'stroke-width': 1.6 }, s);
+      U.svg('circle', { cx: x, cy: 84, r: 8, fill: 'none', stroke: '#9aa4ad', 'stroke-width': 1.6 }, s);
+      const ln2 = U.svg('line', { x1: x, y1: 76, x2: x, y2: 62, stroke: '#555', 'stroke-width': 2 }, s);
+      this.bus220 = U.svg('line', { x1: 410, y1: 62, x2: 600, y2: 62, stroke: '#555', 'stroke-width': 5, 'stroke-linecap': 'round' }, s);
+      T(550, 92, 'TR 440/220 V', { 'font-size': 7.5, fill: '#9aa4ad', 'text-anchor': 'end' });
+      this.b220T = T(598, 54, '220 V', { 'text-anchor': 'end', 'font-size': 8.5, 'font-weight': 700 });
+      this.fs.push({ c: tr, x, ln, ln2, brk, kw: T(x - 10, 128, '', { 'font-size': 7.2, 'text-anchor': 'end', fill: '#ffd27a' }) });
+      f220.forEach((c, k) => {
+        const x2 = 440 + k * 60;
+        const ln = U.svg('line', { x1: x2, y1: 62, x2: x2, y2: 22, stroke: '#555', 'stroke-width': 2 }, s);
+        const brk = U.svg('rect', { x: x2 - 5, y: 34, width: 10, height: 10, fill: 'none', stroke: '#3bff6a', 'stroke-width': 2 }, s);
+        T(x2 + 10, 18, c.c.name.replace(' 220 V', ''), { 'font-size': 7.2, 'text-anchor': 'start' });
+        const kw = T(x2 + 10, 30, '', { 'font-size': 7, 'text-anchor': 'start', fill: '#ffd27a' });
+        this.fs.push({ c, x: x2, ln, brk, kw, is220: true });
+      });
+    }
+    this.off = 0;
+  }
+  update(dt) {   // анимация потоков мощности
+    this.off = (this.off + dt * 30) % 1000;
+    for (const q of this.gs) {
+      const pw = q.g.kW, a = Math.abs(pw) > 15 && q.g.acb.closed;
+      const sp = this.off * (0.4 + Math.min(1.6, Math.abs(pw) / 600)) * (pw >= 0 ? -1 : 1);
+      for (const f of [q.flow1, q.flow2]) { f.setAttribute('opacity', a ? 1 : 0); f.setAttribute('stroke', pw >= 0 ? '#ffd27a' : '#ff5a4a'); f.style.strokeDashoffset = sp; }
+    }
+    for (const q of this.fs) if (q.fl) { const a = q.c.sw === 'ON' && q.c.P > 3; q.fl.setAttribute('opacity', a ? 1 : 0); q.fl.style.strokeDashoffset = -this.off * (0.4 + Math.min(1.6, q.c.P / 200)); }
+  }
+  updateSlow() {
+    const b = Model.bus, live = b.live, LIVE = '#ff8a1e', DEAD = '#4a4f54';
+    this.bus.setAttribute('stroke', live ? LIVE : DEAD);
+    this.busT.textContent = live ? `MAIN BUS 440 V · ${(b.U * 440).toFixed(0)} V · ${b.f.toFixed(2)} Hz · ${b.P.toFixed(0)} kW` : 'MAIN BUS 440 V · DEAD';
+    this.busT.setAttribute('fill', live ? '#ffb36a' : '#ff6a5a');
+    for (const q of this.gs) {
+      const g = q.g, gl = g.U > 0.3;
+      q.circ.setAttribute('stroke', g.running ? (gl ? LIVE : '#ffd27a') : '#777');
+      q.line1.setAttribute('stroke', gl ? LIVE : DEAD);
+      q.line2.setAttribute('stroke', live ? LIVE : DEAD);
+      const tr = !!g.acb.tripped, cl = g.acb.closed;
+      q.brk.setAttribute('fill', cl ? '#ff3b2b' : 'none');
+      q.brk.setAttribute('stroke', tr ? (UI.blinkFast ? '#ffbf2a' : '#553300') : cl ? '#ff3b2b' : '#3bff6a');
+      q.kw.textContent = g.running ? `${g.kW.toFixed(0)} kW` : '';
+      q.st.textContent = g.running ? `${g.volts.toFixed(0)} V ${g.f.toFixed(1)} Hz` : g.eng.state === 'STOPPED' ? 'STOP' : g.eng.state;
+      q.br.textContent = tr ? 'TRIP' : '';
+    }
+    const tr220 = Model.trOn() && live;
+    if (this.bus220) { this.bus220.setAttribute('stroke', tr220 ? LIVE : DEAD); this.b220T.textContent = tr220 ? `220 V · ${Model.V220().toFixed(0)} V` : '220 V · DEAD'; }
+    for (const q of this.fs) {
+      const c = q.c, on = c.sw === 'ON', en = on && (q.is220 ? tr220 : live);
+      q.brk.setAttribute('fill', on ? '#ff3b2b' : 'none');
+      q.brk.setAttribute('stroke', c.sw === 'TRIP' ? (UI.blinkFast ? '#ffbf2a' : '#553300') : c.sw === 'PT' ? '#ffbf2a' : c.sw === 'WAIT' ? (UI.blinkFast ? '#fff' : '#555') : on ? '#ff3b2b' : '#3bff6a');
+      const srcLive = q.is220 ? tr220 : live;
+      q.ln.setAttribute('stroke', en ? LIVE : (srcLive ? '#6a5a4a' : DEAD));
+      if (q.ln2) q.ln2.setAttribute('stroke', tr220 ? LIVE : DEAD);
+      if (q.ld) q.ld.setAttribute('stroke', en && c.state !== 'IDLE' ? '#ffd27a' : '#777');
+      q.kw.textContent = en && c.P > 1 ? `${Math.round(c.P)}` : '';
+    }
+  }
+}
+
 class AlarmPanel {
   constructor(board) {
     const p = this.el = U.el('div', 'panel span2 alarms snapA', board); p.dataset.panel = 'ALARM';
@@ -1639,7 +2057,11 @@ const UI = {
     const board = document.getElementById('board');
     for (const g of Model.gens) { const gp = new GenPanel(g, board); this.genPanels.push(gp); this.panels.push(gp); }
     this.sync = new SyncPanel(board); this.panels.push(this.sync);
+    this.bus = new BusPanel(board); this.panels.push(this.bus);
+    this.feeders = new FeederPanel(board); this.panels.push(this.feeders);
+    this.mimic = new MimicPanel(board); this.panels.push(this.mimic);
     this.alarms = new AlarmPanel(board); this.panels.push(this.alarms);
+    this.nav();
     Layout.init();
     this.keys();
     // верхняя панель
@@ -1650,6 +2072,13 @@ const UI = {
     document.getElementById('tbSound').addEventListener('click', ev => { ev.currentTarget.textContent = Audio.toggle() ? '🔊' : '🔇'; });
     document.addEventListener('pointerdown', () => Audio.init(), { once: true });
     document.getElementById('tbAlarm').addEventListener('click', () => this.alarms.el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' }));
+  },
+  nav() {   // быстрый переход к панелям (телефон)
+    const nav = document.getElementById('tbNav'), names = { SYNC: 'SY', BUS: 'BUS', FEED: 'FD', MIMIC: 'MIM', ALARM: 'ALM' };
+    for (const pnl of this.panels) {
+      const id = pnl.el.dataset.panel, b = U.el('button', '', nav, names[id] || id);
+      b.addEventListener('click', () => pnl.el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' }));
+    }
   },
   keys() {   // клавиатура: ←/→ регулятор, ↓/↑ напряжение выбранного на SYNC SELECT генератора
     const map = { ArrowLeft: ['govOp', -1], ArrowRight: ['govOp', 1], ArrowDown: ['avrOp', -1], ArrowUp: ['avrOp', 1] };
@@ -1720,6 +2149,8 @@ const Layout = {
     board.style.zoom = z;
     vp.classList.toggle('snap', snap && W < 1100);
     this.cols = c;
+    const fits = board.scrollWidth * z <= W + 4 && board.scrollHeight * z <= H + 4;
+    document.getElementById('tbNav').classList.toggle('hidden', fits);
   },
 };
 
@@ -1730,6 +2161,7 @@ function buildModel() {
   Model.consumers = (CONFIG.consumers || [
     { id: 'BASE', name: 'TEST LOAD', kW: 600, pf: 0.82, on: true },
   ]).map(c => new Consumer(c));
+  for (const c of Model.consumers) if (c.motor || c.c.uv) c.sw = 'OFF';   // шины обесточены — пускатели отключены
 }
 
 let lastFrame = 0;
@@ -1742,7 +2174,7 @@ function loop(ts) {
 buildModel();
 UI.build();
 requestAnimationFrame(loop);
-window.SIM = { CONFIG, Model, Sim, UI, U, Log, Layout, Sync, Alarms, Protection, Automation };
+window.SIM = { CONFIG, Model, Sim, UI, U, Log, Layout, Sync, Alarms, Protection, Automation, PMS };
 </script>
 </body>
 </html>
