@@ -8,3 +8,6 @@ dist/
 data/settings.json
 data/history.json
 *.tmp
+
+# release archives
+*.zip
