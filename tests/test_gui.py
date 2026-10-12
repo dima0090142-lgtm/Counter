@@ -64,15 +64,18 @@ def test_pc_lists_only_allowed_ranks(app):
         form.get()  # 4E + 5E + motorman: nobody may sign as P.C.
 
 
-def test_manual_loto_defaults_to_electrician(app):
+def test_manual_loto_empty_until_ticked(app):
     form = app.manual_tab.form
     jid = [j["id"] for j in form.jobs].index("hfo_purifier_bowl_cleaning")
     form.job.current(jid)
     form._job_changed()
     form.auto_crew()
     p = form.get()
-    assert p["loto"] == "remesan"
+    assert p["loto"] == ""  # empty by default
     assert app.store.can_pc(p["pc"]) and app.store.can_pc(p["close"])
+    form.loto_var.set(True)
+    form._loto_toggled()
+    assert form.get()["loto"] == "remesan"  # ticked: the electrician is proposed
     form.loto_var.set(False)
     form._loto_toggled()
     assert form.get()["loto"] == ""

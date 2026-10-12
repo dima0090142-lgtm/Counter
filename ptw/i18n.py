@@ -166,7 +166,8 @@ RU = {
         "Добро пожаловать!\n\nВведите название судна и выберите папку, куда сохранять пермиты "
         "(Параметры > Настройки).",
     "P.C. ranks (if the lead cannot be P.C.)": "Ранги P.C. (если ответственный не P.C.)",
-    "LOTO (isolation) needed": "Нужен LOTO (изоляция)",
+    "LOTO usually needed (hint only)": "Обычно нужен LOTO (только подсказка)",
+    "LOTO usually needed: {answer}": "Обычно нужен LOTO: {answer}",
     "Responsible ranks: one of them leads the job, e.g. 2E. If the lead cannot be P.C.\n"
     "(4E, 5E), a P.C. from 'P.C. ranks' is added - empty = Settings > Generation.\n"
     "Counts are 'min-max', e.g. 0-1 or 1-2. Ranks are comma separated: MM, FITTR.\n"

@@ -73,21 +73,16 @@ def test_2e_and_3e_take_turns_as_pc_for_4e_jobs(store):
     assert abs(sup.count("2E") - sup.count("3E")) <= len(sup) * 0.25
 
 
-def test_loto_person_for_isolation_jobs(store):
-    plan = make_plan(store, 60)
-    for p in plan:
-        if store.job(p["job_id"])["loto"]:
-            assert p["loto"] == "remesan"  # the AEO applies LOTO
-        else:
-            assert p["loto"] == ""
-    assert any(p["loto"] for p in plan) and not all(p["loto"] for p in plan)
+def test_loto_is_empty_in_generated_permits(store):
+    """LOTO is only added by the user (Edit... / Manual), never by the generator."""
+    assert all(p["loto"] == "" for p in make_plan(store, 60))
 
 
-def test_loto_falls_back_to_pc_without_electrician(store):
+def test_loto_person_when_ticked(store):
+    assert generator.pick_loto(store, ["singh", "kaushal"], "singh") == "remesan"  # AEO first
     store.member("remesan")["active"] = False
-    job = store.job("ae_cooling_pump_overhaul")
-    team = generator.Planner(store, random.Random(3)).make_team(job, dt.date(2026, 3, 1))
-    assert team["loto"] == team["pc"]
+    assert generator.pick_loto(store, ["singh", "kaushal"], "singh") == "singh"  # then the P.C.
+    assert "kaushal" not in generator.loto_candidates(store)  # 4E (cadet) cannot apply LOTO
 
 
 def test_lead_rotates(store):

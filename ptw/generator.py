@@ -234,9 +234,9 @@ class Planner:
         lead_id = team[0] if team else ""
         crew = sort_by_rank(self.store, team)
         pc, transfer, close = default_roles(self.store, crew, lead_id)
-        loto = pick_loto(self.store, crew, pc) if job.get("loto") else ""
+        # LOTO stays empty: the user ticks it himself (Edit... / Manual)
         return {"crew": crew, "lead": lead_id, "pc": pc, "transfer": transfer,
-                "close": close, "loto": loto}
+                "close": close, "loto": ""}
 
     def make_crew(self, job, day, busy=()):
         return self.make_team(job, day, busy)["crew"]

@@ -190,17 +190,14 @@ class PermitForm(tk.Frame):
         if not j:
             self.info.config(text="")
             return
-        loto = "   LOTO: " + (T("yes") if j.get("loto") else T("no"))
+        loto = "   " + T("LOTO usually needed: {answer}",
+                          answer=T("yes") if j.get("loto") else T("no"))
         self.info.config(text=f"{T('Location')}:  {j['location']}\n{T('Plant')}:  {j['plant']}\n"
                               f"{T('Work')}:  {j['work']}\nRisk Assessment:  {j.get('ra_no', '')}"
                               + loto)
 
     def _job_changed(self):
         self._show_job()
-        j = self.current_job()
-        if j is not None:
-            self.loto_var.set(bool(j.get("loto")))
-            self._loto_toggled()
 
     def current_job(self):
         i = self.job.current()
@@ -260,9 +257,8 @@ class PermitForm(tk.Frame):
         self.lead = team["lead"]
         self._update_role_lists()
         self.set_roles(team["pc"], team["transfer"], team["close"])
-        self.loto_var.set(bool(team["loto"]))
-        self.loto.set(generator.sign_text(self.store, team["loto"]) if team["loto"] else "")
-        self._loto_toggled()
+        if self.loto_var.get() and not self.loto.get():  # LOTO ticked by the user: fill a name
+            self._loto_toggled()
 
     # --- in / out ---
     def set(self, permit):
@@ -1231,7 +1227,7 @@ class App(tk.Tk):
                   ("rating_ranks", "Ratings ranks", "codes"),
                   ("ratings", "Ratings count", "range"),
                   ("pc_ranks", "P.C. ranks (if the lead cannot be P.C.)", "codes"),
-                  ("loto", "LOTO (isolation) needed", "bool"), ("active", "Active", "bool")]
+                  ("loto", "LOTO usually needed (hint only)", "bool"), ("active", "Active", "bool")]
         hint = ("Responsible ranks: one of them leads the job, e.g. 2E. If the lead cannot be P.C.\n"
                 "(4E, 5E), a P.C. from 'P.C. ranks' is added - empty = Settings > Generation.\n"
                 "Counts are 'min-max', e.g. 0-1 or 1-2. Ranks are comma separated: MM, FITTR.\n"
