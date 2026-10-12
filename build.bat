@@ -21,7 +21,7 @@ if errorlevel 1 goto :error
 
 echo === Building ===
 python -m PyInstaller --noconfirm --clean --windowed --name PTW_Generator ^
-    --add-data "data;data" --add-data "templates;templates" ^
+    --add-data "data;data" --add-data "templates;templates" --add-data "sounds;sounds" ^
     --hidden-import babel.numbers main.py
 if errorlevel 1 goto :error
 

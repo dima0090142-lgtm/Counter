@@ -37,7 +37,7 @@ cd C:\PTW
 python -m pip install -r requirements.txt pyinstaller pytest
 python -m pytest -q tests
 python -m PyInstaller --noconfirm --clean --windowed --name PTW_Generator ^
-    --add-data "data;data" --add-data "templates;templates" ^
+    --add-data "data;data" --add-data "templates;templates" --add-data "sounds;sounds" ^
     --hidden-import babel.numbers main.py
 ```
 
@@ -53,9 +53,9 @@ python -m PyInstaller --noconfirm --clean --windowed --name PTW_Generator ^
 
 ## 4. Первый запуск
 
-- Рядом с exe появятся папки `data\` (экипаж, работы, настройки, история) и
-  `templates\` (шаблон Word). **Это ваши данные:** при обновлении программы
-  заменяйте только exe и `_internal`, а `data` и `templates` оставляйте.
+- Рядом с exe появятся папки `data\` (экипаж, работы, настройки, история),
+  `templates\` (шаблон Word) и `sounds\` (звуки). **Это ваши данные:** при обновлении программы
+  заменяйте только exe и `_internal`, а `data`, `templates` и `sounds` оставляйте.
 - Программа попросит выбрать папку для пермитов (**Параметры → Настройки → Файлы**).
 - Язык меняется в **Настройки → Общие → Язык** (English / Русский).
 
@@ -94,5 +94,6 @@ python -m PyInstaller --noconfirm --clean --windowed --name PTW_Generator ^
 | `python` не найден | Переустановите Python с галочкой **Add python.exe to PATH** |
 | `No module named tkinter` | Запустите установщик Python → Modify → отметьте **tcl/tk and IDLE** |
 | Антивирус ругается на exe | Так бывает с PyInstaller. Добавьте папку в исключения или используйте сборку без `--onefile` |
+| Нет звука | Проверьте **Настройки → Общие → Звуки** и что рядом с exe есть папка `sounds` с файлами `.wav` |
 | Календарь не открывается в exe | Проверьте, что в команде есть `--hidden-import babel.numbers` |
 | Изменения в работах пропали после обновления | Вы заменили папку `data`. Восстановите её из старой копии |

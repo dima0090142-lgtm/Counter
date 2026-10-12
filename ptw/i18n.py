@@ -71,7 +71,7 @@ RU = {
     "Create file": "Создать файл", "Created {name}": "Создан {name}",
     "Created:\n{name}\n\nOpen it now?": "Создан:\n{name}\n\nОткрыть его?",
     # history
-    "No": "№", "Open file": "Открыть файл", "Open folder": "Открыть папку",
+    "No.": "№", "Yes": "Да", "No": "Нет", "Open file": "Открыть файл", "Open folder": "Открыть папку",
     "Delete entry": "Удалить запись",
     "History is used to keep jobs and crew different from day to day.":
         "История нужна, чтобы работы и экипаж менялись день ото дня.",
@@ -136,6 +136,13 @@ RU = {
         "Форма должна умещаться на одном листе A4. Значения печатаются Times New Roman 9 pt;\n"
         "если значение не помещается в строку, оно печатается мельче, а не переносится.",
     "Defaults": "По умолчанию",
+    "Play sounds": "Звуки", "Test": "Проверить",
+    "Show the splash screen at start": "Показывать заставку при запуске",
+    "Generator  -  Engine Department": "Генератор  -  машинная команда",
+    "Version {v}": "Версия {v}",
+    "Loading settings...": "Загрузка настроек...", "Loading crew list...": "Загрузка экипажа...",
+    "Loading jobs...": "Загрузка списка работ...",
+    "Checking Word template...": "Проверка шаблона Word...", "Starting...": "Запуск...",
     "Reset all settings to defaults (folders are kept)?":
         "Сбросить все настройки по умолчанию (папки сохранятся)?",
     "Numbers expected for per day / repeat / permit no.":

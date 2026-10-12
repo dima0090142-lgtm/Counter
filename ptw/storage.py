@@ -35,6 +35,8 @@ DEFAULT_SETTINGS = {
     "ui_font_size": 8,
     "open_folder_after": True,
     "skip_weekdays": [],
+    "sounds": True,
+    "splash": True,
 }
 
 
@@ -50,6 +52,13 @@ def ensure_data():
         src = os.path.join(BUNDLE_DIR, "data", name + ".json")
         if not os.path.exists(dst) and os.path.exists(src) and src != dst:
             shutil.copy(src, dst)
+    snd_src = os.path.join(BUNDLE_DIR, "sounds")
+    snd_dst = os.path.join(APP_DIR, "sounds")
+    if os.path.isdir(snd_src) and snd_src != snd_dst:
+        os.makedirs(snd_dst, exist_ok=True)
+        for f in os.listdir(snd_src):
+            if not os.path.exists(os.path.join(snd_dst, f)):
+                shutil.copy(os.path.join(snd_src, f), snd_dst)
     tpl_dir = os.path.dirname(DEFAULT_TEMPLATE)
     src_tpl = os.path.join(BUNDLE_DIR, "templates", "ptw_template.docx")
     if not os.path.exists(DEFAULT_TEMPLATE) and os.path.exists(src_tpl):

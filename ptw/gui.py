@@ -6,11 +6,11 @@ import re
 import subprocess
 import sys
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, ttk
 
 from tkcalendar import Calendar, DateEntry
 
-from . import docgen, generator, i18n, storage, win95
+from . import __version__, docgen, generator, i18n, sound, storage, win95
 from .i18n import T
 from .win95 import BG
 
@@ -19,6 +19,38 @@ WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 def app_title():
     return T("Permit to Work Generator")
+
+
+class _Messages:
+    """Win95-style replacement for tkinter.messagebox, with the program sounds.
+
+    Same call style: messagebox.showinfo(title, text, parent=...)."""
+
+    SOUNDS = {"info": "ding", "warning": "exclamation", "error": "chord", "question": None}
+
+    def _box(self, kind, title, text, buttons, cancel, parent):
+        if self.SOUNDS[kind]:
+            sound.play(self.SOUNDS[kind])
+        return win95.MessageBox(parent, title, text, kind, buttons, cancel).result
+
+    def showinfo(self, title, text, parent=None):
+        self._box("info", title, text, [(True, T("OK"))], True, parent)
+
+    def showwarning(self, title, text, parent=None):
+        self._box("warning", title, text, [(True, T("OK"))], True, parent)
+
+    def showerror(self, title, text, parent=None):
+        self._box("error", title, text, [(True, T("OK"))], True, parent)
+
+    def askyesno(self, title, text, parent=None):
+        return self._box("question", title, text, [(True, T("Yes")), (False, T("No"))], False, parent)
+
+    def askyesnocancel(self, title, text, parent=None):
+        return self._box("question", title, text,
+                         [(True, T("Yes")), (False, T("No")), (None, T("Cancel"))], None, parent)
+
+
+messagebox = _Messages()
 
 
 def open_path(path):
@@ -247,7 +279,9 @@ def show_write_result(app, parent, paths, warnings):
     s = app.store
     app.history_tab.show()
     app.status.set(T("{n} files created in {folder}", n=len(paths), folder=s.settings["output_dir"]))
-    if warnings:
+    if not warnings:
+        sound.play("tada")
+    else:
         lines = [f"{name}: {', '.join(keys)}" for name, keys in warnings[:15]]
         messagebox.showwarning(app_title(), T("Some values were too long even in the smallest font "
                                               "and were shortened (…) to keep the permit on one page:") + "\n\n"
@@ -451,7 +485,7 @@ class ManualTab(tk.Frame):
 
 
 class HistoryTab(tk.Frame):
-    COLS = [("date", "Date"), ("no", "No"), ("job", "Job"), ("crew", "Issued to"), ("file", "File")]
+    COLS = [("date", "Date"), ("no", "No."), ("job", "Job"), ("crew", "Issued to"), ("file", "File")]
 
     def __init__(self, master, app):
         super().__init__(master, bg=BG)
@@ -756,6 +790,14 @@ class SettingsDialog(tk.Toplevel):
         for label, mid in self.ao_map.items():
             if mid == s.get("ao_id"):
                 self.ao.set(label)
+        self.sounds = tk.BooleanVar(value=bool(s.get("sounds", True)))
+        tk.Checkbutton(g, text=T("Play sounds"), variable=self.sounds
+                       ).grid(row=4, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        win95.button(g, T("Test"), lambda: sound.play("tada") if self.sounds.get() else None,
+                     width=8).grid(row=4, column=1, sticky="e")
+        self.splash = tk.BooleanVar(value=bool(s.get("splash", True)))
+        tk.Checkbutton(g, text=T("Show the splash screen at start"), variable=self.splash
+                       ).grid(row=5, column=0, columnspan=2, sticky="w")
 
         # --- Files ---
         f = self._page(nb, T("Files"))
@@ -918,6 +960,9 @@ class SettingsDialog(tk.Toplevel):
         s["skip_weekdays"] = [i for i, v in enumerate(self.skip_vars) if v.get()]
         s["language"] = self.lang_map.get(self.lang.get(), "en")
         s["ui_font_size"] = int(self.ui_font.get())
+        s["sounds"] = self.sounds.get()
+        s["splash"] = self.splash.get()
+        sound.enabled = s["sounds"]
         s["ao_id"] = self.ao_map.get(self.ao.get(), s.get("ao_id"))
         storage.save("settings", s)
         self.destroy()
@@ -931,14 +976,46 @@ class SettingsDialog(tk.Toplevel):
 # Main window
 # ======================================================================
 
+SPLASH_STEPS = [(0.0, "Loading settings..."), (0.25, "Loading crew list..."),
+                (0.5, "Loading jobs..."), (0.75, "Checking Word template..."),
+                (0.95, "Starting...")]
+
+
 class App(tk.Tk):
-    def __init__(self):
+    def __init__(self, splash=None):
         super().__init__()
+        self.withdraw()  # shown after the splash screen
         self.store = storage.Store()
+        s = self.store.settings
+        sound.enabled = bool(s.get("sounds", True))
+        i18n.set_language(s.get("language", "en"))
+        win95.apply_style(self, int(s.get("ui_font_size", 8)))
         self.geometry("1100x680")
         self.minsize(900, 600)
-        self.build()
+        self.protocol("WM_DELETE_WINDOW", self.quit_app)
+        show = s.get("splash", True) if splash is None else splash
+        sound.play("startup")
+        if show:
+            win95.Splash(self, "Permit to Work", T("Generator  -  Engine Department"),
+                         f"{s.get('ship_name', '')}", T("Version {v}", v=__version__),
+                         [(at, T(text)) for at, text in SPLASH_STEPS], duration=2000,
+                         on_done=self._show)
+            self.after(60, self.build)  # build the hidden window while the splash runs
+        else:
+            self.build()
+            self._show()
+
+    def _show(self):
+        self.deiconify()
+        self.lift()
         self.after(200, self._first_start)
+
+    def quit_app(self):
+        """Exit with the closing sound (the window disappears first)."""
+        self.withdraw()
+        self.update()
+        sound.play("shutdown", wait=True)
+        self.destroy()
 
     def build(self):
         s = self.store.settings
@@ -978,7 +1055,7 @@ class App(tk.Tk):
         f = tk.Menu(m, tearoff=0)
         f.add_command(label=T("Open output folder"), command=lambda: self.history_tab.open_folder())
         f.add_separator()
-        f.add_command(label=T("Exit"), command=self.destroy)
+        f.add_command(label=T("Exit"), command=self.quit_app)
         m.add_cascade(label=T("File"), menu=f, underline=0)
         d = tk.Menu(m, tearoff=0)
         d.add_command(label=T("Jobs..."), command=self.edit_jobs)

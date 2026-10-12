@@ -227,5 +227,20 @@ def test_every_ui_string_is_translated():
             strings.add(ast.literal_eval(n.value))
     strings |= {m.group(1) for m in _re.finditer(
         r'\("\w+", "([^"]+)", "(?:str|int|bool|codes|range|rank)"\)', src)}
+    strings |= {t for _, t in gui.SPLASH_STEPS}
     strings |= {"5) P.C. (accepts permit):", "6) Transferred to:", "7) P.C. (closes permit):"}
     assert [s for s in strings if s not in RU] == []
+
+
+def test_sound_files_and_player(monkeypatch):
+    import wave
+
+    from ptw import sound
+    for name in ("startup", "tada", "ding", "chord", "exclamation", "shutdown"):
+        with wave.open(sound.path(name)) as w:
+            assert w.getnchannels() == 1 and w.getframerate() == 22050
+            assert 0.3 < w.getnframes() / w.getframerate() < 3.5
+    monkeypatch.setattr(sound, "enabled", True)
+    sound.play("does_not_exist")  # missing file: silently nothing
+    monkeypatch.setattr(sound, "enabled", False)
+    sound.play("startup")
