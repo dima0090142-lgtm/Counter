@@ -178,7 +178,30 @@ def fit_paragraph(p, filled, min_size):
     return status
 
 
-def fill_template(template, values, out_path, fit=True, min_size=6.5):
+def set_checkboxes(document, tick_ao, tick_pc):
+    """Tick the A.O. / P.C. form check boxes of sections 2 and 3.
+
+    Every table row with exactly two check boxes is a hazard / precaution line:
+    the first box is the A.O. column, the second the P.C. column."""
+    for tr in document.element.body.iter(qn("w:tr")):
+        boxes = list(tr.iter(qn("w:checkBox")))
+        if len(boxes) != 2:
+            continue
+        for box, on in zip(boxes, (tick_ao, tick_pc)):
+            val = "1" if on else "0"
+            default = box.find(qn("w:default"))
+            if default is None:
+                default = box.makeelement(qn("w:default"), {})
+                box.append(default)
+            default.set(qn("w:val"), val)
+            checked = box.find(qn("w:checked"))
+            if checked is None:
+                checked = box.makeelement(qn("w:checked"), {})
+                default.addnext(checked)
+            checked.set(qn("w:val"), val)
+
+
+def fill_template(template, values, out_path, fit=True, min_size=6.5, ticks=(True, True)):
     """Fill the template; returns the keys whose text had to be cut to fit one line."""
     d = docx.Document(template)
     too_long = []
@@ -186,6 +209,8 @@ def fill_template(template, values, out_path, fit=True, min_size=6.5):
         keys, filled = _replace_in_paragraph(p, values)
         if fit and filled and fit_paragraph(p, filled, min_size) == "cut":
             too_long += keys
+    if ticks is not None:
+        set_checkboxes(d, *ticks)
     d.save(out_path)
     return too_long
 
@@ -239,8 +264,10 @@ def values_for(store, permit):
     day = generator.parse_date(permit["date"])
     job = store.job(permit["job_id"]) or {}
     no = permit.get("permit_no")
+    empty_field = "\u2002" * 5  # how Word shows an empty form field
     return {
         "SHIP": s.get("ship_name", ""),
+        "LOTO_NAME": generator.loto_text(store, permit.get("loto")) or empty_field,
         "DATE": day.strftime("%d/%m/%Y"),
         "YEAR": day.strftime("%Y"),
         "PERMIT_NO": str(no) if no else " " * 14,
@@ -298,15 +325,17 @@ def write_permits(store, permits, replace_dates=False):
         raise FileNotFoundError(f"Template not found: {template}")
     os.makedirs(folder, exist_ok=True)
 
+    numbers = generator.permit_numbers(store, permits, replace_dates)
     if replace_dates:
         dates = {p["date"] for p in permits}
         store.history = [h for h in store.history if h["date"] not in dates]
 
     paths, warnings = [], []
-    for p in permits:
-        if s.get("auto_number") and not p.get("permit_no"):
-            p["permit_no"] = s["next_permit_no"]
-            s["next_permit_no"] = int(s["next_permit_no"]) + 1
+    for p, no in zip(permits, numbers):
+        if not p.get("permit_no") and no:
+            p["permit_no"] = no
+            if s.get("permit_numbering") == "sequential":
+                s["next_permit_no"] = int(no) + 1
         path = unique_path(folder, file_name(store, p))
         min_size = float(s.get("min_font_size", 6.5))
         values = values_for(store, p)
@@ -314,7 +343,8 @@ def write_permits(store, permits, replace_dates=False):
         if res and not res[1]:  # a big team: "2E DMITRII" instead of "2ND ENG DMITRII"
             values["ISSUED_TO"] = generator.issued_to_text(store, p["crew"], compact=True)
         too_long = fill_template(template, values, path,
-                                 fit=s.get("fit_one_line", True), min_size=min_size)
+                                 fit=s.get("fit_one_line", True), min_size=min_size,
+                                 ticks=(bool(s.get("tick_ao", True)), bool(s.get("tick_pc", True))))
         paths.append(path)
         if too_long:
             warnings.append((os.path.basename(path), sorted(set(too_long))))

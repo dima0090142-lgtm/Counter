@@ -37,11 +37,13 @@ cd C:\PTW
 python -m pip install -r requirements.txt pyinstaller pytest
 python -m pytest -q tests
 python -m PyInstaller --noconfirm --clean --windowed --name PTW_Generator ^
-    --add-data "data;data" --add-data "templates;templates" --add-data "sounds;sounds" ^
+    --add-data "defaults;defaults" --add-data "templates;templates" --add-data "sounds;sounds" ^
+    --add-data "icons;icons" --icon icons\ptw.ico ^
     --hidden-import babel.numbers main.py
 ```
 
-Готовая программа: `C:\PTW\dist\PTW_Generator\PTW_Generator.exe`.
+Готовая программа: `C:\PTW\dist\PTW_Generator\PTW_Generator.exe` (с иконкой — лист
+пермита с каской).
 
 > Нужна **вся папка** `dist\PTW_Generator`, а не только exe: рядом лежит `_internal`
 > с библиотеками. Для удобства на exe можно сделать ярлык на рабочем столе.
@@ -56,6 +58,12 @@ python -m PyInstaller --noconfirm --clean --windowed --name PTW_Generator ^
 - Рядом с exe появятся папки `data\` (экипаж, работы, настройки, история),
   `templates\` (шаблон Word) и `sounds\` (звуки). **Это ваши данные:** при обновлении программы
   заменяйте только exe и `_internal`, а `data`, `templates` и `sounds` оставляйте.
+- **Обновление с прошлой версии.** Ваш список работ в `data\` не меняется сам. Чтобы получить
+  новые работы (фильтры, сепараторы, переименование DG → AE), откройте
+  **Данные → Загрузить стандартный список работ…**: «Да» заменяет ваш список стандартным,
+  «Нет» только добавляет недостающие работы.
+- Стандартные списки (экипаж, работы, ранги) лежат внутри программы в `defaults\`,
+  их никто не меняет; программа копирует их в `data\` при первом запуске.
 - Программа попросит выбрать папку для пермитов (**Параметры → Настройки → Файлы**).
 - Язык меняется в **Настройки → Общие → Язык** (English / Русский).
 
@@ -73,10 +81,11 @@ python -m PyInstaller --noconfirm --clean --windowed --name PTW_Generator ^
 5. Редактор работ (**Данные → Работы**) сразу предупреждает о слишком длинном тексте.
 
 Как проверено:
-- `tools/check_print.py` строит пермит на **каждую** из 103 работ с максимальной
-  командой и самыми длинными именами, плюс стресс-пермит с очень длинным текстом и
-  всем экипажем. Затем конвертирует их через LibreOffice в PDF и проверяет, что везде
-  **ровно 1 страница** и каждое значение стоит в одной строке. Результат: 104 из 104.
+- `tools/check_print.py` строит пермит на **каждую** из 136 работ с максимальной
+  командой и самыми длинными именами (плюс P.C. 2E/3E, раздел 6, LOTO, галочки A.O./P.C.),
+  и стресс-пермит с очень длинным текстом и всем экипажем. Затем конвертирует их через
+  LibreOffice в PDF и проверяет, что везде **ровно 1 страница** и каждое значение стоит
+  в одной строке. Результат: 137 из 137.
 - Чтобы повторить проверку у себя, установите LibreOffice и запустите
   ```
   python tools/check_print.py

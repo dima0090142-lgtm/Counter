@@ -4,76 +4,98 @@
     "short": "C/ENG",
     "full": "Chief Engineer",
     "officer": true,
-    "order": 1
+    "order": 1,
+    "can_pc": false,
+    "can_loto": true
   },
   {
     "code": "2E",
     "short": "2ND ENG",
     "full": "Second Engineer",
     "officer": true,
-    "order": 2
+    "order": 2,
+    "can_pc": true,
+    "can_loto": true
   },
   {
     "code": "3E",
     "short": "3RD ENG",
     "full": "Third Engineer",
     "officer": true,
-    "order": 3
+    "order": 3,
+    "can_pc": true,
+    "can_loto": true
   },
   {
     "code": "4E",
     "short": "4TH ENG",
     "full": "Fourth Engineer",
     "officer": true,
-    "order": 4
+    "order": 4,
+    "can_pc": false,
+    "can_loto": false
   },
   {
     "code": "5E",
     "short": "JR ENG",
     "full": "Junior Engineer",
     "officer": true,
-    "order": 5
+    "order": 5,
+    "can_pc": false,
+    "can_loto": false
   },
   {
     "code": "ETO",
     "short": "ETO",
     "full": "Electro-Technical Officer",
     "officer": true,
-    "order": 6
+    "order": 6,
+    "can_pc": true,
+    "can_loto": true
   },
   {
     "code": "AEO",
     "short": "AEO",
     "full": "Assistant Electrical Officer",
     "officer": true,
-    "order": 7
+    "order": 7,
+    "can_pc": true,
+    "can_loto": true
   },
   {
     "code": "MM",
     "short": "MOTORMAN",
     "full": "Motorman",
     "officer": false,
-    "order": 10
+    "order": 10,
+    "can_pc": false,
+    "can_loto": false
   },
   {
     "code": "FITTR",
     "short": "FITTER",
     "full": "Fitter",
     "officer": false,
-    "order": 11
+    "order": 11,
+    "can_pc": false,
+    "can_loto": false
   },
   {
     "code": "WLDR",
     "short": "WELDER",
     "full": "Welder",
     "officer": false,
-    "order": 12
+    "order": 12,
+    "can_pc": false,
+    "can_loto": false
   },
   {
     "code": "WIPR",
     "short": "WIPER",
     "full": "Wiper",
     "officer": false,
-    "order": 13
+    "order": 13,
+    "can_pc": false,
+    "can_loto": false
   }
 ]

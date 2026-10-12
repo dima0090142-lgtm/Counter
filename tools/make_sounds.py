@@ -96,49 +96,47 @@ def save(name, buf, peak=0.85):
 
 
 def startup():
-    """Warm rising chord with chimes on top, ~2.5 s."""
-    chord = ["C4", "G4", "C5", "E5", "G5"]
-    parts = [(0.0, pad(note("C3"), 2.6, attack=0.5, decay=0.9), 0.6)]
-    for i, n in enumerate(chord):
-        parts.append((0.08 + i * 0.13, pad(note(n), 2.4 - i * 0.13), 0.45))
-    for i, n in enumerate(["G5", "C6", "E6", "G6"]):
-        parts.append((0.7 + i * 0.18, bell(note(n), 1.4, decay=3.2), 0.22))
-    parts.append((1.45, bell(note("C7"), 1.0, decay=3.5), 0.12))
-    return fade_out(echo(mix(2.6, *parts), 0.16, 0.3, 3), 0.4)
+    """Warm rising chord with a chime on top, ~1.3 s."""
+    parts = [(0.0, pad(note("C3"), 1.3, attack=0.25, decay=1.6), 0.55)]
+    for i, n in enumerate(["C4", "G4", "C5", "E5", "G5"]):
+        parts.append((0.04 + i * 0.07, pad(note(n), 1.2 - i * 0.07, attack=0.12, decay=2.0), 0.45))
+    for i, n in enumerate(["G5", "C6", "E6"]):
+        parts.append((0.38 + i * 0.09, bell(note(n), 0.8, decay=4.5), 0.22))
+    return fade_out(echo(mix(1.3, *parts), 0.1, 0.25, 2), 0.25)
 
 
 def tada():
-    """Short fanfare: two pick-up notes and a big chord."""
-    parts = [(0.0, brass(note("G4"), 0.16, 6), 0.7), (0.15, brass(note("C5"), 0.16, 6), 0.7)]
+    """Short fanfare: two pick-up notes and a chord, ~0.9 s."""
+    parts = [(0.0, brass(note("G4"), 0.1, 9), 0.7), (0.09, brass(note("C5"), 0.1, 9), 0.7)]
     for n in ("C4", "G4", "C5", "E5", "G5"):
-        parts.append((0.3, brass(note(n), 1.1, 2.4), 0.5))
-    parts.append((0.3, bell(note("C6"), 0.9), 0.25))
-    return fade_out(echo(mix(1.4, *parts), 0.09, 0.25, 2), 0.2)
+        parts.append((0.18, brass(note(n), 0.7, 4.0), 0.5))
+    parts.append((0.18, bell(note("C6"), 0.6, 6), 0.25))
+    return fade_out(echo(mix(0.9, *parts), 0.07, 0.2, 1), 0.15)
 
 
 def ding():
-    return fade_out(mix(0.7, (0.0, bell(note("E6"), 0.7, 5.5), 1.0),
-                        (0.0, bell(note("E5"), 0.7, 5), 0.35)))
+    return fade_out(mix(0.35, (0.0, bell(note("E6"), 0.35, 9), 1.0),
+                        (0.0, bell(note("E5"), 0.35, 8), 0.35)), 0.06)
 
 
 def chord():
-    """Error: three-note bell chord, slightly dark."""
-    parts = [(0.0, bell(note(n), 0.8, 4.5), 0.6) for n in ("A4", "C5", "E5")]
-    parts.append((0.0, bell(note("A3"), 0.8, 4), 0.4))
-    return fade_out(mix(0.8, *parts))
+    """Error: three-note bell chord, slightly dark, ~0.45 s."""
+    parts = [(0.0, bell(note(n), 0.45, 7.5), 0.6) for n in ("A4", "C5", "E5")]
+    parts.append((0.0, bell(note("A3"), 0.45, 7), 0.4))
+    return fade_out(mix(0.45, *parts), 0.06)
 
 
 def exclamation():
-    return fade_out(mix(0.7, (0.0, bell(note("B5"), 0.35, 7), 0.8),
-                        (0.14, bell(note("G5"), 0.55, 5), 0.8)))
+    return fade_out(mix(0.4, (0.0, bell(note("B5"), 0.2, 12), 0.8),
+                        (0.09, bell(note("G5"), 0.31, 9), 0.8)), 0.06)
 
 
 def shutdown():
-    """Falling chord for exit, ~1.3 s."""
+    """Falling chord for exit, ~0.8 s."""
     parts = []
     for i, n in enumerate(["G5", "E5", "C5", "G4", "C4"]):
-        parts.append((i * 0.12, pad(note(n), 1.2 - i * 0.08, attack=0.05, decay=2.2), 0.5))
-    return fade_out(echo(mix(1.3, *parts), 0.14, 0.25, 2), 0.25)
+        parts.append((i * 0.07, pad(note(n), 0.75 - i * 0.05, attack=0.03, decay=3.5), 0.5))
+    return fade_out(echo(mix(0.8, *parts), 0.09, 0.2, 1), 0.2)
 
 
 def click():

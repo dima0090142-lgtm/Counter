@@ -23,6 +23,7 @@ RUN_REPLACEMENTS = {
     "Fourth Engineer/Parth Kausal": "{{PC}}",
     "Third Engineer/ Arun Singh": "{{TRANSFER_TO}}",
     "Second Engineer/ Gleb Strizhkov": "{{PC_CLOSE}}",
+    " MSC Alix 3": " {{SHIP}}",
 }
 
 
@@ -115,6 +116,22 @@ def main(src, dst):
                     r = copy.deepcopy(sample_run)
                     set_text(r, ph)
                     target.append(r)
+
+    # LOTO table: the first "Rank/Name (A.O.)" form field gets the LOTO person
+    for tr in d.element.body.iter(qn("w:tr")):
+        cells = tr.findall(qn("w:tc"))
+        if cells and "".join(t.text or "" for t in cells[0].iter(qn("w:t"))).startswith("Rank/Name"):
+            row = tr.getnext()
+            while row is not None and row.tag != qn("w:tr"):
+                row = row.getnext()
+            first = row.findall(qn("w:tc"))[0]
+            texts = [t for t in first.iter(qn("w:t"))]
+            texts[0].text = "{{LOTO_NAME}}"
+            for t in texts[1:]:
+                t.text = ""
+            break
+    else:
+        print("LOTO table not found - {{LOTO_NAME}} not placed")
 
     d.save(dst)
     leftovers = [p_text(p) for p in paragraphs(docx.Document(dst))

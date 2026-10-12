@@ -41,20 +41,58 @@ def test_job_not_repeated_within_window(store):
 
 
 def test_crew_matches_job_ranks_and_ce_not_used(store):
-    for p in make_plan(store, 60):
+    for p in make_plan(store, 90):
         job = store.job(p["job_id"])
         ranks = [store.member(i)["rank"] for i in p["crew"]]
-        assert ranks[0] in job["lead_ranks"]
-        allowed = set(job["lead_ranks"]) | set(job["officer_ranks"]) | set(job["rating_ranks"])
+        assert store.member(p["lead"])["rank"] in job["lead_ranks"]
+        allowed = (set(job["lead_ranks"]) | set(job["officer_ranks"]) | set(job["rating_ranks"])
+                   | set(job["pc_ranks"] or store.settings["pc_supervisor_ranks"]))
         assert set(ranks) <= allowed
         assert "CE" not in ranks
         assert len(set(p["crew"])) == len(p["crew"])
-        assert p["close"] == p["crew"][0]
+        assert p["crew"] == generator.sort_by_rank(store, p["crew"])
+
+
+def test_only_allowed_ranks_sign_as_pc(store):
+    """4E (cadet), 5E and ratings never sign sections 5, 6 or 7 (PSC)."""
+    plan = make_plan(store, 120)
+    for p in plan:
+        assert p["pc"] and p["close"], p
+        for role in ("pc", "transfer", "close"):
+            if p[role]:
+                assert p[role] in p["crew"]
+                assert store.member(p[role])["rank"] in ("2E", "3E", "ETO", "AEO"), (role, p)
+
+
+def test_2e_and_3e_take_turns_as_pc_for_4e_jobs(store):
+    plan = make_plan(store, 150)
+    sup = [store.member(p["pc"])["rank"] for p in plan
+           if store.member(p["lead"])["rank"] in ("4E", "5E") and "remesan" not in p["crew"]]
+    assert len(sup) > 30
+    assert set(sup) == {"2E", "3E"}
+    assert abs(sup.count("2E") - sup.count("3E")) <= len(sup) * 0.25
+
+
+def test_loto_person_for_isolation_jobs(store):
+    plan = make_plan(store, 60)
+    for p in plan:
+        if store.job(p["job_id"])["loto"]:
+            assert p["loto"] == "remesan"  # the AEO applies LOTO
+        else:
+            assert p["loto"] == ""
+    assert any(p["loto"] for p in plan) and not all(p["loto"] for p in plan)
+
+
+def test_loto_falls_back_to_pc_without_electrician(store):
+    store.member("remesan")["active"] = False
+    job = store.job("ae_cooling_pump_overhaul")
+    team = generator.Planner(store, random.Random(3)).make_team(job, dt.date(2026, 3, 1))
+    assert team["loto"] == team["pc"]
 
 
 def test_lead_rotates(store):
     plan = make_plan(store, 120)
-    same = sum(a["crew"][0] == b["crew"][0] for a, b in zip(plan, plan[1:]))
+    same = sum(a["lead"] == b["lead"] for a, b in zip(plan, plan[1:]))
     assert same < len(plan) * 0.15
 
 
@@ -100,19 +138,22 @@ def _all_text(path):
 
 
 def test_write_permits_fills_template(store):
-    store.settings["auto_number"] = True
+    store.settings["permit_numbering"] = "sequential"
     store.settings["next_permit_no"] = 41
+    store.settings["ship_name"] = "MSC Test Ship"
     plan = [{"date": "2026-07-13", "job_id": "me_fuel_valves_overhaul",
-             "crew": ["sukhoverkhii", "singh", "kaushal"],
-             "pc": "kaushal", "transfer": "singh", "close": "sukhoverkhii"}]
+             "crew": ["sukhoverkhii", "singh", "kaushal"], "lead": "sukhoverkhii",
+             "pc": "singh", "transfer": "sukhoverkhii", "close": "sukhoverkhii",
+             "loto": "remesan"}]
     path = docgen.write_permits(store, plan)[0][0]
     assert path.endswith("2026-07-13 ME Fuel Valves Overhaul.docx")
     text = _all_text(path)
     assert "{{" not in text
-    for s in ("13/07/2026", "E-   41/2026", "Main Engine fuel injection valves",
+    for s in ("Ship:  MSC Test Ship", "13/07/2026", "E-   41/2026",
+              "Main Engine fuel injection valves",
               "Risk Assessment number RA-001", "2ND ENG DMITRII, 3RD ENG ARUN, 4TH ENG PARTH",
-              "Chief Engineer / Vadim Medvedev", "Fourth Engineer / Parth Kaushal",
-              "Third Engineer / Arun Singh", "Asst. Second Engineer / Dmitrii Sukhoverkhii",
+              "Chief Engineer / Vadim Medvedev", "Third Engineer / Arun Singh",
+              "Asst. Second Engineer / Dmitrii Sukhoverkhii", "AEO Abhijith Remesan",
               "08:00", "12:00", "20:00"):
         assert s in text, s
     assert store.settings["next_permit_no"] == 42
@@ -120,8 +161,8 @@ def test_write_permits_fills_template(store):
 
 
 def test_no_transfer_leaves_section_6_empty(store):
-    plan = [{"date": "2026-07-14", "job_id": "fo_strainers_cleaning", "crew": ["pal", "padilla"],
-             "pc": "pal", "transfer": "", "close": "pal"}]
+    plan = [{"date": "2026-07-14", "job_id": "fo_strainers_cleaning", "crew": ["singh", "pal"],
+             "pc": "singh", "transfer": "", "close": "singh"}]
     text = _all_text(docgen.write_permits(store, plan)[0][0])
     assert text.count("14/07/2026") == 3  # header, section 5, section 7
     assert "12:00" not in text
@@ -244,3 +285,104 @@ def test_sound_files_and_player(monkeypatch):
     sound.play("does_not_exist")  # missing file: silently nothing
     monkeypatch.setattr(sound, "enabled", False)
     sound.play("startup")
+
+
+def _numbers(store, dates):
+    return generator.permit_numbers(store, [{"date": d} for d in dates])
+
+
+def test_permit_number_is_day_of_year(store):
+    assert store.settings["permit_numbering"] == "day"
+    assert _numbers(store, ["2026-10-12", "2026-10-13"]) == ["285", "286"]
+    assert _numbers(store, ["2026-10-12", "2026-10-12", "2026-01-05"]) == ["285-1", "285-2", "5"]
+    store.history = [{"date": "2026-10-12", "job_id": "x", "crew": [], "permit_no": "285"}]
+    assert _numbers(store, ["2026-10-12"]) == ["285-2"]  # second permit that day
+    assert generator.permit_numbers(store, [{"date": "2026-10-12"}], replace_dates=True) == ["285"]
+
+
+def test_day_number_is_printed(store):
+    p = {"date": "2026-10-12", "job_id": "fo_strainers_cleaning", "crew": ["singh"],
+         "pc": "singh", "transfer": "", "close": "singh"}
+    (path,), _ = docgen.write_permits(store, [p])
+    assert "E-   285/2026" in _all_text(path)
+    assert store.history[-1]["permit_no"] == "285"
+
+
+def test_blank_numbering(store):
+    store.settings["permit_numbering"] = "blank"
+    assert _numbers(store, ["2026-10-12"]) == [""]
+
+
+def _boxes(path):
+    rows = []
+    for tr in docx.Document(path).element.body.iter(qn("w:tr")):
+        boxes = list(tr.iter(qn("w:checkBox")))
+        if len(boxes) == 2:
+            rows.append(tuple(b.find(qn("w:default")).get(qn("w:val")) for b in boxes))
+    return rows
+
+
+@pytest.mark.parametrize("ao,pc", [(True, True), (True, False), (False, False)])
+def test_ao_pc_boxes_ticked_by_setting(store, ao, pc):
+    store.settings.update(tick_ao=ao, tick_pc=pc)
+    p = {"date": "2026-10-12", "job_id": "fo_strainers_cleaning", "crew": ["singh"],
+         "pc": "singh", "transfer": "", "close": "singh"}
+    (path,), _ = docgen.write_permits(store, [p])
+    rows = _boxes(path)
+    assert len(rows) == 12  # 6 hazards + 6 precautions
+    assert set(rows) == {("1" if ao else "0", "1" if pc else "0")}
+
+
+def test_ticks_on_by_default():
+    assert storage.DEFAULT_SETTINGS["tick_ao"] and storage.DEFAULT_SETTINGS["tick_pc"]
+
+
+def test_no_diesel_generator_names_and_responsibilities(store):
+    for j in store.jobs:
+        assert "DG " not in j["title"] and "Diesel generator" not in j["plant"], j["title"]
+        assert "D/G" not in j["location"]
+    lead = {j["title"]: j["lead_ranks"][0] for j in store.jobs}
+    for t, r in lead.items():
+        if t.startswith(("Boiler", "STP", "Sewage")):
+            assert r == "3E", t
+        if "Purifier" in t or t.startswith(("FO ", "DO ")):
+            assert r == "4E", t
+    titles = set(lead)
+    for t in ("HFO Purifier Bowl Cleaning", "LO Purifier Bowl Cleaning", "DO Purifier Overhaul",
+              "ME TC Air Filter Renewal", "AE TC Air Filter Renewal", "Main SW Pump Strainer"):
+        assert t in titles
+
+
+def test_old_settings_and_ranks_are_migrated(tmp_path, monkeypatch):
+    import json
+    data = tmp_path / "data"
+    data.mkdir()
+    (data / "settings.json").write_text(json.dumps({"auto_number": True}))
+    (data / "ranks.json").write_text(json.dumps([{"code": "4E", "short": "4TH ENG",
+                                                   "full": "Fourth Engineer", "officer": True,
+                                                   "order": 4},
+                                                  {"code": "3E", "short": "3RD ENG",
+                                                   "full": "Third Engineer", "officer": True,
+                                                   "order": 3}]))
+    monkeypatch.setattr(storage, "DATA_DIR", str(data))
+    st = storage.Store()
+    assert st.settings["permit_numbering"] == "sequential"
+    assert st.rank("4E")["can_pc"] is False and st.rank("3E")["can_pc"] is True
+    assert all("loto" in j for j in st.jobs)
+
+
+def test_sounds_are_short():
+    import wave
+
+    from ptw import sound
+    for name in ("startup", "tada", "ding", "chord", "exclamation", "shutdown"):
+        with wave.open(sound.path(name)) as w:
+            assert w.getnframes() / w.getframerate() <= 1.6, name
+
+
+def test_icons_exist():
+    for size in (16, 32, 48, 64):
+        assert os.path.exists(storage.resource("icons", f"ptw_{size}.png"))
+    Image = pytest.importorskip("PIL.Image")  # only to read the .ico sizes
+    ico = Image.open(storage.resource("icons", "ptw.ico"))
+    assert {(16, 16), (32, 32), (256, 256)} <= set(ico.info["sizes"])

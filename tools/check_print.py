@@ -42,7 +42,7 @@ def find_soffice():
 
 
 def worst_crew(store, job):
-    """Lead + the most helpers the job allows, longest names first."""
+    """Lead + the most helpers the job allows (longest names first) + a P.C. if needed."""
     def by_len(ranks, exclude=()):
         ms = [m for m in store.crew if m.get("active", True) and m["rank"] in ranks
               and m["id"] not in exclude]
@@ -52,30 +52,38 @@ def worst_crew(store, job):
     team = [m["id"] for m in lead]
     team += [m["id"] for m in by_len(job.get("officer_ranks", []), team)[:job.get("officers", [0, 0])[1]]]
     team += [m["id"] for m in by_len(job.get("rating_ranks", []), team)[:job.get("ratings", [0, 0])[1]]]
+    if team and not any(store.can_pc(i) for i in team):
+        ranks = job.get("pc_ranks") or store.settings.get("pc_supervisor_ranks") or []
+        team += [m["id"] for m in by_len(ranks, team)[:1]]
     return team
 
 
-def longest_officer(store):
-    officers = [m["id"] for m in store.crew if store.rank(m["rank"]).get("officer")]
-    return max(officers, key=lambda i: len(generator.sign_text(store, i)))
+def longest(store, test):
+    ids = [m["id"] for m in store.crew if test(m["id"])]
+    return max(ids, key=lambda i: len(generator.sign_text(store, i)))
 
 
 def build_permits(store):
     permits = []
-    officer = longest_officer(store)
-    for n, job in enumerate(store.jobs):
-        crew = worst_crew(store, job)
-        if not crew:
+    officer = longest(store, store.can_pc)
+    loto = longest(store, store.can_loto)
+    for job in store.jobs:
+        team = worst_crew(store, job)
+        if not team:
             continue
-        permits.append({"date": "2026-12-28", "job_id": job["id"], "crew": crew,
-                        "pc": crew[-1], "transfer": officer, "close": crew[0],
-                        "permit_no": 9000 + n})
+        crew = generator.sort_by_rank(store, team)
+        pc, _transfer, close = generator.default_roles(store, crew, team[0])
+        # always fill section 6 and LOTO with the longest names: worst case for the layout
+        permits.append({"date": "2026-12-28", "job_id": job["id"], "crew": crew, "lead": team[0],
+                        "pc": pc, "transfer": officer, "close": close, "loto": loto,
+                        "permit_no": "366-9"})
     # stress: very long texts and every crew member on one permit
     stress = dict(store.jobs[0], id="zz_stress_long_text", title="ZZ Stress long text", **LONG)
     store.jobs.append(stress)
     everybody = [m["id"] for m in store.crew if m["id"] != store.settings.get("ao_id")]
     permits.append({"date": "2026-12-29", "job_id": stress["id"], "crew": everybody,
-                    "pc": officer, "transfer": officer, "close": officer, "permit_no": 99999})
+                    "pc": officer, "transfer": officer, "close": officer, "loto": loto,
+                    "permit_no": "99999"})
     return permits
 
 
@@ -119,11 +127,13 @@ def one_line_problems(pdf, values, cut=()):
     return bad
 
 
-CHECK_KEYS = ("LOCATION", "PLANT", "WORK", "ISSUED_TO", "AO", "PC", "TRANSFER_TO", "PC_CLOSE")
+CHECK_KEYS = ("LOCATION", "PLANT", "WORK", "ISSUED_TO", "AO", "PC", "TRANSFER_TO", "PC_CLOSE",
+              "LOTO_NAME")
 
 
 def run(store, outdir, soffice):
-    store.settings.update(output_dir=outdir, auto_number=False, fit_one_line=True)
+    store.settings.update(output_dir=outdir, fit_one_line=True, tick_ao=True, tick_pc=True,
+                          ship_name=store.settings.get("ship_name") or "MSC MEDITERRANEAN EXAMPLE")
     permits = build_permits(store)
     storage.save = lambda *a, **k: None  # never touch the real history / settings
     paths, warnings = docgen.write_permits(store, permits)

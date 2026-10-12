@@ -164,6 +164,17 @@ def scrolled_tree(master, columns, widths, height=12):
     tree.configure(yscrollcommand=sb.set)
     tree.pack(side="left", fill="both", expand=True)
     sb.pack(side="right", fill="y")
+
+    def fit(event):
+        """Shrink the wide column so that all columns stay visible."""
+        stretch = [c for (c, _), w in zip(columns, widths) if w >= 250]
+        if not stretch:
+            return
+        fixed = sum(w for w in widths if w < 250)
+        room = max(120, event.width - fixed - 4)
+        for c in stretch:
+            tree.column(c, width=room // len(stretch))
+    tree.bind("<Configure>", fit, add="+")
     return f, tree
 
 
@@ -225,37 +236,6 @@ def draw_icon(c, kind, x=0, y=0):
         c.create_text(x + 15, y + 13, text=mark, fill=NAVY, font=("Times New Roman", 15, "bold"))
 
 
-def draw_permit_icon(c, x, y, scale=1.0):
-    """A permit sheet with a red stamp and a yellow hard hat."""
-    s = scale
-    c.create_rectangle(x + 4 * s, y + 4 * s, x + 44 * s, y + 56 * s, fill="black", outline="")
-    c.create_polygon(x, y, x + 30 * s, y, x + 40 * s, y + 10 * s, x + 40 * s, y + 52 * s,
-                     x, y + 52 * s, fill=WHITE, outline="black")
-    c.create_polygon(x + 30 * s, y, x + 30 * s, y + 10 * s, x + 40 * s, y + 10 * s,
-                     fill=BG, outline="black")
-    for i in range(6):
-        yy = y + (14 + i * 6) * s
-        c.create_line(x + 6 * s, yy, x + (34 if i % 2 else 28) * s, yy, fill=DARK)
-    c.create_rectangle(x + 8 * s, y + 38 * s, x + 30 * s, y + 47 * s, outline="#c00000", width=2)
-    c.create_text(x + 19 * s, y + 42.5 * s, text="PTW", fill="#c00000",
-                  font=("Arial", max(6, int(6 * s)), "bold"))
-    # hard hat
-    hx, hy = x + 30 * s, y + 40 * s
-    c.create_arc(hx, hy, hx + 24 * s, hy + 22 * s, start=0, extent=180,
-                 fill="#ffcc00", outline="black", style="chord")
-    c.create_rectangle(hx - 3 * s, hy + 10 * s, hx + 27 * s, hy + 13 * s,
-                       fill="#ffcc00", outline="black")
-    c.create_line(hx + 12 * s, hy + 1 * s, hx + 12 * s, hy + 10 * s, fill="#b38f00", width=2)
-
-
-def gradient(c, x0, y0, x1, y1, steps=64):
-    for i in range(steps):
-        g = int(0x80 * i / steps)
-        a = x0 + (x1 - x0) * i // steps
-        b = x0 + (x1 - x0) * (i + 1) // steps + 1
-        c.create_rectangle(a, y0, b, y1, outline="", fill=f"#00{g:02x}80")
-
-
 # ----------------------------------------------------------------------
 # Message box in Win95 style
 # ----------------------------------------------------------------------
@@ -308,73 +288,112 @@ class MessageBox(tk.Toplevel):
 # Splash screen
 # ----------------------------------------------------------------------
 
+def _mix(c1, c2, t):
+    return "#%02x%02x%02x" % tuple(int(a + (b - a) * t) for a, b in zip(c1, c2))
+
+
 class Splash(tk.Toplevel):
-    """Small borderless start-up window with a block progress bar."""
+    """Small borderless start-up window in the Win95 boot-screen mood:
+    sky with clouds, the program name in the middle and a running colour band."""
 
-    W, H = 420, 236
+    W, H = 460, 270
+    BAND = ((0, 0, 128), (0, 128, 255), (0, 200, 200), (255, 255, 255), (0, 128, 255))
 
-    def __init__(self, master, title, subtitle, info, version, steps, duration=2000,
-                 on_done=None):
+    def __init__(self, master, title, subtitle, version, steps, icon=None, duration=2000,
+                 on_done=None, footer=""):
         super().__init__(master)
         self.overrideredirect(True)
-        self.configure(bg=BG)
+        self.configure(bg="black")
         try:
             self.attributes("-topmost", True)
         except tk.TclError:
             pass
-        x = (self.winfo_screenwidth() - self.W) // 2
-        y = (self.winfo_screenheight() - self.H) // 3
-        self.geometry(f"{self.W}x{self.H}+{x}+{y}")
-        self.c = c = tk.Canvas(self, width=self.W, height=self.H, bg=BG, highlightthickness=0)
+        W, H = self.W, self.H
+        x = (self.winfo_screenwidth() - W) // 2
+        y = (self.winfo_screenheight() - H) // 3
+        self.geometry(f"{W}x{H}+{x}+{y}")
+        self.c = c = tk.Canvas(self, width=W, height=H, highlightthickness=0, bd=0, bg=BG)
         c.pack()
         self.steps, self.duration, self.on_done = steps, duration, on_done
-        W, H = self.W, self.H
-        # 3D border: black / grey outside, white / dark inside
+        self.icon = icon
+        sky_h = H - 40
+        # sky: deep blue at the top to pale blue at the horizon
+        for i in range(0, sky_h, 2):
+            c.create_rectangle(0, i, W, i + 2, outline="",
+                               fill=_mix((24, 72, 176), (150, 190, 238), i / sky_h))
+        self._clouds(sky_h)
+        # title block
+        cx = W // 2
+        if icon is not None:
+            c.create_image(cx - 150, 96, image=icon)
+        big = (FONT[0], 24, "bold italic")
+        tx = cx - 108 if icon is not None else cx - 140
+        for dx, dy in ((-1, -1), (1, -1), (-1, 1), (1, 1), (0, 2), (2, 2)):
+            c.create_text(tx + dx, 86 + dy, text=title, anchor="w", fill=WHITE, font=big)
+        c.create_text(tx, 86, text=title, anchor="w", fill=NAVY, font=big)
+        c.create_text(tx + 2, 118, text=subtitle, anchor="w", fill="black",
+                      font=(FONT[0], 11, "bold italic"))
+        c.create_text(W - 9, 13, text=version, anchor="ne", fill="black", font=FONT_BOLD)
+        c.create_text(W - 10, 12, text=version, anchor="ne", fill=WHITE, font=FONT_BOLD)
+        # running band
+        self.band_y = sky_h - 14
+        self.cells = []
+        step = 4
+        for i in range(0, W, step):
+            self.cells.append(c.create_rectangle(i, self.band_y, i + step, self.band_y + 10,
+                                                 outline="", fill=NAVY))
+        # status strip with a progress line
+        c.create_rectangle(0, sky_h, W, H, fill=BG, outline="")
+        c.create_line(0, sky_h, W, sky_h, fill=LIGHT)
+        self.status = c.create_text(10, sky_h + 14, text=steps[0][1] if steps else "",
+                                    anchor="w", fill="black", font=FONT)
+        c.create_text(W - 10, sky_h + 14, text=footer, anchor="e", fill=DARK, font=FONT)
+        c.create_line(10, H - 9, W - 10, H - 9, fill=DARK)
+        c.create_line(10, H - 8, W - 10, H - 8, fill=LIGHT)
+        self.bar = c.create_rectangle(10, H - 12, 10, H - 7, fill=NAVY, outline="")
+        # 3D border
         c.create_rectangle(0, 0, W - 1, H - 1, outline="black")
         c.create_line(1, H - 2, 1, 1, W - 2, 1, fill=LIGHT)
         c.create_line(1, H - 2, W - 2, H - 2, W - 2, 1, fill=DARK)
-        gradient(c, 6, 6, W - 6, 112)
-        c.create_rectangle(6, 6, W - 7, 112, outline=DARK)
-        draw_permit_icon(c, 22, 26, 1.0)
-        big = (FONT[0], 20, "bold italic")
-        c.create_text(98, 50, text=title, anchor="w", fill="black", font=big)
-        c.create_text(96, 48, text=title, anchor="w", fill=WHITE, font=big)
-        c.create_text(98, 80, text=subtitle, anchor="w", fill=WHITE, font=(FONT[0], 11, "italic"))
-        c.create_text(W - 14, 102, text=version, anchor="e", fill=WHITE, font=FONT)
-        c.create_text(14, 130, text=info, anchor="w", fill="black", font=FONT_BOLD)
-        self.status = c.create_text(14, 152, text=steps[0][1] if steps else "", anchor="w",
-                                    fill="black", font=FONT)
-        # sunken progress bar
-        self.bx0, self.by0, self.bx1, self.by1 = 14, 166, W - 14, 186
-        c.create_line(self.bx0, self.by1, self.bx0, self.by0, self.bx1, self.by0, fill=DARK)
-        c.create_line(self.bx0, self.by1, self.bx1, self.by1, self.bx1, self.by0, fill=LIGHT)
-        c.create_rectangle(self.bx0 + 1, self.by0 + 1, self.bx1 - 1, self.by1 - 1,
-                           fill=WHITE, outline="")
-        c.create_line(8, H - 30, W - 8, H - 30, fill=DARK)
-        c.create_line(8, H - 29, W - 8, H - 29, fill=LIGHT)
-        c.create_text(14, H - 15, text=f"© {__import__('datetime').date.today().year}  "
-                      "Daily Permit to Work", anchor="w", fill=DARK, font=FONT)
-        self.blocks = 0
-        self.max_blocks = (self.bx1 - self.bx0 - 4) // 10
         self.lift()
         self.update()
         self.start = time.monotonic()  # wall clock: exactly `duration` even if the app is busy
-        self.after(40, self._tick)
+        self.after(30, self._tick)
+
+    def _clouds(self, sky_h):
+        import random
+        rnd = random.Random(95)
+        for _ in range(9):
+            x = rnd.randint(-30, self.W - 150)
+            y = rnd.choice((rnd.randint(18, 50), rnd.randint(140, sky_h - 40)))
+            w = rnd.randint(60, 130)
+            puffs = [(x + rnd.randint(0, w), y + rnd.randint(-6, 8), rnd.randint(14, 26))
+                     for _ in range(7)]
+            for px, py, r in puffs:  # bluish shade under every puff
+                self.c.create_oval(px - r, py - r // 2 + 5, px + r, py + r // 2 + 9,
+                                   fill="#c7d8ef", outline="")
+            for px, py, r in puffs:
+                self.c.create_oval(px - r, py - r // 2, px + r, py + r // 2,
+                                   fill="#f4f8fd", outline="")
 
     def _tick(self):
-        frac = min(1.0, (time.monotonic() - self.start) * 1000 / self.duration)
-        want = int(self.max_blocks * frac)
-        while self.blocks < want:
-            x = self.bx0 + 3 + self.blocks * 10
-            self.c.create_rectangle(x, self.by0 + 3, x + 7, self.by1 - 3, fill=NAVY, outline="")
-            self.blocks += 1
+        elapsed = time.monotonic() - self.start
+        frac = min(1.0, elapsed * 1000 / self.duration)
+        # colour band moving to the right
+        n = len(self.BAND)
+        shift = elapsed * 1.6
+        for i, item in enumerate(self.cells):
+            t = (i / len(self.cells) * 2 - shift) % 1.0 * n
+            k = int(t)
+            self.c.itemconfigure(item, fill=_mix(self.BAND[k % n], self.BAND[(k + 1) % n], t - k))
+        self.c.coords(self.bar, 10, self.H - 12, 10 + (self.W - 20) * frac, self.H - 7)
         for at, text in self.steps:
             if frac >= at:
                 self.c.itemconfigure(self.status, text=text)
         if frac >= 1.0:
             self.after(60, self._finish)
         else:
-            self.after(40, self._tick)
+            self.after(30, self._tick)
 
     def _finish(self):
         self.destroy()

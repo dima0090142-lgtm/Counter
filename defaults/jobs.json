@@ -26,6 +26,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -56,6 +58,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -85,6 +89,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -114,6 +120,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -143,6 +151,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -172,6 +182,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -201,6 +213,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -230,6 +244,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -259,6 +275,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -288,6 +306,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -317,6 +337,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -347,13 +369,15 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
-    "id": "dg_fuel_injectors_overhaul",
-    "title": "DG Fuel Injectors Overhaul",
-    "location": "Engine Room, D/G flat",
-    "plant": "Diesel generator fuel injectors",
+    "id": "ae_fuel_injectors_overhaul",
+    "title": "AE Fuel Injectors Overhaul",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine fuel injectors",
     "work": "Removal, overhaul and pressure test",
     "ra_no": "RA-013",
     "lead_ranks": [
@@ -376,13 +400,15 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
-    "id": "dg_cylinder_head_overhaul",
-    "title": "DG Cylinder Head Overhaul",
-    "location": "Engine Room, D/G flat",
-    "plant": "Diesel generator cylinder head",
+    "id": "ae_cylinder_head_overhaul",
+    "title": "AE Cylinder Head Overhaul",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine cylinder head",
     "work": "Removal, valves grinding, assembly",
     "ra_no": "RA-014",
     "lead_ranks": [
@@ -405,13 +431,15 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
-    "id": "dg_crankcase_inspection",
-    "title": "DG Crankcase Inspection",
-    "location": "Engine Room, D/G flat",
-    "plant": "Diesel generator crankcase",
+    "id": "ae_crankcase_inspection",
+    "title": "AE Crankcase Inspection",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine crankcase",
     "work": "Crankcase inspection, bearing check",
     "ra_no": "RA-015",
     "lead_ranks": [
@@ -434,13 +462,15 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
-    "id": "dg_lo_filter_renewal",
-    "title": "DG LO Filter Renewal",
-    "location": "Engine Room, D/G flat",
-    "plant": "Diesel generator LO filter",
+    "id": "ae_lo_filter_renewal",
+    "title": "AE LO Filter Renewal",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine LO filter",
     "work": "Renewal of LO filter elements",
     "ra_no": "RA-016",
     "lead_ranks": [
@@ -463,13 +493,15 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
-    "id": "dg_tc_filter_cleaning",
-    "title": "DG TC Filter Cleaning",
-    "location": "Engine Room, D/G flat",
-    "plant": "Diesel generator turbocharger filter",
+    "id": "ae_tc_filter_cleaning",
+    "title": "AE TC Filter Cleaning",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine turbocharger filter",
     "work": "Cleaning of TC air intake filter",
     "ra_no": "RA-017",
     "lead_ranks": [
@@ -492,13 +524,15 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
-    "id": "dg_air_cooler_cleaning",
-    "title": "DG Air Cooler Cleaning",
-    "location": "Engine Room, D/G flat",
-    "plant": "Diesel generator charge air cooler",
+    "id": "ae_air_cooler_cleaning",
+    "title": "AE Air Cooler Cleaning",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine charge air cooler",
     "work": "Removal and cleaning of air cooler",
     "ra_no": "RA-018",
     "lead_ranks": [
@@ -521,13 +555,15 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
-    "id": "dg_cooling_pump_overhaul",
-    "title": "DG Cooling Pump Overhaul",
-    "location": "Engine Room, D/G flat",
-    "plant": "Diesel generator HT/LT cooling pump",
+    "id": "ae_cooling_pump_overhaul",
+    "title": "AE Cooling Pump Overhaul",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine HT/LT cooling pump",
     "work": "Overhaul, seal & bearing renewal",
     "ra_no": "RA-019",
     "lead_ranks": [
@@ -550,6 +586,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -579,6 +617,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -608,6 +648,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -637,6 +679,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -666,6 +710,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -695,6 +741,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -723,6 +771,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -751,6 +801,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -761,10 +813,11 @@
     "work": "Bowl cleaning and inspection",
     "ra_no": "RA-027",
     "lead_ranks": [
-      "4E",
+      "4E"
+    ],
+    "officer_ranks": [
       "5E"
     ],
-    "officer_ranks": [],
     "officers": [
       0,
       0
@@ -778,6 +831,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -806,6 +861,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -834,6 +891,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -863,6 +922,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -891,6 +952,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -919,6 +982,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -946,6 +1011,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -974,6 +1041,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1001,6 +1070,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1011,9 +1082,11 @@
     "work": "Cleaning of chambers, blower check",
     "ra_no": "RA-036",
     "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
       "5E"
     ],
-    "officer_ranks": [],
     "officers": [
       0,
       0
@@ -1027,6 +1100,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1037,10 +1112,11 @@
     "work": "Burner cleaning, chamber inspection",
     "ra_no": "RA-037",
     "lead_ranks": [
-      "5E",
-      "4E"
+      "3E"
     ],
-    "officer_ranks": [],
+    "officer_ranks": [
+      "5E"
+    ],
     "officers": [
       0,
       0
@@ -1054,6 +1130,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1081,6 +1159,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1110,6 +1190,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1136,6 +1218,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -1146,9 +1230,11 @@
     "work": "Changeover and cleaning of strainers",
     "ra_no": "RA-041",
     "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
       "5E"
     ],
-    "officer_ranks": [],
     "officers": [
       0,
       0
@@ -1162,6 +1248,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -1188,6 +1276,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1214,6 +1304,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1240,6 +1332,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -1269,6 +1363,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1298,6 +1394,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1322,6 +1420,8 @@
       0,
       0
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1349,6 +1449,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1374,6 +1476,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1401,6 +1505,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1426,6 +1532,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1456,6 +1564,8 @@
       2,
       3
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1485,6 +1595,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1514,6 +1626,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1543,6 +1657,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1572,6 +1688,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -1600,6 +1718,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1629,6 +1749,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1658,6 +1780,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1687,6 +1811,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1716,6 +1842,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1744,13 +1872,15 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
-    "id": "dg_piston_overhaul",
-    "title": "DG Piston Overhaul",
-    "location": "Engine Room, D/G flat",
-    "plant": "Diesel generator piston & con-rod",
+    "id": "ae_piston_overhaul",
+    "title": "AE Piston Overhaul",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine piston & con-rod",
     "work": "Piston removal, rings renewal, liner check",
     "ra_no": "RA-063",
     "lead_ranks": [
@@ -1773,13 +1903,15 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
-    "id": "dg_fuel_pump_overhaul",
-    "title": "DG Fuel Pump Overhaul",
-    "location": "Engine Room, D/G flat",
-    "plant": "Diesel generator fuel injection pump",
+    "id": "ae_fuel_pump_overhaul",
+    "title": "AE Fuel Pump Overhaul",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine fuel injection pump",
     "work": "Overhaul and timing check",
     "ra_no": "RA-064",
     "lead_ranks": [
@@ -1802,13 +1934,15 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
-    "id": "dg_starting_air_motor",
-    "title": "DG Starting Air Motor",
-    "location": "Engine Room, D/G flat",
-    "plant": "Diesel generator air starting motor",
+    "id": "ae_starting_air_motor",
+    "title": "AE Starting Air Motor",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine air starting motor",
     "work": "Overhaul of air starter",
     "ra_no": "RA-065",
     "lead_ranks": [
@@ -1831,13 +1965,15 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
-    "id": "dg_lo_cooler_cleaning",
-    "title": "DG LO Cooler Cleaning",
-    "location": "Engine Room, D/G flat",
-    "plant": "Diesel generator LO cooler",
+    "id": "ae_lo_cooler_cleaning",
+    "title": "AE LO Cooler Cleaning",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine LO cooler",
     "work": "Opening and cleaning of cooler",
     "ra_no": "RA-066",
     "lead_ranks": [
@@ -1860,13 +1996,15 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
-    "id": "dg_valve_clearance_check",
-    "title": "DG Valve Clearance Check",
-    "location": "Engine Room, D/G flat",
-    "plant": "Diesel generator inlet / exhaust valves",
+    "id": "ae_valve_clearance_check",
+    "title": "AE Valve Clearance Check",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine inlet / exhaust valves",
     "work": "Valve clearance check and adjustment",
     "ra_no": "RA-067",
     "lead_ranks": [
@@ -1889,6 +2027,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1918,6 +2058,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -1946,6 +2088,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -1975,6 +2119,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2004,6 +2150,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2033,6 +2181,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2062,6 +2212,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -2090,6 +2242,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2118,6 +2272,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2146,6 +2302,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -2174,6 +2332,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2203,6 +2363,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2231,6 +2393,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2259,6 +2423,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -2287,6 +2453,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2315,6 +2483,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2343,6 +2513,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2371,6 +2543,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2399,6 +2573,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -2409,8 +2585,7 @@
     "work": "Overhaul, stator / rotor check",
     "ra_no": "RA-086",
     "lead_ranks": [
-      "4E",
-      "5E"
+      "4E"
     ],
     "officer_ranks": [],
     "officers": [
@@ -2426,6 +2601,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2452,6 +2629,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -2477,6 +2656,8 @@
       1,
       2
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -2503,6 +2684,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -2529,6 +2712,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2557,6 +2742,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2583,6 +2770,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2611,6 +2800,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2637,6 +2828,8 @@
       1,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -2661,6 +2854,8 @@
       0,
       0
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -2688,6 +2883,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -2712,6 +2909,8 @@
       0,
       0
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2736,6 +2935,8 @@
       0,
       0
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2763,6 +2964,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2787,6 +2990,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": false,
     "active": true
   },
   {
@@ -2811,6 +3016,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2838,6 +3045,8 @@
       0,
       1
     ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   },
   {
@@ -2863,6 +3072,975 @@
       0,
       0
     ],
+    "pc_ranks": [],
+    "loto": false,
+    "active": true
+  },
+  {
+    "id": "hfo_purifier_bowl_cleaning",
+    "title": "HFO Purifier Bowl Cleaning",
+    "location": "Engine Room, purifier room",
+    "plant": "HFO purifier bowl & disc stack",
+    "work": "Bowl dismantling and cleaning of discs",
+    "ra_no": "RA-104",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "lo_purifier_bowl_cleaning",
+    "title": "LO Purifier Bowl Cleaning",
+    "location": "Engine Room, purifier room",
+    "plant": "M/E LO purifier bowl & disc stack",
+    "work": "Bowl dismantling and cleaning of discs",
+    "ra_no": "RA-105",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "ae_lo_purifier_cleaning",
+    "title": "AE LO Purifier Cleaning",
+    "location": "Engine Room, purifier room",
+    "plant": "A/E LO purifier",
+    "work": "Bowl dismantling and cleaning of discs",
+    "ra_no": "RA-106",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "do_purifier_overhaul",
+    "title": "DO Purifier Overhaul",
+    "location": "Engine Room, purifier room",
+    "plant": "DO purifier",
+    "work": "Bowl dismantling, cleaning, seals renewal",
+    "ra_no": "RA-107",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "purifier_feed_pump_strainer",
+    "title": "Purifier Feed Pump Strainer",
+    "location": "Engine Room, purifier room",
+    "plant": "Purifier feed pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-108",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "fo_transfer_pump_strainer",
+    "title": "FO Transfer Pump Strainer",
+    "location": "Engine Room, FO transfer pumps",
+    "plant": "FO transfer pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-109",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "fo_supply_pump_filter",
+    "title": "FO Supply Pump Filter",
+    "location": "Engine Room, fuel module",
+    "plant": "FO supply / booster pump suction filter",
+    "work": "Opening and cleaning of filter",
+    "ra_no": "RA-110",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "do_transfer_pump_strainer",
+    "title": "DO Transfer Pump Strainer",
+    "location": "Engine Room, DO transfer pump",
+    "plant": "DO transfer pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-111",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "sludge_pump_strainer",
+    "title": "Sludge Pump Strainer",
+    "location": "Engine Room, bottom platform",
+    "plant": "Sludge pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-112",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "me_tc_air_filter_renewal",
+    "title": "ME TC Air Filter Renewal",
+    "location": "Engine Room, M/E turbocharger",
+    "plant": "Main Engine turbocharger air filter",
+    "work": "Renewal of air filter elements / mats",
+    "ra_no": "RA-113",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "me_lo_pump_suction_strainer",
+    "title": "ME LO Pump Suction Strainer",
+    "location": "Engine Room, M/E LO system",
+    "plant": "Main Engine LO pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-114",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "me_lo_fine_filter_cleaning",
+    "title": "ME LO Fine Filter Cleaning",
+    "location": "Engine Room, M/E LO system",
+    "plant": "Main Engine LO fine / indicator filter",
+    "work": "Opening, cleaning or renewal of elements",
+    "ra_no": "RA-115",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "steering_gear_filter_renewal",
+    "title": "Steering Gear Filter Renewal",
+    "location": "Steering gear room",
+    "plant": "Steering gear hydraulic filters",
+    "work": "Renewal of filter elements",
+    "ra_no": "RA-116",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "stern_tube_lo_pump_strainer",
+    "title": "Stern Tube LO Pump Strainer",
+    "location": "Engine Room, shaft tunnel",
+    "plant": "Stern tube LO pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-117",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "ae_tc_air_filter_renewal",
+    "title": "AE TC Air Filter Renewal",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine turbocharger air filter",
+    "work": "Renewal of air filter elements",
+    "ra_no": "RA-118",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "ae_fuel_filter_renewal",
+    "title": "AE Fuel Filter Renewal",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine fuel oil filter",
+    "work": "Renewal of filter elements",
+    "ra_no": "RA-119",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "ae_lo_autofilter_cleaning",
+    "title": "AE LO Autofilter Cleaning",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine LO automatic filter",
+    "work": "Opening and cleaning of filter elements",
+    "ra_no": "RA-120",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "ae_cooling_water_strainer",
+    "title": "AE Cooling Water Strainer",
+    "location": "Engine Room, A/E flat",
+    "plant": "Auxiliary engine HT / LT cooling strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-121",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "boiler_feed_pump_strainer",
+    "title": "Boiler Feed Pump Strainer",
+    "location": "Engine Room, boiler platform",
+    "plant": "Aux boiler feed pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-122",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "boiler_burner_fuel_filter",
+    "title": "Boiler Burner Fuel Filter",
+    "location": "Engine Room, boiler platform",
+    "plant": "Aux boiler burner fuel filter",
+    "work": "Opening and cleaning of filter",
+    "ra_no": "RA-123",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "stp_blower_filter_cleaning",
+    "title": "STP Blower Filter Cleaning",
+    "location": "Engine Room, sewage plant",
+    "plant": "Sewage treatment plant blower air filter",
+    "work": "Cleaning / renewal of air filter",
+    "ra_no": "RA-124",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "stp_discharge_pump_strainer",
+    "title": "STP Discharge Pump Strainer",
+    "location": "Engine Room, sewage plant",
+    "plant": "Sewage plant discharge pump strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-125",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "air_compressor_suction_filter",
+    "title": "Air Compressor Suction Filter",
+    "location": "Engine Room, compressor room",
+    "plant": "Main air compressor suction air filter",
+    "work": "Cleaning / renewal of filter element",
+    "ra_no": "RA-126",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "main_sw_pump_strainer",
+    "title": "Main SW Pump Strainer",
+    "location": "Engine Room, bottom platform",
+    "plant": "Main sea water pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-127",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [
+      "4E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "lt_fw_pump_strainer",
+    "title": "LT FW Pump Strainer",
+    "location": "Engine Room, central cooling system",
+    "plant": "LT fresh water pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-128",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "fire_pump_suction_strainer",
+    "title": "Fire Pump Suction Strainer",
+    "location": "Engine Room, bottom platform",
+    "plant": "Main fire pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-129",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "bilge_pump_suction_strainer",
+    "title": "Bilge Pump Suction Strainer",
+    "location": "Engine Room, bottom platform",
+    "plant": "Bilge pump suction strainer / mud box",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-130",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "WIPR",
+      "MM"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "ballast_pump_strainer",
+    "title": "Ballast Pump Strainer",
+    "location": "Engine Room, pump room",
+    "plant": "Ballast pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-131",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "gs_pump_strainer",
+    "title": "GS Pump Strainer",
+    "location": "Engine Room, bottom platform",
+    "plant": "General service pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-132",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "hydrophore_pump_strainer",
+    "title": "Hydrophore Pump Strainer",
+    "location": "Engine Room, FW hydrophore",
+    "plant": "Fresh water hydrophore pump strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-133",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      0,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "ac_plant_sw_strainer",
+    "title": "AC Plant SW Strainer",
+    "location": "AC plant room",
+    "plant": "AC plant condenser SW strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-134",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      0,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "provision_plant_sw_strainer",
+    "title": "Provision Plant SW Strainer",
+    "location": "Provision plant room",
+    "plant": "Provision plant condenser SW strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-135",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      0,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
+    "active": true
+  },
+  {
+    "id": "fwg_ejector_pump_strainer",
+    "title": "FWG Ejector Pump Strainer",
+    "location": "Engine Room, FWG",
+    "plant": "FWG ejector pump suction strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-136",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      0,
+      1
+    ],
+    "pc_ranks": [],
+    "loto": true,
     "active": true
   }
 ]

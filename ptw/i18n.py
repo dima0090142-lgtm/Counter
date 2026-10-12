@@ -16,15 +16,13 @@ RU = {
     "Auto generate": "Автогенерация", "Manual": "Вручную", "History": "История",
     "Ready. Choose the period and press 'Generate'.":
         "Готово. Выберите период и нажмите «Сгенерировать».",
-    "Welcome!\n\nPlease choose the folder where permits will be saved (Options > Settings).":
-        "Добро пожаловать!\n\nВыберите папку, куда сохранять пермиты (Параметры > Настройки).",
     "Output folder is not set.": "Не выбрана папка для сохранения.",
     "Generates daily Permit to Work forms\nfrom the Word template with rotating jobs and crew.":
         "Создаёт ежедневные Permit to Work\nпо шаблону Word, чередуя работы и экипаж.",
     "Data folder:": "Папка с данными:",
     # permit form
     "Permit": "Пермит", "Date:": "Дата:", "Permit No:": "№ пермита:",
-    "(empty = auto / blank)": "(пусто = авто / не заполнять)", "Job:": "Работа:",
+    "Job:": "Работа:",
     "Location": "Место", "Plant": "Оборудование", "Work": "Работа",
     "Risk Assessment": "Risk Assessment",
     "Crew taking part": "Участники", "Auto-pick crew": "Подобрать экипаж",
@@ -60,7 +58,6 @@ RU = {
     "Could not create files:": "Не удалось создать файлы:",
     "Could not create file:": "Не удалось создать файл:",
     "{n} files created in {folder}": "Создано файлов: {n} в {folder}",
-    "{n} permits created.\n\nOpen the folder?": "Создано пермитов: {n}.\n\nОткрыть папку?",
     "Some values were too long even in the smallest font and were shortened (…) "
     "to keep the permit on one page:":
         "Некоторые значения не уместились даже самым мелким шрифтом и были сокращены (…), "
@@ -91,13 +88,6 @@ RU = {
     "Risk Assessment No": "№ Risk Assessment", "Responsible ranks": "Ответственные ранги",
     "Extra officers ranks": "Ранги доп. офицеров", "Extra officers count": "Кол-во доп. офицеров",
     "Ratings ranks": "Ранги рядовых", "Ratings count": "Кол-во рядовых", "Active": "Активна",
-    "Responsible ranks: one of them leads the job and closes the permit, e.g. 2E.\n"
-    "Counts are 'min-max', e.g. 0-1 or 1-2. Ranks are comma separated: MM, FITTR.\n"
-    "Keep Location / Plant / Work short - the form has one line for each.":
-        "Ответственные ранги: один из них ведёт работу и закрывает пермит, например 2E.\n"
-        "Количество пишется как «мин-макс», например 0-1 или 1-2. Ранги через запятую: MM, FITTR.\n"
-        "Место / Оборудование / Работа пишите коротко: в форме по одной строке на каждое. "
-        "Текст на английском — форма английская.",
     "Rank": "Ранг", "First name": "Имя", "Last name": "Фамилия",
     "Rank title (optional)": "Должность (необязательно)", "On board": "На борту",
     "Rank title overrides the rank name in signatures, e.g. 'Asst. Second Engineer'.\n"
@@ -106,7 +96,6 @@ RU = {
         "Снимите «На борту», когда член экипажа списывается — история сохранится.",
     "Code": "Код", "Short (issued to)": "Кратко (поле Issued to)",
     "Full (signatures)": "Полностью (подписи)",
-    "Officer (can sign as P.C.)": "Офицер (может подписывать как P.C.)",
     "Order (seniority)": "Порядок (старшинство)",
     "(off)": "(списан)",
     # settings
@@ -123,7 +112,6 @@ RU = {
     "Example:": "Пример:",
     "Time permit issued (5):": "Время выдачи (5):", "Time of transfer (6):": "Время передачи (6):",
     "Time permit closed (7):": "Время закрытия (7):",
-    "Number permits automatically": "Нумеровать пермиты автоматически",
     "Next permit number:": "Следующий номер:",
     "Permits per day:": "Пермитов в день:",
     "Do not repeat a job within (days):": "Не повторять работу (дней):",
@@ -152,6 +140,49 @@ RU = {
     "Smallest font size must be a number between 5 and 9.":
         "Минимальный размер шрифта — число от 5 до 9.",
     "Template not found: {path}": "Шаблон не найден: {path}",
+    # version 1.3
+    "(empty = automatic)": "(пусто = автоматически)",
+    "P.C. can be: {ranks}": "P.C. может быть: {ranks}",
+    "4) LOTO procedure, Rank/Name (A.O.):": "4) LOTO, Rank/Name (A.O.):",
+    "yes": "да", "no": "нет", "LOTO": "LOTO",
+    "Nobody in the team can sign as P.C. Add one of: {ranks}.":
+        "В команде нет никого, кто может быть P.C. Добавьте одного из: {ranks}.",
+    "Choose the P.C. for sections 5 and 7.": "Выберите P.C. для разделов 5 и 7.",
+    "Choose who applies LOTO, or untick LOTO.": "Выберите, кто ставит LOTO, или снимите галочку LOTO.",
+    "Consecutive Permit No:": "Consecutive Permit No:",
+    "Day of the year: 285, or 285-1, 285-2 for several a day":
+        "По дню года: 285, а если пермитов за день несколько — 285-1, 285-2",
+    "Running number (next number below)": "Сквозной номер (следующий номер ниже)",
+    "Leave empty (written by pen)": "Не заполнять (вписать ручкой)",
+    "Sections 2 and 3, tick the boxes in the file:": "Разделы 2 и 3, ставить галочки в файле:",
+    "P.C. when the job lead cannot be P.C. (take turns):":
+        "P.C., если ответственный не может быть P.C. (по очереди):",
+    "LOTO is applied first of all by:": "LOTO в первую очередь ставит:",
+    "Who may be P.C. or apply LOTO is set per rank in Data > Ranks.":
+        "Кто может быть P.C. и ставить LOTO, задаётся у рангов: Данные > Ранги.",
+    "Load default jobs list...": "Загрузить стандартный список работ...",
+    "Welcome!\n\nPlease enter the ship name and choose the folder where permits will be saved "
+    "(Options > Settings).":
+        "Добро пожаловать!\n\nВведите название судна и выберите папку, куда сохранять пермиты "
+        "(Параметры > Настройки).",
+    "P.C. ranks (if the lead cannot be P.C.)": "Ранги P.C. (если ответственный не P.C.)",
+    "LOTO (isolation) needed": "Нужен LOTO (изоляция)",
+    "Responsible ranks: one of them leads the job, e.g. 2E. If the lead cannot be P.C.\n"
+    "(4E, 5E), a P.C. from 'P.C. ranks' is added - empty = Settings > Generation.\n"
+    "Counts are 'min-max', e.g. 0-1 or 1-2. Ranks are comma separated: MM, FITTR.\n"
+    "Keep Location / Plant / Work short - the form has one line for each.":
+        "Ответственные ранги: один из них ведёт работу, например 2E. Если он не может быть P.C.\n"
+        "(4E, 5E), добавляется P.C. из «Ранги P.C.»; пусто = Настройки > Генерация.\n"
+        "Количество пишется как «мин-макс», например 0-1 или 1-2. Ранги через запятую: MM, FITTR.\n"
+        "Место / Оборудование / Работа пишите коротко: в форме по одной строке на каждое. "
+        "Текст на английском — форма английская.",
+    "Officer": "Офицер",
+    "Can sign as P.C. (sections 5-7)": "Может быть P.C. (разделы 5-7)",
+    "Can apply LOTO": "Может ставить LOTO",
+    "Default list: {n} jobs.\n\nYes - replace your list with it\nNo - only add the jobs you do not have yet":
+        "В стандартном списке работ: {n}.\n\nДа — заменить ваш список стандартным\n"
+        "Нет — только добавить работы, которых у вас нет",
+    "Jobs list updated: {n} jobs ({added} new).": "Список работ обновлён: {n} работ ({added} новых).",
 }
 
 
