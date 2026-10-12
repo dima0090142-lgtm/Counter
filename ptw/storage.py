@@ -29,6 +29,12 @@ DEFAULT_SETTINGS = {
     "next_permit_no": 1,
     "filename_pattern": "{date} {title}",
     "filename_date_format": "%Y-%m-%d",
+    "fit_one_line": True,
+    "min_font_size": 6.5,
+    "language": "en",
+    "ui_font_size": 8,
+    "open_folder_after": True,
+    "skip_weekdays": [],
 }
 
 

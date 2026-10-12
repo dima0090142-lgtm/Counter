@@ -20,12 +20,13 @@ def daterange(start, end):
 
 # ---------- text for the form ----------
 
-def issued_to_text(store, ids):
+def issued_to_text(store, ids, compact=False):
     parts = []
     for mid in ids:
         m = store.member(mid)
         if m:
-            parts.append(f"{store.rank(m['rank'])['short']} {m['first_name'].upper()}")
+            rank = m["rank"] if compact else store.rank(m["rank"])["short"]
+            parts.append(f"{rank} {m['first_name'].upper()}")
     return ", ".join(parts)
 
 
@@ -158,7 +159,10 @@ class Planner:
         self.load_history(start)
         result = []
         per_day = max(1, int(self.store.settings.get("permits_per_day", 1)))
+        skip = set(self.store.settings.get("skip_weekdays") or [])
         for day in daterange(start, end):
+            if day.weekday() in skip:
+                continue
             used, busy = set(), set()
             for _ in range(per_day):
                 p = self.make_permit(day, used, busy)

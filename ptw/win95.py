@@ -14,18 +14,19 @@ FONT = ("MS Sans Serif", 8)
 FONT_BOLD = ("MS Sans Serif", 8, "bold")
 
 
-def _pick_font(root):
+def _pick_font(root, size):
+    """Microsoft Sans Serif looks like the Win95 system font and has Cyrillic."""
     global FONT, FONT_BOLD
     families = set(tkfont.families(root))
-    for name, size in (("MS Sans Serif", 8), ("Microsoft Sans Serif", 8),
-                       ("Tahoma", 8), ("DejaVu Sans", 8), ("Helvetica", 9)):
+    for name, extra in (("Microsoft Sans Serif", 0), ("MS Sans Serif", 0), ("Tahoma", 0),
+                        ("DejaVu Sans", 0), ("Helvetica", 1)):
         if name in families:
-            FONT, FONT_BOLD = (name, size), (name, size, "bold")
+            FONT, FONT_BOLD = (name, size + extra), (name, size + extra, "bold")
             return
 
 
-def apply_style(root):
-    _pick_font(root)
+def apply_style(root, size=8):
+    _pick_font(root, size)
     root.configure(bg=BG)
     opts = {
         "*Background": BG,
@@ -66,7 +67,7 @@ def apply_style(root):
     st.configure(".", background=BG, font=FONT, foreground="black",
                  fieldbackground=WHITE, troughcolor=BG, borderwidth=2)
     st.configure("Treeview", background=WHITE, fieldbackground=WHITE,
-                 rowheight=18, borderwidth=2, relief="sunken")
+                 rowheight=FONT[1] * 2 + 2, borderwidth=2, relief="sunken")
     st.map("Treeview", background=[("selected", NAVY)], foreground=[("selected", WHITE)])
     st.configure("Treeview.Heading", background=BG, relief="raised", borderwidth=2, font=FONT)
     st.map("Treeview.Heading", background=[("active", BG)])
@@ -84,7 +85,7 @@ def apply_style(root):
     return st
 
 
-def calendar_options():
+def calendar_options(locale="en_GB"):
     """Colours for tkcalendar widgets in the Date/Time Properties look."""
     return dict(
         font=FONT, headersfont=FONT_BOLD, background=BG, foreground="black",
@@ -94,7 +95,7 @@ def calendar_options():
         othermonthbackground="#e8e8e8", othermonthwebackground="#e8e8e8",
         othermonthforeground=DARK, othermonthweforeground=DARK,
         selectbackground=NAVY, selectforeground=WHITE,
-        showweeknumbers=False, firstweekday="monday", locale="en_GB",
+        showweeknumbers=False, firstweekday="monday", locale=locale,
         date_pattern="dd/mm/yyyy", cursor="arrow",
     )
 
@@ -178,10 +179,18 @@ def center(win, parent=None):
 
 def fix_calendar_arrows(cal):
     """The 'classic' theme draws 3D arrows with the background colour only:
-    make the month/year buttons raised grey triangles instead of invisible ones."""
+    make the month/year buttons raised grey triangles instead of invisible ones.
+    Also use nominative month names ("Октябрь", not "Октября") in the header."""
+    from babel.dates import get_month_names
     from tkcalendar import DateEntry
     if isinstance(cal, DateEntry):  # DateEntry keeps its Calendar inside
         cal = cal._calendar
+    try:
+        cal._month_names = get_month_names("wide", context="stand-alone",
+                                           locale=cal["locale"])
+        cal._display_calendar()
+    except Exception:  # noqa: BLE001 - only cosmetics, keep the default names
+        pass
     prefix = cal._style_prefixe
     for side in "LR":
         name = f"{side}.{prefix}.TButton"

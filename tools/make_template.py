@@ -92,7 +92,11 @@ def main(src, dst):
             fill_paragraph(p, "{{LOCATION}}")
             sample_run = rs[0]
         elif t.startswith("Risk assessment checked"):
-            set_text(rs[-1], text_of(rs[-1]) + " {{RA_NO}}")
+            # the number gets its own run, so only it is shrunk when too long
+            set_text(rs[-1], text_of(rs[-1]).rstrip() + " ")
+            ra = copy.deepcopy(rs[-1])
+            set_text(ra, "{{RA_NO}}")
+            rs[-1].addnext(ra)
 
     # Scope of Work table: the value paragraph follows each label paragraph
     labels = {
