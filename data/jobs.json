@@ -1,0 +1,1431 @@
+[
+  {
+    "id": "me_fuel_valves_overhaul",
+    "title": "ME Fuel Valves Overhaul",
+    "location": "Engine Room, M/E top platform",
+    "plant": "Main Engine fuel injection valves",
+    "work": "Removal, overhaul and pressure test of fuel valves",
+    "ra_no": "RA-E01",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "me_exhaust_valve_overhaul",
+    "title": "ME Exhaust Valve Overhaul",
+    "location": "Engine Room, M/E top platform / workshop",
+    "plant": "Main Engine exhaust valve",
+    "work": "Removal, spindle & seat grinding, assembly",
+    "ra_no": "RA-E02",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      1,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR",
+      "WLDR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "me_scavenge_space_inspection",
+    "title": "ME Scavenge Space Inspection",
+    "location": "Engine Room, M/E scavenge space",
+    "plant": "Main Engine scavenge ports, piston rings, liners",
+    "work": "Inspection and cleaning of scavenge spaces",
+    "ra_no": "RA-E03",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "me_crankcase_inspection",
+    "title": "ME Crankcase Inspection",
+    "location": "Engine Room, M/E crankcase",
+    "plant": "Main Engine crankcase, bearings, crossheads",
+    "work": "Crankcase inspection, bearing check",
+    "ra_no": "RA-E04",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "me_air_cooler_cleaning",
+    "title": "ME Air Cooler Cleaning",
+    "location": "Engine Room, M/E scavenge air cooler",
+    "plant": "Main Engine scavenge air cooler",
+    "work": "Chemical cleaning of air side of cooler",
+    "ra_no": "RA-E05",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "me_tc_filter_cleaning",
+    "title": "ME TC Filter Cleaning",
+    "location": "Engine Room, M/E turbocharger",
+    "plant": "Main Engine turbocharger air filter",
+    "work": "Removal and cleaning of air intake filter",
+    "ra_no": "RA-E06",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "me_starting_air_valve_overhaul",
+    "title": "ME Starting Air Valve Overhaul",
+    "location": "Engine Room, M/E top platform",
+    "plant": "Main Engine starting air valves",
+    "work": "Removal, overhaul and testing",
+    "ra_no": "RA-E07",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "me_fuel_pump_overhaul",
+    "title": "ME Fuel Pump Overhaul",
+    "location": "Engine Room, M/E fuel pump platform",
+    "plant": "Main Engine fuel injection pump",
+    "work": "Overhaul of fuel pump plunger & barrel",
+    "ra_no": "RA-E08",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      1,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "me_lo_autofilter_cleaning",
+    "title": "ME LO Autofilter Cleaning",
+    "location": "Engine Room, M/E LO system",
+    "plant": "Main Engine LO automatic backflush filter",
+    "work": "Opening and cleaning of filter elements",
+    "ra_no": "RA-E09",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "steering_gear_maintenance",
+    "title": "Steering Gear Maintenance",
+    "location": "Steering gear room",
+    "plant": "Steering gear hydraulic units",
+    "work": "Filter cleaning, oil level check, greasing",
+    "ra_no": "RA-E10",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "stern_tube_seal_check",
+    "title": "Stern Tube Seal Check",
+    "location": "Engine Room, shaft tunnel",
+    "plant": "Stern tube seals & LO tank",
+    "work": "Inspection of seals, oil sampling",
+    "ra_no": "RA-E11",
+    "lead_ranks": [
+      "2E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "central_cooler_cleaning",
+    "title": "Central Cooler Cleaning",
+    "location": "Engine Room, central cooling system",
+    "plant": "Central FW cooler (plate type)",
+    "work": "Opening and cleaning of cooler plates",
+    "ra_no": "RA-E12",
+    "lead_ranks": [
+      "2E",
+      "4E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "dg_fuel_injectors_overhaul",
+    "title": "DG Fuel Injectors Overhaul",
+    "location": "Engine Room, D/G flat",
+    "plant": "Diesel generator fuel injectors",
+    "work": "Removal, overhaul and pressure test",
+    "ra_no": "RA-E13",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "dg_cylinder_head_overhaul",
+    "title": "DG Cylinder Head Overhaul",
+    "location": "Engine Room, D/G flat",
+    "plant": "Diesel generator cylinder head",
+    "work": "Removal, valves grinding, assembly",
+    "ra_no": "RA-E14",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      1,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "dg_crankcase_inspection",
+    "title": "DG Crankcase Inspection",
+    "location": "Engine Room, D/G flat",
+    "plant": "Diesel generator crankcase",
+    "work": "Crankcase inspection, bearing check",
+    "ra_no": "RA-E15",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "dg_lo_filter_renewal",
+    "title": "DG LO Filter Renewal",
+    "location": "Engine Room, D/G flat",
+    "plant": "Diesel generator LO filter",
+    "work": "Renewal of LO filter elements",
+    "ra_no": "RA-E16",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "dg_tc_filter_cleaning",
+    "title": "DG TC Filter Cleaning",
+    "location": "Engine Room, D/G flat",
+    "plant": "Diesel generator turbocharger filter",
+    "work": "Cleaning of TC air intake filter",
+    "ra_no": "RA-E17",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "dg_air_cooler_cleaning",
+    "title": "DG Air Cooler Cleaning",
+    "location": "Engine Room, D/G flat",
+    "plant": "Diesel generator charge air cooler",
+    "work": "Removal and cleaning of air cooler",
+    "ra_no": "RA-E18",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "dg_cooling_pump_overhaul",
+    "title": "DG Cooling Pump Overhaul",
+    "location": "Engine Room, D/G flat",
+    "plant": "Diesel generator HT/LT cooling pump",
+    "work": "Overhaul, seal & bearing renewal",
+    "ra_no": "RA-E19",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "boiler_burner_maintenance",
+    "title": "Boiler Burner Maintenance",
+    "location": "Engine Room, boiler platform",
+    "plant": "Aux boiler burner",
+    "work": "Cleaning of nozzle, igniter, photocell",
+    "ra_no": "RA-E20",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "boiler_gauge_glass_overhaul",
+    "title": "Boiler Gauge Glass Overhaul",
+    "location": "Engine Room, boiler platform",
+    "plant": "Aux boiler water level gauge glass",
+    "work": "Renewal of gauge glass and gaskets",
+    "ra_no": "RA-E21",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "ege_water_washing",
+    "title": "EGE Water Washing",
+    "location": "Engine Room, funnel casing",
+    "plant": "Exhaust gas economizer",
+    "work": "Water washing of EGE tubes",
+    "ra_no": "RA-E22",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "main_air_compressor_overhaul",
+    "title": "Main Air Compressor Overhaul",
+    "location": "Engine Room, compressor room",
+    "plant": "Main air compressor",
+    "work": "Overhaul of valves, rings, unloader",
+    "ra_no": "RA-E23",
+    "lead_ranks": [
+      "3E"
+    ],
+    "officer_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "emergency_generator_maintenance",
+    "title": "Emergency Generator Maintenance",
+    "location": "Emergency generator room",
+    "plant": "Emergency generator engine",
+    "work": "Filters renewal, LO change, test run",
+    "ra_no": "RA-E24",
+    "lead_ranks": [
+      "3E",
+      "5E"
+    ],
+    "officer_ranks": [
+      "AEO"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      0,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "hfo_purifier_overhaul",
+    "title": "HFO Purifier Overhaul",
+    "location": "Engine Room, purifier room",
+    "plant": "HFO purifier",
+    "work": "Bowl dismantling, cleaning, seals renewal",
+    "ra_no": "RA-E25",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "lo_purifier_overhaul",
+    "title": "LO Purifier Overhaul",
+    "location": "Engine Room, purifier room",
+    "plant": "M/E LO purifier",
+    "work": "Bowl dismantling, cleaning, seals renewal",
+    "ra_no": "RA-E26",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "do_purifier_bowl_cleaning",
+    "title": "DO Purifier Bowl Cleaning",
+    "location": "Engine Room, purifier room",
+    "plant": "DO purifier",
+    "work": "Bowl cleaning and inspection",
+    "ra_no": "RA-E27",
+    "lead_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "fw_generator_cleaning",
+    "title": "FW Generator Cleaning",
+    "location": "Engine Room, FWG",
+    "plant": "Fresh water generator",
+    "work": "Plates cleaning, ejector inspection",
+    "ra_no": "RA-E28",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "ows_maintenance",
+    "title": "OWS Maintenance",
+    "location": "Engine Room, OWS",
+    "plant": "Oily water separator & 15 ppm alarm",
+    "work": "Cleaning of separator, alarm test",
+    "ra_no": "RA-E29",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "fo_transfer_pump_overhaul",
+    "title": "FO Transfer Pump Overhaul",
+    "location": "Engine Room, FO transfer pumps",
+    "plant": "FO transfer pump",
+    "work": "Overhaul, mechanical seal renewal",
+    "ra_no": "RA-E30",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR",
+      "WLDR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "fo_supply_pump_overhaul",
+    "title": "FO Supply Pump Overhaul",
+    "location": "Engine Room, fuel module",
+    "plant": "FO supply / booster pump",
+    "work": "Overhaul, seal & bearing check",
+    "ra_no": "RA-E31",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "sw_cooling_pump_overhaul",
+    "title": "SW Cooling Pump Overhaul",
+    "location": "Engine Room, bottom platform",
+    "plant": "Main sea water cooling pump",
+    "work": "Overhaul, impeller & seal check",
+    "ra_no": "RA-E32",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "sea_chest_strainer_cleaning",
+    "title": "Sea Chest Strainer Cleaning",
+    "location": "Engine Room, bottom platform",
+    "plant": "Sea chest strainer",
+    "work": "Opening and cleaning of strainer",
+    "ra_no": "RA-E33",
+    "lead_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "er_crane_maintenance",
+    "title": "ER Crane Maintenance",
+    "location": "Engine Room, crane rail",
+    "plant": "Engine room overhead crane",
+    "work": "Wire, brake & limit switches check",
+    "ra_no": "RA-E34",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "AEO"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "er_piping_repair",
+    "title": "ER Piping Repair",
+    "location": "Engine Room",
+    "plant": "ER pipelines, supports and clamps",
+    "work": "Renewal of pipe clamps / gaskets (cold work)",
+    "ra_no": "RA-E35",
+    "lead_ranks": [
+      "4E"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "FITTR",
+      "WLDR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "sewage_plant_maintenance",
+    "title": "Sewage Plant Maintenance",
+    "location": "Engine Room, sewage plant",
+    "plant": "Sewage treatment plant",
+    "work": "Cleaning of chambers, blower check",
+    "ra_no": "RA-E36",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "incinerator_maintenance",
+    "title": "Incinerator Maintenance",
+    "location": "Incinerator room",
+    "plant": "Incinerator",
+    "work": "Burner cleaning, chamber inspection",
+    "ra_no": "RA-E37",
+    "lead_ranks": [
+      "5E",
+      "4E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "bilge_pump_overhaul",
+    "title": "Bilge Pump Overhaul",
+    "location": "Engine Room, bottom platform",
+    "plant": "Bilge pump",
+    "work": "Overhaul, valves & seals check",
+    "ra_no": "RA-E38",
+    "lead_ranks": [
+      "5E",
+      "4E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "ballast_pump_overhaul",
+    "title": "Ballast Pump Overhaul",
+    "location": "Engine Room, pump room",
+    "plant": "Ballast pump",
+    "work": "Overhaul, mechanical seal check",
+    "ra_no": "RA-E39",
+    "lead_ranks": [
+      "5E",
+      "4E"
+    ],
+    "officer_ranks": [
+      "4E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      2
+    ],
+    "active": true
+  },
+  {
+    "id": "hydrophore_system_check",
+    "title": "Hydrophore System Check",
+    "location": "Engine Room, FW hydrophore",
+    "plant": "Fresh water hydrophore & pumps",
+    "work": "Pressure switch check, pump inspection",
+    "ra_no": "RA-E40",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "fo_strainers_cleaning",
+    "title": "FO Strainers Cleaning",
+    "location": "Engine Room, fuel module",
+    "plant": "FO duplex strainers",
+    "work": "Changeover and cleaning of strainers",
+    "ra_no": "RA-E41",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "emergency_fire_pump_maintenance",
+    "title": "Emergency Fire Pump Maintenance",
+    "location": "Emergency fire pump room",
+    "plant": "Emergency fire pump & engine",
+    "work": "Inspection, test run, greasing",
+    "ra_no": "RA-E42",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "lifeboat_engine_maintenance",
+    "title": "Lifeboat Engine Maintenance",
+    "location": "Boat deck, lifeboat",
+    "plant": "Lifeboat engine",
+    "work": "LO / filter check, test run",
+    "ra_no": "RA-E43",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      0,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "rescue_boat_engine_maintenance",
+    "title": "Rescue Boat Engine Maintenance",
+    "location": "Boat deck, rescue boat",
+    "plant": "Rescue boat outboard engine",
+    "work": "Inspection, test run",
+    "ra_no": "RA-E44",
+    "lead_ranks": [
+      "5E"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      0,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "provision_plant_maintenance",
+    "title": "Provision Plant Maintenance",
+    "location": "Provision plant room",
+    "plant": "Provision refrigeration compressor",
+    "work": "Filters cleaning, gas level check",
+    "ra_no": "RA-E45",
+    "lead_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officer_ranks": [
+      "AEO"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      0,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "ac_plant_maintenance",
+    "title": "AC Plant Maintenance",
+    "location": "AC plant room",
+    "plant": "Air conditioning unit",
+    "work": "Filters cleaning, compressor check",
+    "ra_no": "RA-E46",
+    "lead_ranks": [
+      "4E",
+      "5E"
+    ],
+    "officer_ranks": [
+      "AEO"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR",
+      "WIPR"
+    ],
+    "ratings": [
+      0,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "msb_inspection",
+    "title": "MSB Inspection",
+    "location": "Engine Control Room, MSB",
+    "plant": "Main switchboard",
+    "work": "Cleaning, terminal tightening (dead)",
+    "ra_no": "RA-E47",
+    "lead_ranks": [
+      "AEO"
+    ],
+    "officer_ranks": [
+      "3E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [],
+    "ratings": [
+      0,
+      0
+    ],
+    "active": true
+  },
+  {
+    "id": "electric_motor_overhaul",
+    "title": "Electric Motor Overhaul",
+    "location": "Engine Room / workshop",
+    "plant": "Electric motor of ER pump",
+    "work": "Bearing renewal, insulation test",
+    "ra_no": "RA-E48",
+    "lead_ranks": [
+      "AEO"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "FITTR",
+      "MM"
+    ],
+    "ratings": [
+      0,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "emergency_batteries_maintenance",
+    "title": "Emergency Batteries Maintenance",
+    "location": "Battery room",
+    "plant": "Emergency batteries",
+    "work": "Electrolyte check, terminals cleaning",
+    "ra_no": "RA-E49",
+    "lead_ranks": [
+      "AEO"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "WIPR"
+    ],
+    "ratings": [
+      0,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "reefer_sockets_inspection",
+    "title": "Reefer Sockets Inspection",
+    "location": "Cargo holds / deck, reefer sockets",
+    "plant": "Reefer container sockets & cables",
+    "work": "Inspection and insulation check",
+    "ra_no": "RA-E50",
+    "lead_ranks": [
+      "AEO"
+    ],
+    "officer_ranks": [
+      "5E"
+    ],
+    "officers": [
+      0,
+      1
+    ],
+    "rating_ranks": [
+      "MM",
+      "FITTR"
+    ],
+    "ratings": [
+      0,
+      1
+    ],
+    "active": true
+  },
+  {
+    "id": "er_lighting_repair",
+    "title": "ER Lighting Repair",
+    "location": "Engine Room",
+    "plant": "Engine room lighting fixtures",
+    "work": "Renewal of defective fittings",
+    "ra_no": "RA-E51",
+    "lead_ranks": [
+      "AEO"
+    ],
+    "officer_ranks": [],
+    "officers": [
+      0,
+      0
+    ],
+    "rating_ranks": [
+      "MM",
+      "WIPR"
+    ],
+    "ratings": [
+      1,
+      1
+    ],
+    "active": true
+  }
+]

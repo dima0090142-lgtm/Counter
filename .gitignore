@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+build/
+dist/
+*.spec
+# local working data, created by the program
+data/settings.json
+data/history.json
+*.tmp

@@ -1,0 +1,79 @@
+[
+  {
+    "code": "CE",
+    "short": "C/ENG",
+    "full": "Chief Engineer",
+    "officer": true,
+    "order": 1
+  },
+  {
+    "code": "2E",
+    "short": "2ND ENG",
+    "full": "Second Engineer",
+    "officer": true,
+    "order": 2
+  },
+  {
+    "code": "3E",
+    "short": "3RD ENG",
+    "full": "Third Engineer",
+    "officer": true,
+    "order": 3
+  },
+  {
+    "code": "4E",
+    "short": "4TH ENG",
+    "full": "Fourth Engineer",
+    "officer": true,
+    "order": 4
+  },
+  {
+    "code": "5E",
+    "short": "JR ENG",
+    "full": "Junior Engineer",
+    "officer": true,
+    "order": 5
+  },
+  {
+    "code": "ETO",
+    "short": "ETO",
+    "full": "Electro-Technical Officer",
+    "officer": true,
+    "order": 6
+  },
+  {
+    "code": "AEO",
+    "short": "AEO",
+    "full": "Assistant Electrical Officer",
+    "officer": true,
+    "order": 7
+  },
+  {
+    "code": "MM",
+    "short": "MOTORMAN",
+    "full": "Motorman",
+    "officer": false,
+    "order": 10
+  },
+  {
+    "code": "FITTR",
+    "short": "FITTER",
+    "full": "Fitter",
+    "officer": false,
+    "order": 11
+  },
+  {
+    "code": "WLDR",
+    "short": "WELDER",
+    "full": "Welder",
+    "officer": false,
+    "order": 12
+  },
+  {
+    "code": "WIPR",
+    "short": "WIPER",
+    "full": "Wiper",
+    "officer": false,
+    "order": 13
+  }
+]
