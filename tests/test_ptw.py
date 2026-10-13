@@ -520,3 +520,23 @@ def test_reroll_respects_repeat_window_both_ways(store):
         for q in plan:
             if q is not plan[i] and q["job_id"] == plan[i]["job_id"]:
                 assert abs((dt.date.fromisoformat(q["date"]) - d).days) > window
+
+
+def test_replace_overwrites_files_instead_of_adding_copies(store):
+    p = {"date": "2026-10-12", "job_id": "fo_strainers_cleaning", "crew": ["singh"],
+         "pc": "singh", "transfer": "", "close": "singh"}
+    q = {"date": "2026-10-13", "job_id": "boiler_burner_maintenance", "crew": ["singh"],
+         "pc": "singh", "transfer": "", "close": "singh"}
+    docgen.write_permits(store, [dict(p), dict(q)])
+    folder = store.settings["output_dir"]
+    first = sorted(os.listdir(folder))
+    docgen.write_permits(store, [dict(p), dict(q)], replace_dates=True)
+    assert sorted(os.listdir(folder)) == first  # same names, no "(2)"
+    assert len(store.history) == 2
+    docgen.write_permits(store, [dict(p)])      # "keep both": a second file
+    assert len(os.listdir(folder)) == 3
+    # another job on a replaced day: the old file of that day goes
+    r = dict(p, job_id="sludge_pump_strainer")
+    docgen.write_permits(store, [r], replace_dates=True)
+    names = os.listdir(folder)
+    assert not any("FO Strainers" in n for n in names) and any("Sludge" in n for n in names)

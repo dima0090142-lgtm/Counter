@@ -52,9 +52,10 @@ RU = {
         "Запланировано пермитов: {n}. Проверьте список и нажмите «Создать файлы».",
     "Select permits in the list to reroll.": "Выделите в списке пермиты для замены.",
     "Nothing to create. Press 'Generate' first.": "Нечего создавать. Сначала нажмите «Сгенерировать».",
-    "History already has permits for some of these dates.\n\nYes - replace them in history\nNo - keep both":
+    "History already has permits for some of these dates.\n\n"
+    "Yes - replace them (old files and history entries are removed)\nNo - keep both":
         "В истории уже есть пермиты на некоторые из этих дат.\n\n"
-        "Да — заменить их в истории\nНет — оставить оба",
+        "Да — заменить их (старые файлы и записи истории удаляются)\nНет — оставить оба",
     "Could not create files:": "Не удалось создать файлы:",
     "Could not create file:": "Не удалось создать файл:",
     "{n} files created in {folder}": "Создано файлов: {n} в {folder}",
@@ -185,6 +186,40 @@ RU = {
         "Нет — только добавить работы, которых у вас нет",
     "Jobs list updated: {n} jobs ({added} new).": "Список работ обновлён: {n} работ ({added} новых).",
     "Recreate file": "Пересоздать файл",
+    "Filter:": "Фильтр:", "{n} of {total}": "{n} из {total}",
+    "(title, equipment, location, rank or RA No)": "(название, оборудование, место, ранг или № RA)",
+    "Print (test)": "Печать (тест)", "Print selected files (test)": "Печать выделенных файлов (тест)",
+    "Printing is not available on this computer.": "Печать на этом компьютере недоступна.",
+    "Print {n} files on the default printer?\n(test function: Word opens and prints each file)":
+        "Напечатать файлов: {n} на принтере по умолчанию?\n(тестовая функция: Word откроет и напечатает каждый файл)",
+    "{n} files sent to the printer": "Отправлено на печать файлов: {n}",
+    "Keyboard shortcuts": "Горячие клавиши",
+    "Ctrl+A - select all (lists, text fields)\n"
+    "Shift / Ctrl + click - select several rows\n"
+    "F5 or Ctrl+G - generate the plan\n"
+    "Ctrl+R - reroll selected rows\n"
+    "Enter, F2 or Ctrl+E - edit the selected row\n"
+    "Delete - remove the selected rows\n"
+    "Ctrl+S - create files (Auto) / create file (Manual)\n"
+    "Ctrl+F - job filter (Manual) / filter in the editors\n"
+    "Ctrl+N - new record (editors), Ctrl+S - OK (editors)\n"
+    "Ctrl+P - print selected files (History, test)\n"
+    "Ctrl+O - open the output folder\n"
+    "Ctrl+1 / 2 / 3 - Auto generate / Manual / History\n"
+    "Ctrl+Q - exit":
+        "Ctrl+A — выделить всё (списки, поля ввода)\n"
+        "Shift / Ctrl + щелчок — выделить несколько строк\n"
+        "F5 или Ctrl+G — сгенерировать план\n"
+        "Ctrl+R — заменить выделенные строки\n"
+        "Enter, F2 или Ctrl+E — изменить выделенную строку\n"
+        "Delete — удалить выделенные строки\n"
+        "Ctrl+S — создать файлы (Авто) / создать файл (Вручную)\n"
+        "Ctrl+F — фильтр работ (Вручную) / фильтр в редакторах\n"
+        "Ctrl+N — новая запись (редакторы), Ctrl+S — OK (редакторы)\n"
+        "Ctrl+P — печать выделенных файлов (История, тест)\n"
+        "Ctrl+O — открыть папку с пермитами\n"
+        "Ctrl+1 / 2 / 3 — Автогенерация / Вручную / История\n"
+        "Ctrl+Q — выход\n\nКлавиши работают и в русской раскладке.",
     "Select permits in the list.": "Выделите пермиты в списке.",
     "Write {n} files again with the same numbers?\nThe old files are overwritten.":
         "Записать заново файлов: {n}, с теми же номерами?\nСтарые файлы будут перезаписаны.",

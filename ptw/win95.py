@@ -427,3 +427,49 @@ class Splash(tk.Toplevel):
         self.destroy()
         if self.on_done:
             self.on_done()
+
+
+# ----------------------------------------------------------------------
+# Keyboard helpers
+# ----------------------------------------------------------------------
+
+# Russian layout keysyms -> the Latin key at the same place (Ctrl+Ф works as Ctrl+A)
+CYRILLIC_KEYS = {
+    "Cyrillic_shorti": "q", "Cyrillic_tse": "w", "Cyrillic_u": "e", "Cyrillic_ka": "r",
+    "Cyrillic_ie": "t", "Cyrillic_en": "y", "Cyrillic_ghe": "u", "Cyrillic_sha": "i",
+    "Cyrillic_shcha": "o", "Cyrillic_ze": "p", "Cyrillic_ef": "a", "Cyrillic_yeru": "s",
+    "Cyrillic_ve": "d", "Cyrillic_a": "f", "Cyrillic_pe": "g", "Cyrillic_er": "h",
+    "Cyrillic_o": "j", "Cyrillic_el": "k", "Cyrillic_de": "l", "Cyrillic_ya": "z",
+    "Cyrillic_che": "x", "Cyrillic_es": "c", "Cyrillic_em": "v", "Cyrillic_i": "b",
+    "Cyrillic_te": "n", "Cyrillic_softsign": "m",
+}
+
+
+def key_letter(event):
+    """The Latin letter / digit of a key press whatever the keyboard layout, or ''."""
+    import sys
+    if sys.platform.startswith("win") and (65 <= event.keycode <= 90 or 48 <= event.keycode <= 57):
+        return chr(event.keycode).lower()  # Windows virtual key codes do not depend on layout
+    sym = event.keysym
+    if len(sym) == 1 and sym.isascii() and sym.isalnum():
+        return sym.lower()
+    return CYRILLIC_KEYS.get(sym, "")
+
+
+def select_all(w):
+    """Ctrl+A: all rows of a list or the whole text of a field. True if done."""
+    if w is None:
+        return False
+    if isinstance(w, ttk.Treeview):
+        if str(w.cget("selectmode")) != "browse":
+            w.selection_set(w.get_children())
+        return True
+    if isinstance(w, tk.Listbox):
+        if str(w.cget("selectmode")) in ("extended", "multiple"):
+            w.selection_set(0, "end")
+        return True
+    if isinstance(w, (tk.Entry, ttk.Entry, ttk.Combobox, tk.Spinbox)):
+        w.select_range(0, "end")
+        w.icursor("end")
+        return True
+    return False

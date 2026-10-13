@@ -551,7 +551,21 @@ def write_permits(store, permits, replace_dates=False):
 
     numbers = generator.permit_numbers(store, permits, replace_dates)
     if replace_dates:
+        # "replace": the old permits of these days go - history entries AND their files,
+        # so the new files get the plain names instead of "... (2).docx"
         dates = {p["date"] for p in permits}
+        old = [h for h in store.history if h["date"] in dates]
+        old_files = [os.path.join(folder, h["file"]) for h in old if h.get("file")]
+        old_files = [f for f in old_files if os.path.isfile(f)]
+        for f in old_files:  # check first: a file open in Word cannot be replaced
+            try:
+                with open(f, "r+b"):
+                    pass
+            except OSError as e:
+                raise PermitError(f"{os.path.basename(f)}: {e.strerror or e} "
+                                  "(close it in Word and try again)") from None
+        for f in old_files:
+            os.remove(f)
         store.history = [h for h in store.history if h["date"] not in dates]
 
     paths, warnings = [], []

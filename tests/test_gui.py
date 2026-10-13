@@ -45,7 +45,7 @@ def test_list_editor_highlights_one_row(app, monkeypatch):
         w.insert("end", " x")
         _click(ed.lb, target)
         assert ed.lb.curselection() == (target,)
-        assert ed.current == target
+        assert ed.current == ed.view[target]
     ed.destroy()
 
 
@@ -148,3 +148,77 @@ def test_settings_refuse_bad_pc_ranks(app, monkeypatch):
     e.insert(0, "2e, 3e")
     d.ok()
     assert app.store.settings["pc_supervisor_ranks"] == ["2E", "3E"]
+
+
+def _jobs_editor(app):
+    app.edit_jobs()
+    return [w for w in app.winfo_children() if isinstance(w, gui.ListEditor)][0]
+
+
+def test_jobs_editor_filter_and_sorted_new_job(app, monkeypatch):
+    monkeypatch.setattr(gui.messagebox, "showwarning", lambda *a, **k: None)
+    ed = _jobs_editor(app)
+    ed.filter.insert(0, "purifier bowl")
+    ed._refresh_view()
+    shown = [ed.records[i] for i in ed.view]
+    assert shown and len(shown) < len(ed.records)
+    for r in shown:  # every word somewhere in the job (title, equipment, work ...)
+        text = " ".join(str(v) for v in r.values()).lower()
+        assert "purifier" in text and "bowl" in text
+    assert "HFO Purifier Bowl Cleaning" in [r["title"] for r in shown]
+    assert ed.count.cget("text").startswith(f"{len(shown)} ")
+    # a new job does not end up at the bottom: after Apply it sits among its rank / title
+    ed.new()
+    assert ed.filter.get() == ""
+    w = dict((k, v[0]) for k, v in ed.widgets.items())
+    w["title"].insert(0, "AE Aaa New Filter Job")
+    w["lead_ranks"].delete(0, "end")
+    w["lead_ranks"].insert(0, "3E")
+    ed.apply()
+    row = ed.view.index(ed.current)
+    assert 0 < row < len(ed.view) - 1
+    before = ed.records[ed.view[row - 1]]
+    assert before["lead_ranks"][0] in ("2E", "3E")
+    saved = {}
+    ed.on_save = lambda recs: saved.setdefault("recs", recs)
+    ed.ok()
+    titles = [r["title"] for r in saved["recs"]]
+    assert titles.index("AE Aaa New Filter Job") < len(titles) - 1
+
+
+def test_manual_job_filter(app):
+    form = app.manual_tab.form
+    form.filter.insert(0, "turbine")
+    form._filter_jobs()
+    assert len(form.jobs) == 1 and form.current_job()["id"] == "me_tc_turbine_washing"
+    form.filter.delete(0, "end")
+    form.filter.insert(0, "ra-104")
+    form._filter_jobs()
+    assert form.current_job()["ra_no"] == "RA-104"
+    form._clear_filter()
+    assert len(form.jobs) == len(form.all_jobs)
+
+
+class _Key:
+    def __init__(self, keysym, keycode=0):
+        self.keysym, self.keycode = keysym, keycode
+
+
+def test_ctrl_a_selects_all_rows_in_any_layout(app):
+    from ptw import win95
+    app.auto_tab.generate()
+    tree = app.auto_tab.tree
+    assert win95.key_letter(_Key("a")) == "a"
+    assert win95.key_letter(_Key("Cyrillic_ef")) == "a"  # Russian layout: Ctrl+Ф
+    tree.focus_set()
+    app.update()
+    assert app._on_ctrl(_Key("Cyrillic_ef")) == "break"
+    assert len(tree.selection()) == len(tree.get_children()) == len(app.auto_tab.plan)
+
+
+def test_hotkeys_generate_and_tabs(app):
+    app.auto_tab.plan = []
+    app._on_ctrl(_Key("g"))
+    assert app.auto_tab.plan
+    app._on_ctrl(_Key("3"))
+    assert app.notebook.index("current") == 2

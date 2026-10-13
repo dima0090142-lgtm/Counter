@@ -10,7 +10,7 @@ from tkinter import filedialog, ttk
 
 from tkcalendar import Calendar, DateEntry
 
-from . import __version__, docgen, generator, i18n, sound, storage, win95
+from . import __version__, docgen, generator, i18n, printing, sound, storage, win95
 from .i18n import T
 from .win95 import BG
 
@@ -109,14 +109,26 @@ class PermitForm(tk.Frame):
         self.permit_no.grid(row=0, column=3, sticky="w", padx=4)
         tk.Label(top, text=T("(empty = automatic)"), fg=win95.DARK).grid(row=0, column=4, sticky="w")
 
-        tk.Label(top, text=T("Job:")).grid(row=1, column=0, sticky="w")
+        tk.Label(top, text=T("Filter:")).grid(row=1, column=0, sticky="w")
+        frow = tk.Frame(top, bg=BG)
+        frow.grid(row=1, column=1, columnspan=4, sticky="we", padx=4, pady=2)
+        self.filter = tk.Entry(frow, width=30)
+        self.filter.pack(side="left")
+        self.filter.bind("<KeyRelease>", lambda e: self._filter_jobs())
+        self.filter.bind("<Return>", lambda e: self.job.focus_set())
+        win95.button(frow, "x", self._clear_filter, width=2).pack(side="left", padx=4)
+        self.filter_count = tk.Label(frow, fg=win95.DARK)
+        self.filter_count.pack(side="left", padx=4)
+        tk.Label(frow, text=T("(title, equipment, location, rank or RA No)"),
+                 fg=win95.DARK).pack(side="left")
+        tk.Label(top, text=T("Job:")).grid(row=2, column=0, sticky="w")
         self.job = ttk.Combobox(top, state="readonly", width=48, height=25)
-        self.job.grid(row=1, column=1, columnspan=4, sticky="we", padx=4, pady=2)
+        self.job.grid(row=2, column=1, columnspan=4, sticky="we", padx=4, pady=2)
         self.job.bind("<<ComboboxSelected>>", lambda e: self._job_changed())
 
         self.info = tk.Label(top, justify="left", anchor="w", relief="sunken", bd=2,
                              bg=win95.WHITE, padx=4, pady=2, height=4)
-        self.info.grid(row=2, column=0, columnspan=5, sticky="we", pady=4)
+        self.info.grid(row=3, column=0, columnspan=5, sticky="we", pady=4)
         top.columnconfigure(4, weight=1)
 
         mid = tk.Frame(self, bg=BG)
@@ -151,9 +163,9 @@ class PermitForm(tk.Frame):
     # --- data ---
     def refresh(self):
         s = self.store.settings
-        self.jobs = sorted((j for j in self.store.jobs if j.get("active", True)),
-                           key=lambda j: j["title"].lower())
-        self.job["values"] = [f"{j['title']}   [{j.get('ra_no', '')}]" for j in self.jobs]
+        self.all_jobs = sorted((j for j in self.store.jobs if j.get("active", True)),
+                               key=lambda j: j["title"].lower())
+        self._filter_jobs()
         for w in self.crew_frame.winfo_children():
             w.destroy()
         old = {k for k, v in self.check_vars.items() if v.get()}
@@ -198,6 +210,34 @@ class PermitForm(tk.Frame):
 
     def _job_changed(self):
         self._show_job()
+
+    def _filter_jobs(self):
+        """Show only jobs matching the filter words; keep the chosen job if it matches."""
+        cur = self.current_job() if hasattr(self, "jobs") else None
+        words = self.filter.get().lower().split()
+        self.jobs = [j for j in self.all_jobs
+                     if not words or text_match(words, j["title"], j.get("plant", ""),
+                                                j.get("location", ""), j.get("work", ""),
+                                                j.get("ra_no", ""), *j.get("lead_ranks", []))]
+        self.job["values"] = [f"{j['title']}   [{j.get('ra_no', '')}]" for j in self.jobs]
+        self.filter_count.config(text=T("{n} of {total}", n=len(self.jobs), total=len(self.all_jobs)))
+        ids = [j["id"] for j in self.jobs]
+        if cur is not None and cur["id"] in ids:
+            self.job.current(ids.index(cur["id"]))
+        elif len(self.jobs) == 1:  # only one left: take it
+            self.job.current(0)
+            self._job_changed()
+        else:
+            self.job.set("")
+            self._show_job()
+
+    def _clear_filter(self):
+        self.filter.delete(0, "end")
+        self._filter_jobs()
+
+    def focus_filter(self):
+        self.filter.focus_set()
+        self.filter.select_range(0, "end")
 
     def current_job(self):
         i = self.job.current()
@@ -264,6 +304,8 @@ class PermitForm(tk.Frame):
     # --- in / out ---
     def set(self, permit):
         self.date.set_date(generator.parse_date(permit["date"]))
+        if self.filter.get():
+            self._clear_filter()
         ids = [j["id"] for j in self.jobs]
         if permit["job_id"] in ids:
             self.job.current(ids.index(permit["job_id"]))
@@ -407,6 +449,9 @@ class AutoTab(tk.Frame):
         f, self.tree = win95.scrolled_tree(g, cols, PLAN_WIDTHS, height=20)
         f.pack(fill="both", expand=True)
         self.tree.bind("<Double-1>", lambda e: self.edit())
+        self.tree.bind("<Return>", lambda e: self.edit())
+        self.tree.bind("<F2>", lambda e: self.edit())
+        self.tree.bind("<Delete>", lambda e: self.remove())
 
     def set_range(self, a, b):
         for cal, d in ((self.cal_from, a), (self.cal_to, b)):
@@ -510,7 +555,8 @@ class AutoTab(tk.Frame):
         if any(h["date"] in dates for h in self.store.history):
             ans = messagebox.askyesnocancel(
                 app_title(), T("History already has permits for some of these dates.\n\n"
-                               "Yes - replace them in history\nNo - keep both"), parent=self)
+                               "Yes - replace them (old files and history entries are removed)\n"
+                               "No - keep both"), parent=self)
             if ans is None:
                 return
             replace = ans
@@ -572,12 +618,15 @@ class HistoryTab(tk.Frame):
         win95.button(bar, T("Open folder"), self.open_folder, width=14).pack(side="left", padx=4)
         win95.button(bar, T("Delete entry"), self.delete, width=14).pack(side="left", padx=4)
         win95.button(bar, T("Recreate file"), self.recreate, width=14).pack(side="left", padx=4)
+        win95.button(bar, T("Print (test)"), self.print_files, width=14).pack(side="left", padx=4)
         tk.Label(bar, text=T("History is used to keep jobs and crew different from day to day."),
                  fg=win95.DARK).pack(side="left", padx=8)
         cols = [(k, T(t)) for k, t in self.COLS]
         f, self.tree = win95.scrolled_tree(self, cols, [74, 40, 200, 300, 260], height=20)
         f.pack(fill="both", expand=True, padx=4, pady=(0, 4))
         self.tree.bind("<Double-1>", lambda e: self.open_file())
+        self.tree.bind("<Return>", lambda e: self.open_file())
+        self.tree.bind("<Delete>", lambda e: self.delete())
         self.show()
 
     def show(self):
@@ -606,6 +655,39 @@ class HistoryTab(tk.Frame):
         folder = self.app.store.settings.get("output_dir")
         if folder and os.path.isdir(folder):
             open_path(folder)
+
+    def print_files(self):
+        """Send the files of the selected permits to the default printer (test)."""
+        st = self.app.store
+        sel = sorted(self._sel())
+        if not sel:
+            messagebox.showinfo(app_title(), T("Select permits in the list."), parent=self)
+            return
+        folder = st.settings.get("output_dir", "")
+        paths = [os.path.join(folder, st.history[i].get("file", "")) for i in sel]
+        missing = [p for p in paths if not os.path.isfile(p)]
+        paths = [p for p in paths if os.path.isfile(p)]
+        if not paths:
+            messagebox.showinfo(app_title(), f"{T('File not found:')}\n" + "\n".join(missing[:5]),
+                                parent=self)
+            return
+        if not printing.can_print():
+            messagebox.showwarning(app_title(), T("Printing is not available on this computer."),
+                                   parent=self)
+            return
+        if not messagebox.askyesno(app_title(), T("Print {n} files on the default printer?\n"
+                                                  "(test function: Word opens and prints each file)",
+                                                  n=len(paths)), parent=self):
+            return
+        done = 0
+        for p in paths:
+            try:
+                printing.print_file(p)
+                done += 1
+            except OSError as e:
+                messagebox.showerror(app_title(), f"{os.path.basename(p)}:\n{e}", parent=self)
+                break
+        self.app.status.set(T("{n} files sent to the printer", n=done))
 
     def recreate(self):
         """Write the selected permits again with the current template (same No., same file)."""
@@ -647,16 +729,23 @@ def slug(text):
     return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_") or "item"
 
 
+def text_match(words, *texts):
+    """Every word of the filter appears somewhere in the texts (case-insensitive)."""
+    hay = " ".join(str(t) for t in texts).lower()
+    return all(w in hay for w in words)
+
+
 class ListEditor(tk.Toplevel):
-    """Generic editor: list of records on the left, fields on the right.
+    """Generic editor: sorted, filterable list of records on the left, fields on the right.
 
     field kinds: str, int, bool, codes (comma separated list), range (min-max), rank
     """
 
     def __init__(self, app, title, records, fields, label, id_from, on_save, hint="",
-                 validate=None, new_record=None):
+                 validate=None, new_record=None, sort_key=None):
         super().__init__(app)
         self.new_record = new_record  # callable returning field values of a "New" record
+        self.sort_key = sort_key or (lambda r: label(r).lower())
         self.title(title)
         self.configure(bg=BG)
         self.transient(app)
@@ -664,18 +753,29 @@ class ListEditor(tk.Toplevel):
         self.records = copy.deepcopy(records)
         self.fields, self.label, self.id_from, self.on_save = fields, label, id_from, on_save
         self.validate = validate
-        self.current = None
+        self.current = None  # index in self.records
+        self.view = []       # record indices shown in the list, in list order
 
         left = win95.group(self, T("Records"))
         left.pack(side="left", fill="both", padx=6, pady=6)
+        top = tk.Frame(left, bg=BG)
+        top.pack(fill="x", pady=(0, 4))
+        tk.Label(top, text=T("Filter:")).pack(side="left")
+        self.filter = tk.Entry(top, width=24)
+        self.filter.pack(side="left", padx=4, fill="x", expand=True)
+        self.filter.bind("<KeyRelease>", lambda e: self._refresh_view())
+        win95.button(top, "x", self._clear_filter, width=2).pack(side="left")
+        self.count = tk.Label(left, anchor="w", fg=win95.DARK)
+        self.count.pack(fill="x")
         lf = tk.Frame(left, bg=BG)
         lf.pack(fill="both", expand=True)
-        self.lb = tk.Listbox(lf, width=38, height=24, exportselection=False, activestyle="none")
+        self.lb = tk.Listbox(lf, width=40, height=24, exportselection=False, activestyle="none")
         sb = ttk.Scrollbar(lf, orient="vertical", command=self.lb.yview)
         self.lb.configure(yscrollcommand=sb.set)
         self.lb.pack(side="left", fill="both", expand=True)
         sb.pack(side="right", fill="y")
         self.lb.bind("<<ListboxSelect>>", self._select)
+        self.lb.bind("<Delete>", lambda e: self.delete())
         b = tk.Frame(left, bg=BG)
         b.pack(fill="x", pady=(4, 0))
         win95.button(b, T("New"), self.new, width=8).pack(side="left")
@@ -708,38 +808,62 @@ class ListEditor(tk.Toplevel):
         win95.button(bar, T("Cancel"), self.destroy).pack(side="right", padx=4)
         win95.button(bar, T("OK"), self.ok).pack(side="right", padx=4)
         win95.button(bar, T("Apply"), self.apply).pack(side="left")
+        # Ctrl+... keys, see App._on_ctrl
+        self.hotkeys = {"f": self.focus_filter, "n": self.new, "s": self.ok}
 
-        self._fill_list()
-        if self.records:
-            self._highlight(0)
-            self._select()
+        self._refresh_view()
+        if self.view:
+            self._show(self.view[0])
         win95.center(self, app)
         self.grab_set()
 
-    def _fill_list(self):
+    # --- list ---
+    def _refresh_view(self):
+        """Sort and filter the list; keep the current record highlighted."""
+        words = self.filter.get().lower().split()
+        idx = [i for i, r in enumerate(self.records)
+               if not words or text_match(words, self.label(r), *r.values())]
+        idx.sort(key=lambda i: self.sort_key(self.records[i]))
+        self.view = idx
         self.lb.delete(0, "end")
-        for r in self.records:
-            self.lb.insert("end", self.label(r))
+        for i in idx:
+            self.lb.insert("end", self.label(self.records[i]))
+        self.count.config(text=T("{n} of {total}", n=len(idx), total=len(self.records)))
+        if self.current in self.view:
+            self._highlight(self.current)
 
-    def _highlight(self, index):
+    def _clear_filter(self):
+        self.filter.delete(0, "end")
+        self._refresh_view()
+
+    def focus_filter(self):
+        self.filter.focus_set()
+        self.filter.select_range(0, "end")
+
+    def _highlight(self, rec_index):
         """Exactly one highlighted row (Listbox.selection_set alone adds to the selection)."""
         self.lb.selection_clear(0, "end")
-        self.lb.selection_set(index)
-        self.lb.activate(index)
-        self.lb.see(index)
+        if rec_index in self.view:
+            row = self.view.index(rec_index)
+            self.lb.selection_set(row)
+            self.lb.activate(row)
+            self.lb.see(row)
 
     def _select(self, _e=None):
         sel = self.lb.curselection()
-        if not sel:
+        if not sel or sel[0] >= len(self.view):
             return
-        target = sel[0]
+        target = self.view[sel[0]]
         if self.current is not None and self.current != target:
             if not self.apply():
                 self._highlight(self.current)
                 return
-        self._highlight(target)
-        self.current = target
-        rec = self.records[self.current]
+        self._show(target)
+
+    def _show(self, rec_index):
+        self.current = rec_index
+        self._highlight(rec_index)
+        rec = self.records[rec_index]
         for key, (w, kind) in self.widgets.items():
             val = rec.get(key)
             if kind == "bool":
@@ -757,6 +881,7 @@ class ListEditor(tk.Toplevel):
                 w.delete(0, "end")
                 w.insert(0, text)
 
+    # --- editing ---
     def _read(self):
         rec = {}
         for key, (w, kind) in self.widgets.items():
@@ -804,11 +929,8 @@ class ListEditor(tk.Toplevel):
         old = self.records[self.current]
         changed = any(old.get(k) != v for k, v in rec.items())
         old.update(rec)
-        selected = self.lb.curselection()
-        self.lb.delete(self.current)
-        self.lb.insert(self.current, self.label(old))
-        if not selected or selected[0] == self.current:  # re-selecting would add a 2nd row
-            self._highlight(self.current)
+        if changed:
+            self._refresh_view()  # the record may move to its place in the sorted list
         if changed and self.validate:
             notes = self.validate(old)
             if notes:
@@ -819,10 +941,14 @@ class ListEditor(tk.Toplevel):
         if not self.apply():
             return
         self.records.append(rec)
-        self.lb.insert("end", self.label(rec))
-        self.current = None
-        self._highlight(len(self.records) - 1)
-        self._select()
+        if self.filter.get():
+            self.filter.delete(0, "end")  # the new record must be visible
+        self.current = len(self.records) - 1
+        self._refresh_view()
+        self._show(self.current)
+        first = next((w for w, kind in self.widgets.values() if kind == "str"), None)
+        if first is not None:
+            first.focus_set()
 
     def new(self):
         rec = {}
@@ -846,17 +972,17 @@ class ListEditor(tk.Toplevel):
             return
         if not messagebox.askyesno(self.title(), T("Delete this record?"), parent=self):
             return
+        pos = self.view.index(self.current) if self.current in self.view else 0
         del self.records[self.current]
         self.current = None
-        self._fill_list()
-        if self.records:
-            self._highlight(0)
-            self._select()
+        self._refresh_view()
+        if self.view:
+            self._show(self.view[min(pos, len(self.view) - 1)])
 
     def ok(self):
         if not self.apply():
             return
-        self.on_save(self.records)
+        self.on_save(sorted(self.records, key=self.sort_key))
         self.destroy()
 
 
@@ -1162,6 +1288,72 @@ class App(tk.Tk):
             self.build()
             self._show()
 
+    # --- keyboard ---
+    def _bind_keys(self):
+        self.bind_all("<Control-KeyPress>", self._on_ctrl)  # replaces: no double calls after rebuild
+        self.bind("<F1>", lambda e: self.shortcuts())
+        self.bind("<F5>", lambda e: self._on_tab(0, self.auto_tab.generate))
+
+    def _on_tab(self, tab, action):
+        self.notebook.select(tab)
+        action()
+        return "break"
+
+    def _print(self):
+        self.notebook.select(2)
+        self.history_tab.print_files()
+
+    def _on_ctrl(self, event):
+        """Ctrl+letter, the same key with the Russian layout (Ctrl+Ф = Ctrl+A)."""
+        key = win95.key_letter(event)
+        if not key:
+            return None
+        w = self.focus_get()
+        if key == "a":
+            return "break" if win95.select_all(w) else None
+        top = w.winfo_toplevel() if w is not None else self
+        if top is not self:
+            action = getattr(top, "hotkeys", {}).get(key)
+            if action:
+                action()
+                return "break"
+            return None
+        tab = self.notebook.index("current")
+        actions = {
+            "g": lambda: self._on_tab(0, self.auto_tab.generate),
+            "r": lambda: self._on_tab(0, self.auto_tab.reroll),
+            "e": lambda: self._on_tab(0, self.auto_tab.edit),
+            "s": (self.auto_tab.create if tab == 0 else self.manual_tab.create if tab == 1
+                  else lambda: None),
+            "f": lambda: self._on_tab(1, self.manual_tab.form.focus_filter),
+            "p": self._print,
+            "o": self.history_tab.open_folder,
+            "q": self.quit_app,
+            "1": lambda: self.notebook.select(0),
+            "2": lambda: self.notebook.select(1),
+            "3": lambda: self.notebook.select(2),
+        }
+        if key in actions:
+            actions[key]()
+            return "break"
+        return None
+
+    def shortcuts(self):
+        messagebox.showinfo(T("Keyboard shortcuts"), T(
+            "Ctrl+A - select all (lists, text fields)\n"
+            "Shift / Ctrl + click - select several rows\n"
+            "F5 or Ctrl+G - generate the plan\n"
+            "Ctrl+R - reroll selected rows\n"
+            "Enter, F2 or Ctrl+E - edit the selected row\n"
+            "Delete - remove the selected rows\n"
+            "Ctrl+S - create files (Auto) / create file (Manual)\n"
+            "Ctrl+F - job filter (Manual) / filter in the editors\n"
+            "Ctrl+N - new record (editors), Ctrl+S - OK (editors)\n"
+            "Ctrl+P - print selected files (History, test)\n"
+            "Ctrl+O - open the output folder\n"
+            "Ctrl+1 / 2 / 3 - Auto generate / Manual / History\n"
+            "Ctrl+Q - exit"), parent=self)
+
     def _set_icon(self):
         """Window / taskbar icon (icons/ptw_*.png, icons/ptw.ico for Windows)."""
         self.icons = {}
@@ -1208,6 +1400,7 @@ class App(tk.Tk):
         self.notebook.add(self.manual_tab, text=T("Manual"))
         self.notebook.add(self.history_tab, text=T("History"))
         self.status.set(T("Ready. Choose the period and press 'Generate'."))
+        self._bind_keys()
 
     def rebuild(self):
         """Recreate the window after a language or font change, keeping the plan."""
@@ -1225,9 +1418,12 @@ class App(tk.Tk):
     def _menu(self):
         m = tk.Menu(self)
         f = tk.Menu(m, tearoff=0)
-        f.add_command(label=T("Open output folder"), command=lambda: self.history_tab.open_folder())
+        f.add_command(label=T("Open output folder"), accelerator="Ctrl+O",
+                      command=lambda: self.history_tab.open_folder())
+        f.add_command(label=T("Print selected files (test)"), accelerator="Ctrl+P",
+                      command=self._print)
         f.add_separator()
-        f.add_command(label=T("Exit"), command=self.quit_app)
+        f.add_command(label=T("Exit"), accelerator="Ctrl+Q", command=self.quit_app)
         m.add_cascade(label=T("File"), menu=f, underline=0)
         d = tk.Menu(m, tearoff=0)
         d.add_command(label=T("Jobs..."), command=self.edit_jobs)
@@ -1240,6 +1436,7 @@ class App(tk.Tk):
         o.add_command(label=T("Settings..."), command=lambda: SettingsDialog(self))
         m.add_cascade(label=T("Options"), menu=o, underline=0)
         h = tk.Menu(m, tearoff=0)
+        h.add_command(label=T("Keyboard shortcuts"), accelerator="F1", command=self.shortcuts)
         h.add_command(label=T("About"), command=self.about)
         m.add_cascade(label=T("Help"), menu=h, underline=0)
         self.config(menu=m)
@@ -1312,7 +1509,9 @@ class App(tk.Tk):
         ListEditor(self, T("Jobs"), self.store.jobs, fields,
                    lambda j: f"{','.join(j.get('lead_ranks', []))[:7]:<8} {j.get('title', '')}",
                    lambda j: j.get("title", ""), self._saver("jobs"), hint, validate,
-                   new_record=lambda recs: {"loto": False, "ratings": [1, 1]})
+                   new_record=lambda recs: {"loto": False, "ratings": [1, 1]},
+                   sort_key=lambda j: (self.store.rank((j.get("lead_ranks") or [""])[0])["order"],
+                                       j.get("title", "").lower()))
 
     def edit_crew(self):
         fields = [("id", "ID", "str"), ("rank", "Rank", "rank"),
@@ -1331,7 +1530,9 @@ class App(tk.Tk):
                    lambda m: f"{m.get('rank', ''):<6} {m.get('first_name', '')} {m.get('last_name', '')}"
                    + ("" if m.get("active", True) else "  " + T("(off)")),
                    lambda m: f"{m.get('last_name', '')} {m.get('first_name', '')}",
-                   self._saver("crew"), hint, validate)
+                   self._saver("crew"), hint, validate,
+                   sort_key=lambda m: (self.store.rank(m.get("rank", ""))["order"],
+                                       m.get("last_name", "").lower()))
 
     def edit_ranks(self):
         fields = [("code", "Code", "str"), ("short", "Short (issued to)", "str"),
@@ -1344,7 +1545,8 @@ class App(tk.Tk):
                    lambda r: f"{r.get('code', ''):<6} {r.get('full', '')}",
                    lambda r: r.get("code", ""), self._saver("ranks"),
                    new_record=lambda recs: {"officer": False, "can_pc": False, "can_loto": False,
-                                            "order": max([r.get("order", 0) for r in recs] or [0]) + 1})
+                                            "order": max([r.get("order", 0) for r in recs] or [0]) + 1},
+                   sort_key=lambda r: (r.get("order", 99), r.get("code", "")))
 
     def load_default_jobs(self):
         try:
