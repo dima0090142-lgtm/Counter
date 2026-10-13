@@ -224,7 +224,8 @@ class PermitForm(tk.Frame):
         if self.lead not in crew:
             self.lead = crew[0] if crew else ""
         self._update_role_lists()
-        self.set_roles(*generator.default_roles(self.store, crew, self.lead))
+        self.set_roles(*generator.default_roles(self.store, crew, self.lead,
+                                                generator.supervisor_ranks(self.store, self.current_job())))
         if self.loto_var.get() and not self.loto.get():
             self._loto_toggled()
 
@@ -335,6 +336,7 @@ def show_write_result(app, parent, paths, warnings):
     """Status line, warnings about long text, offer to open the folder."""
     s = app.store
     app.history_tab.show()
+    app.auto_tab.show()  # plan numbers continue after the new history
     app.status.set(T("{n} files created in {folder}", n=len(paths), folder=s.settings["output_dir"]))
     if not warnings:
         sound.play("tada")
@@ -440,10 +442,10 @@ class AutoTab(tk.Frame):
         self.app.status.set(T("{n} permits planned. Check the list, then press 'Create files'.",
                               n=len(self.plan)))
 
-    def show(self):
+    def show(self, replace=False):
         self.tree.delete(*self.tree.get_children())
         st = self.store
-        numbers = generator.permit_numbers(st, self.plan)
+        numbers = generator.permit_numbers(st, self.plan, replace)
         for i, (p, no) in enumerate(zip(self.plan, numbers)):
             j = st.job(p["job_id"]) or {"title": p["job_id"]}
             d = generator.parse_date(p["date"])
@@ -472,9 +474,11 @@ class AutoTab(tk.Frame):
         sel = self._selected()
         if not sel:
             return
-        d = PermitDialog(self.app, self.plan[sel[0]])
-        if d.result:
-            self.plan[sel[0]] = d.result
+        permit = self.plan[sel[0]]
+        d = PermitDialog(self.app, permit)
+        if d.result and any(p is permit for p in self.plan):  # the plan may have changed
+            i = next(i for i, p in enumerate(self.plan) if p is permit)
+            self.plan[i] = d.result
             self.plan.sort(key=lambda p: p["date"])
             self.show()
 
@@ -488,7 +492,18 @@ class AutoTab(tk.Frame):
             messagebox.showinfo(app_title(), T("Nothing to create. Press 'Generate' first."),
                                 parent=self)
             return
-        if not self.app.ensure_output_dir():
+        if not self.app.ensure_output_dir() or not self.app.check_template(self):
+            return
+        bad = [(i, generator.check_permit(self.store, p)) for i, p in enumerate(self.plan)]
+        bad = [(i, probs) for i, probs in bad if probs]
+        if bad:
+            self.tree.selection_set([str(i) for i, _ in bad])
+            self.tree.see(str(bad[0][0]))
+            lines = [f"{generator.parse_date(self.plan[i]['date']):%d/%m/%Y}: {', '.join(p)}"
+                     for i, p in bad[:12]]
+            messagebox.showwarning(app_title(), T("These plan rows cannot be printed (selected "
+                                                  "in the list). Use Reroll or Edit...:")
+                                   + "\n\n" + "\n".join(lines), parent=self)
             return
         dates = {p["date"] for p in self.plan}
         replace = False
@@ -499,6 +514,7 @@ class AutoTab(tk.Frame):
             if ans is None:
                 return
             replace = ans
+            self.show(replace)  # the numbers shown are the numbers printed
         try:
             paths, warnings = docgen.write_permits(self.store, self.plan, replace_dates=replace)
         except Exception as e:  # show any problem to the user, nothing is lost
@@ -528,7 +544,7 @@ class ManualTab(tk.Frame):
         except ValueError as e:
             messagebox.showwarning(app_title(), str(e), parent=self)
             return
-        if not self.app.ensure_output_dir():
+        if not self.app.ensure_output_dir() or not self.app.check_template(self):
             return
         try:
             paths, warnings = docgen.write_permits(self.app.store, [p])
@@ -555,6 +571,7 @@ class HistoryTab(tk.Frame):
         win95.button(bar, T("Open file"), self.open_file, width=14).pack(side="left", padx=(0, 4))
         win95.button(bar, T("Open folder"), self.open_folder, width=14).pack(side="left", padx=4)
         win95.button(bar, T("Delete entry"), self.delete, width=14).pack(side="left", padx=4)
+        win95.button(bar, T("Recreate file"), self.recreate, width=14).pack(side="left", padx=4)
         tk.Label(bar, text=T("History is used to keep jobs and crew different from day to day."),
                  fg=win95.DARK).pack(side="left", padx=8)
         cols = [(k, T(t)) for k, t in self.COLS]
@@ -590,6 +607,26 @@ class HistoryTab(tk.Frame):
         if folder and os.path.isdir(folder):
             open_path(folder)
 
+    def recreate(self):
+        """Write the selected permits again with the current template (same No., same file)."""
+        sel = self._sel()
+        if not sel:
+            messagebox.showinfo(app_title(), T("Select permits in the list."), parent=self)
+            return
+        if not self.app.ensure_output_dir() or not self.app.check_template(self):
+            return
+        if not messagebox.askyesno(app_title(), T("Write {n} files again with the same numbers?\n"
+                                                  "The old files are overwritten.", n=len(sel)),
+                                   parent=self):
+            return
+        entries = [self.app.store.history[i] for i in sorted(sel)]
+        try:
+            paths, warnings = docgen.rewrite_files(self.app.store, entries)
+        except Exception as e:  # e.g. the file is open in Word
+            messagebox.showerror(app_title(), f"{T('Could not create files:')}\n{e}", parent=self)
+            return
+        show_write_result(self.app, self, paths, warnings)
+
     def delete(self):
         sel = self._sel()
         if not sel or not messagebox.askyesno(
@@ -617,8 +654,9 @@ class ListEditor(tk.Toplevel):
     """
 
     def __init__(self, app, title, records, fields, label, id_from, on_save, hint="",
-                 validate=None):
+                 validate=None, new_record=None):
         super().__init__(app)
+        self.new_record = new_record  # callable returning field values of a "New" record
         self.title(title)
         self.configure(bg=BG)
         self.transient(app)
@@ -790,6 +828,8 @@ class ListEditor(tk.Toplevel):
         rec = {}
         for key, _t, kind in self.fields:
             rec[key] = {"bool": True, "codes": [], "range": [0, 0], "int": 0}.get(kind, "")
+        if self.new_record:
+            rec.update(self.new_record(self.records))
         self._add(rec)
 
     def duplicate(self):
@@ -986,7 +1026,7 @@ class SettingsDialog(tk.Toplevel):
                 date=dt.date.today().strftime(self.entries["filename_date_format"].get() or "%Y-%m-%d"),
                 title="ME Fuel Valves Overhaul", ra="RA-001", no="15")
             self.example.config(text=f"{T('Example:')} {name}.docx", fg="black")
-        except (ValueError, KeyError, IndexError) as e:
+        except Exception as e:  # noqa: BLE001 - shown to the user
             self.example.config(text=str(e), fg="#800000")
 
     def _pick_out(self):
@@ -1039,13 +1079,29 @@ class SettingsDialog(tk.Toplevel):
         try:
             dt.date.today().strftime(new["filename_date_format"])
             new["filename_pattern"].format(date="", title="", ra="", no="")
-        except (ValueError, KeyError, IndexError) as e:
+        except Exception as e:  # noqa: BLE001 - any bad pattern: {x}, {date.year}, {0} ...
             warn(T("Wrong file name pattern: {e}", e=e))
             return
         tpl = self.tpl.get().strip()
         if tpl and not os.path.isfile(tpl):
             warn(T("Template not found: {path}", path=tpl))
             return
+        st = self.app.store
+        codes = {}
+        for key, e in self.code_entries.items():
+            codes[key] = [c.strip().upper() for c in e.get().replace(";", ",").split(",") if c.strip()]
+        known = {r["code"].upper(): r for r in st.ranks}
+        sup = codes.get("pc_supervisor_ranks", [])
+        bad = [c for c in sup if c not in known or not known[c].get("can_pc")]
+        if not sup or bad:
+            warn(T("'P.C. when the job lead cannot be P.C.' needs ranks that may be P.C.: {ok}",
+                   ok=", ".join(r["code"] for r in st.ranks if r.get("can_pc"))))
+            return
+        bad = [c for c in codes.get("loto_preferred_ranks", []) if c not in known]
+        if bad:
+            warn(T("Unknown rank: {codes}", codes=", ".join(bad)))
+            return
+        codes = {k: [known[c]["code"] for c in v] for k, v in codes.items()}
         old_look = (s.get("language"), s.get("ui_font_size"))
         s.update(new)
         s["output_dir"] = self.out.get().strip()
@@ -1053,8 +1109,7 @@ class SettingsDialog(tk.Toplevel):
         s["permit_numbering"] = self.numbering.get()
         s["tick_ao"] = self.tick_ao.get()
         s["tick_pc"] = self.tick_pc.get()
-        for key, e in self.code_entries.items():
-            s[key] = [c.strip() for c in e.get().replace(";", ",").split(",") if c.strip()]
+        s.update(codes)
         s["open_folder_after"] = self.open_after.get()
         s["fit_one_line"] = self.fit.get()
         s["skip_weekdays"] = [i for i, v in enumerate(self.skip_vars) if v.get()]
@@ -1197,6 +1252,21 @@ class App(tk.Tk):
                                                "(Options > Settings)."), parent=self)
             SettingsDialog(self)
 
+    def check_template(self, parent):
+        """Warn (once per session) when the Word template lacks fields of this version."""
+        tpl = storage.template_path(self.store.settings)
+        missing = docgen.template_missing(tpl)
+        if not missing or getattr(self, "_tpl_warned", None) == (tpl, tuple(missing)):
+            return True
+        self._tpl_warned = (tpl, tuple(missing))
+        return messagebox.askyesno(
+            app_title(), T("The Word template has no fields for: {fields}.\n{path}\n\n"
+                           "These values will not be printed. Use the built-in template "
+                           "(Options > Settings > Files, Word template empty).\n\n"
+                           "Create the files anyway?",
+                           fields=", ".join("{{%s}}" % k for k in missing), path=tpl),
+            parent=parent)
+
     def ensure_output_dir(self):
         if self.store.settings.get("output_dir"):
             return True
@@ -1227,6 +1297,7 @@ class App(tk.Tk):
                   ("rating_ranks", "Ratings ranks", "codes"),
                   ("ratings", "Ratings count", "range"),
                   ("pc_ranks", "P.C. ranks (if the lead cannot be P.C.)", "codes"),
+                  ("group", "Group (same filter / purifier: not on close days)", "str"),
                   ("loto", "LOTO usually needed (hint only)", "bool"), ("active", "Active", "bool")]
         hint = ("Responsible ranks: one of them leads the job, e.g. 2E. If the lead cannot be P.C.\n"
                 "(4E, 5E), a P.C. from 'P.C. ranks' is added - empty = Settings > Generation.\n"
@@ -1240,7 +1311,8 @@ class App(tk.Tk):
                                              "RA_NO": j.get("ra_no", "")})
         ListEditor(self, T("Jobs"), self.store.jobs, fields,
                    lambda j: f"{','.join(j.get('lead_ranks', []))[:7]:<8} {j.get('title', '')}",
-                   lambda j: j.get("title", ""), self._saver("jobs"), hint, validate)
+                   lambda j: j.get("title", ""), self._saver("jobs"), hint, validate,
+                   new_record=lambda recs: {"loto": False, "ratings": [1, 1]})
 
     def edit_crew(self):
         fields = [("id", "ID", "str"), ("rank", "Rank", "rank"),
@@ -1267,9 +1339,12 @@ class App(tk.Tk):
                   ("can_pc", "Can sign as P.C. (sections 5-7)", "bool"),
                   ("can_loto", "Can apply LOTO", "bool"),
                   ("order", "Order (seniority)", "int")]
+        # a new rank may NOT sign as P.C. or apply LOTO until you tick it (PSC)
         ListEditor(self, T("Ranks"), self.store.ranks, fields,
                    lambda r: f"{r.get('code', ''):<6} {r.get('full', '')}",
-                   lambda r: r.get("code", ""), self._saver("ranks"))
+                   lambda r: r.get("code", ""), self._saver("ranks"),
+                   new_record=lambda recs: {"officer": False, "can_pc": False, "can_loto": False,
+                                            "order": max([r.get("order", 0) for r in recs] or [0]) + 1})
 
     def load_default_jobs(self):
         try:
@@ -1283,18 +1358,19 @@ class App(tk.Tk):
             parent=self)
         if ans is None:
             return
+        have = {j["id"] for j in self.store.jobs}
+        added = sum(1 for j in defaults if j["id"] not in have)
         if ans:
+            # keep a copy of the user's list: data/jobs_backup_<date>.json
+            storage.save(f"jobs_backup_{dt.datetime.now():%Y%m%d_%H%M%S}", self.store.jobs)
             jobs = defaults
         else:
-            have = {j["id"] for j in self.store.jobs}
             jobs = self.store.jobs + [j for j in defaults if j["id"] not in have]
-        added = len(jobs) - (0 if ans else len(self.store.jobs))
         self._saver("jobs")(jobs)
         self.store.reload()
         self.refresh()
         messagebox.showinfo(app_title(), T("Jobs list updated: {n} jobs ({added} new).",
-                                           n=len(jobs), added=added if not ans else len(jobs)),
-                            parent=self)
+                                           n=len(jobs), added=added), parent=self)
 
     def about(self):
         messagebox.showinfo(T("About"), f"{app_title()}\n\n"

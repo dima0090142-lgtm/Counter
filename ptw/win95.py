@@ -261,27 +261,55 @@ class MessageBox(tk.Toplevel):
                  ).pack(side="left", fill="both", expand=True)
         bar = tk.Frame(self, bg=BG)
         bar.pack(pady=(0, 10))
-        first = None
+        self.buttons = []
         for value, label in buttons:
             b = tk.Button(bar, text=label, width=10, command=lambda v=value: self._done(v))
             b.pack(side="left", padx=4)
-            if first is None:
-                first = b
-                b.configure(default="active")
-        self.bind("<Return>", lambda e: self._done(buttons[0][0]))
+            # the button with the keyboard focus shows the thick default frame
+            b.bind("<FocusIn>", lambda e, b=b: self._mark(b))
+            self.buttons.append(b)
+        first = self.buttons[0]
+        # Enter presses the button that has the focus (Tab / arrows move it), like Win95
+        self.bind("<Return>", lambda e: self._focused().invoke())
+        self.bind("<KP_Enter>", lambda e: self._focused().invoke())
+        self.bind("<Left>", lambda e: self._move(-1))
+        self.bind("<Right>", lambda e: self._move(1))
         self.bind("<Escape>", lambda e: self._done(cancel_value))
         self.protocol("WM_DELETE_WINDOW", lambda: self._done(cancel_value))
         self.deiconify()
         center(self, parent if parent is not None and parent.winfo_viewable() else None)
         self.lift()
         first.focus_set()
+        self._mark(first)
+        # a dialog that opened this box keeps its own modal grab afterwards
+        self._old_grab = self.grab_current()
         self.grab_set()
         self.wait_window()
+
+    def _focused(self):
+        w = self.focus_get()
+        return w if w in self.buttons else self.buttons[0]
+
+    def _mark(self, button):
+        for b in self.buttons:
+            b.configure(default="active" if b is button else "normal")
+
+    def _move(self, step):
+        i = self.buttons.index(self._focused())
+        b = self.buttons[(i + step) % len(self.buttons)]
+        b.focus_set()
 
     def _done(self, value):
         self.result = value
         self.grab_release()
         self.destroy()
+        old = self._old_grab
+        if old is not None:
+            try:
+                if old.winfo_exists():
+                    old.grab_set()
+            except tk.TclError:
+                pass
 
 
 # ----------------------------------------------------------------------

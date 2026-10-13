@@ -21,5 +21,5 @@ def test_worst_case_permits_print_on_one_page(tmp_path, monkeypatch):
     store.jobs = sorted(store.jobs, key=lambda j: -(j["officers"][1] + j["ratings"][1]))[:4]
     results, _ = check_print.run(store, str(tmp_path / "out"), check_print.find_soffice())
     assert [r for r in results if r[1] != 1 or r[2]] == []
-    assert len(results) == 5
+    assert len(results) == 7  # 4 jobs + stress + 2 with the long A.O.
     shutil.rmtree(tmp_path / "out", ignore_errors=True)

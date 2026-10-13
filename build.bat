@@ -19,12 +19,25 @@ python -m pip install pytest
 python -m pytest -q tests
 if errorlevel 1 goto :error
 
+echo === Keeping your data ===
+rem PyInstaller empties dist\PTW_Generator: save data\ of a program run from there
+if exist "dist\PTW_Generator\data" (
+    if exist "_keep_data" rmdir /s /q "_keep_data"
+    xcopy /e /i /q /y "dist\PTW_Generator\data" "_keep_data" >nul
+)
+
 echo === Building ===
 python -m PyInstaller --noconfirm --clean --windowed --name PTW_Generator ^
     --add-data "defaults;defaults" --add-data "templates;templates" --add-data "sounds;sounds" ^
     --add-data "icons;icons" --icon icons\ptw.ico ^
     --hidden-import babel.numbers main.py
 if errorlevel 1 goto :error
+
+if exist "_keep_data" (
+    xcopy /e /i /q /y "_keep_data" "dist\PTW_Generator\data" >nul
+    rmdir /s /q "_keep_data"
+    echo Your data was put back into dist\PTW_Generator\data
+)
 
 echo.
 echo Done: dist\PTW_Generator\PTW_Generator.exe

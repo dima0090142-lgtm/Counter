@@ -71,12 +71,16 @@ def build_permits(store):
         team = worst_crew(store, job)
         if not team:
             continue
-        crew = generator.sort_by_rank(store, team)
-        pc, _transfer, close = generator.default_roles(store, crew, team[0])
+        crew = generator.sort_by_rank(store, team + ([officer] if officer not in team else []))
+        pc, _transfer, close = generator.default_roles(store, crew, team[0],
+                                                       generator.supervisor_ranks(store, job))
         # always fill section 6 and LOTO with the longest names: worst case for the layout
         permits.append({"date": "2026-12-28", "job_id": job["id"], "crew": crew, "lead": team[0],
                         "pc": pc, "transfer": officer, "close": close, "loto": loto,
                         "permit_no": "366-9"})
+    # stress: a very long A.O. (CE) name, cut in the narrow section 7 cell
+    store.crew.append({"id": "zz_long_ce", "rank": "CE", "first_name": "Maximilian-Alexander",
+                       "last_name": "Vandermeer-Konstantinopoulos", "title": "", "active": False})
     # stress: very long texts and every crew member on one permit
     stress = dict(store.jobs[0], id="zz_stress_long_text", title="ZZ Stress long text", **LONG)
     store.jobs.append(stress)
@@ -127,23 +131,34 @@ def one_line_problems(pdf, values, cut=()):
     return bad
 
 
-CHECK_KEYS = ("LOCATION", "PLANT", "WORK", "ISSUED_TO", "AO", "PC", "TRANSFER_TO", "PC_CLOSE",
-              "LOTO_NAME")
+CHECK_KEYS = ("SHIP", "PERMIT_NO", "LOCATION", "PLANT", "WORK", "ISSUED_TO", "AO", "PC",
+              "TRANSFER_TO", "PC_CLOSE", "LOTO_NAME")
 
 
 def run(store, outdir, soffice):
+    # a ship name close to the limit of its cell at 10 pt (the label is not 9 pt!)
     store.settings.update(output_dir=outdir, fit_one_line=True, tick_ao=True, tick_pc=True,
-                          ship_name=store.settings.get("ship_name") or "MSC MEDITERRANEAN EXAMPLE")
+                          ship_name=store.settings.get("ship_name") or "MSC MEDITERRANEO 3")
     permits = build_permits(store)
     storage.save = lambda *a, **k: None  # never touch the real history / settings
     paths, warnings = docgen.write_permits(store, permits)
+    # the same permits once more with the long A.O. and a long manual permit number
+    ao = store.settings.get("ao_id")
+    store.settings["ao_id"] = "zz_long_ce"
+    extra = [dict(permits[0], permit_no="366-12A/B", _ao="zz_long_ce"),
+             dict(permits[-1], permit_no="9999-99", _ao="zz_long_ce")]
+    p2, w2 = docgen.write_permits(store, extra)
+    store.settings["ao_id"] = ao
+    permits, paths, warnings = permits + extra, paths + p2, warnings + w2
     convert(soffice, paths, outdir)
     cut_keys = dict(warnings)
     results = []
     for p, path in zip(permits, paths):
         pdf = os.path.splitext(path)[0] + ".pdf"
         pages = pdf_pages(pdf) if os.path.exists(pdf) else 0
+        store.settings["ao_id"] = p.get("_ao", ao)
         vals = docgen.values_for(store, p)
+        store.settings["ao_id"] = ao
         cut = cut_keys.get(os.path.basename(path), [])
         res = docgen.check_fit(storage.template_path(store.settings), "ISSUED_TO",
                                vals["ISSUED_TO"], float(store.settings.get("min_font_size", 6.5)))

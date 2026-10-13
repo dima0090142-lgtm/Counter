@@ -65,10 +65,60 @@ DEFAULT_CELL_MARGIN = 108  # dxa (twentieths of a point), Word default left/righ
 SAFETY_RATIO, SAFETY_PT = 0.99, 3.0
 
 
+# font sizes from the document styles (a run without w:sz is NOT 9 pt: Word uses the
+# paragraph / character style, then docDefaults, then 10 pt)
+_SIZES = {"default": 10.0, "para": {}, "char": {}, "para_default": None}
+
+
+def _prepare_sizes(document):
+    st = document.styles.element
+    default = 10.0
+    dd = st.find(qn("w:docDefaults"))
+    if dd is not None:
+        sz = dd.find(f"{qn('w:rPrDefault')}/{qn('w:rPr')}/{qn('w:sz')}")
+        if sz is not None:
+            default = int(sz.get(qn("w:val"))) / 2
+    raw = {}
+    for el in st.findall(qn("w:style")):
+        sid = el.get(qn("w:styleId"))
+        based = el.find(qn("w:basedOn"))
+        rpr = el.find(qn("w:rPr"))
+        sz = rpr.find(qn("w:sz")) if rpr is not None else None
+        raw[sid] = (el.get(qn("w:type")), based.get(qn("w:val")) if based is not None else None,
+                    int(sz.get(qn("w:val"))) / 2 if sz is not None else None,
+                    el.get(qn("w:default")) == "1")
+
+    def resolve(sid, seen=()):
+        if sid not in raw or sid in seen:
+            return None
+        _t, based, size, _d = raw[sid]
+        return size if size is not None else resolve(based, seen + (sid,))
+
+    _SIZES["default"] = default
+    _SIZES["para"] = {sid: resolve(sid) for sid, v in raw.items() if v[0] == "paragraph"}
+    _SIZES["char"] = {sid: resolve(sid) for sid, v in raw.items() if v[0] == "character"}
+    _SIZES["para_default"] = next((sid for sid, v in raw.items()
+                                   if v[0] == "paragraph" and v[3]), None)
+
+
 def _run_size(r):
     rpr = r.find(qn("w:rPr"))
-    sz = rpr.find(qn("w:sz")) if rpr is not None else None
-    return int(sz.get(qn("w:val"))) / 2 if sz is not None else 9.0
+    if rpr is not None:
+        sz = rpr.find(qn("w:sz"))
+        if sz is not None:
+            return int(sz.get(qn("w:val"))) / 2
+        rs = rpr.find(qn("w:rStyle"))
+        if rs is not None and _SIZES["char"].get(rs.get(qn("w:val"))):
+            return _SIZES["char"][rs.get(qn("w:val"))]
+    p = r.getparent()
+    while p is not None and p.tag != qn("w:p"):
+        p = p.getparent()
+    sid = _SIZES["para_default"]
+    if p is not None:
+        ps = p.find(f"{qn('w:pPr')}/{qn('w:pStyle')}")
+        if ps is not None:
+            sid = ps.get(qn("w:val"))
+    return _SIZES["para"].get(sid) or _SIZES["default"]
 
 
 def _run_bold(r):
@@ -77,18 +127,48 @@ def _run_bold(r):
     return b is not None and b.get(qn("w:val"), "true") not in ("0", "false")
 
 
+# children of w:rPr that must come after w:sz / w:szCs (ECMA-376 CT_RPr order)
+_AFTER_SZ = ("szCs", "highlight", "u", "effect", "bdr", "shd", "fitText", "vertAlign", "rtl",
+             "cs", "em", "lang", "eastAsianLayout", "specVanish", "oMath")
+
+
 def _set_run_size(r, size):
     rpr = r.find(qn("w:rPr"))
     if rpr is None:
         rpr = r.makeelement(qn("w:rPr"), {})
         r.insert(0, rpr)
     half = str(int(round(size * 2)))
-    for tag in ("w:sz", "w:szCs"):
-        el = rpr.find(qn(tag))
+    for tag in ("sz", "szCs"):
+        el = rpr.find(qn("w:" + tag))
         if el is None:
-            el = rpr.makeelement(qn(tag), {})
-            rpr.append(el)
+            el = rpr.makeelement(qn("w:" + tag), {})
+            later = _AFTER_SZ[_AFTER_SZ.index(tag) + 1:] if tag == "szCs" else _AFTER_SZ
+            nxt = next((c for c in rpr if c.tag in {qn("w:" + t) for t in later}), None)
+            if nxt is not None:
+                nxt.addprevious(el)
+            else:
+                rpr.append(el)
         el.set(qn("w:val"), half)
+
+
+def _grid_width(tc):
+    """Width of the table grid columns the cell spans (dxa), or None."""
+    tr = tc.getparent()
+    tbl = tr.getparent() if tr is not None else None
+    grid = tbl.find(qn("w:tblGrid")) if tbl is not None else None
+    if grid is None:
+        return None
+    cols = [int(g.get(qn("w:w"), 0)) for g in grid.findall(qn("w:gridCol"))]
+    trpr = tr.find(qn("w:trPr"))
+    gb = trpr.find(qn("w:gridBefore")) if trpr is not None else None
+    idx = int(gb.get(qn("w:val"))) if gb is not None else 0
+    for c in tr.findall(qn("w:tc")):
+        span = c.find(f"{qn('w:tcPr')}/{qn('w:gridSpan')}")
+        n = int(span.get(qn("w:val"))) if span is not None else 1
+        if c is tc:
+            return sum(cols[idx:idx + n]) or None
+        idx += n
+    return None
 
 
 def _available_width(p):
@@ -102,7 +182,11 @@ def _available_width(p):
     w = tcpr.find(qn("w:tcW")) if tcpr is not None else None
     if w is None or w.get(qn("w:type")) not in ("dxa", None):
         return None
-    width = int(w.get(qn("w:w"))) - 2 * DEFAULT_CELL_MARGIN
+    width = int(w.get(qn("w:w")))
+    grid = _grid_width(tc)
+    if grid:  # auto-layout tables are laid out on the grid, which can be narrower
+        width = min(width, grid)
+    width -= 2 * DEFAULT_CELL_MARGIN
     ppr = p.find(qn("w:pPr"))
     ind = ppr.find(qn("w:ind")) if ppr is not None else None
     if ind is not None:
@@ -178,6 +262,84 @@ def fit_paragraph(p, filled, min_size):
     return status
 
 
+AUTO_FIELDS = ("DATE", "TIME", "PRINTDATE", "SAVEDATE", "CREATEDATE", "EDITTIME")
+AUTO_INPUTS = ("currentDate", "currentTime")
+
+
+def _fields(p):
+    """Complex fields of a paragraph: dicts with the runs of begin / separate / end,
+    the field instruction and the depth (0 = outermost)."""
+    out, stack = [], []
+    for r in p.iter(qn("w:r")):
+        fc = r.find(qn("w:fldChar"))
+        it = r.find(qn("w:instrText"))
+        if fc is not None:
+            kind = fc.get(qn("w:fldCharType"))
+            if kind == "begin":
+                stack.append({"begin": r, "sep": None, "instr": "", "depth": len(stack),
+                              "ffdata": fc.find(qn("w:ffData")), "runs": [r]})
+                continue
+            if stack:
+                f = stack[-1]
+                f["runs"].append(r)
+                if kind == "separate":
+                    f["sep"] = r
+                elif kind == "end":
+                    f["end"] = r
+                    out.append(stack.pop())
+                    if stack:
+                        stack[-1]["runs"].extend(out[-1]["runs"])
+            continue
+        if stack:
+            stack[-1]["runs"].append(r)
+            if it is not None and stack[-1]["sep"] is None:
+                stack[-1]["instr"] += it.text or ""
+    return out
+
+
+def _is_auto(field):
+    """Fields Word recalculates before printing: DATE / TIME ... and date form fields."""
+    words = field["instr"].split()
+    if words and words[0].upper() in AUTO_FIELDS:
+        return True
+    ff = field["ffdata"]
+    if ff is not None:
+        t = ff.find(qn("w:textInput") + "/" + qn("w:type"))
+        if t is not None and t.get(qn("w:val")) in AUTO_INPUTS:
+            return True
+    return False
+
+
+def freeze_auto_fields(document):
+    """Turn self-updating date/time fields into plain text.
+
+    The MSC form has its dates in 'current date' form fields: Word showed our date
+    on screen but printed the date of the computer. Keeping only the field result
+    makes the printed date the permit date. Returns the number of fields frozen."""
+    frozen = 0
+    for p in _paragraphs(document):
+        for _ in range(10):
+            fields = [f for f in _fields(p) if _is_auto(f) and "end" in f]
+            if not fields:
+                break
+            f = min(fields, key=lambda f: f["depth"])  # outermost first
+            runs, sep = f["runs"], f["sep"]
+            keep = False
+            for r in runs:
+                if r is sep:
+                    keep = True
+                    r.getparent().remove(r)
+                    continue
+                if r is f["end"]:
+                    r.getparent().remove(r)
+                    break
+                if not keep or sep is None:
+                    if r.getparent() is not None:
+                        r.getparent().remove(r)
+            frozen += 1
+    return frozen
+
+
 def set_checkboxes(document, tick_ao, tick_pc):
     """Tick the A.O. / P.C. form check boxes of sections 2 and 3.
 
@@ -190,9 +352,15 @@ def set_checkboxes(document, tick_ao, tick_pc):
         for box, on in zip(boxes, (tick_ao, tick_pc)):
             val = "1" if on else "0"
             default = box.find(qn("w:default"))
-            if default is None:
+            if default is None:  # order: size / sizeAuto, default, checked
                 default = box.makeelement(qn("w:default"), {})
-                box.append(default)
+                size = box.find(qn("w:size"))
+                if size is None:
+                    size = box.find(qn("w:sizeAuto"))
+                if size is not None:
+                    size.addnext(default)
+                else:
+                    box.insert(0, default)
             default.set(qn("w:val"), val)
             checked = box.find(qn("w:checked"))
             if checked is None:
@@ -204,6 +372,7 @@ def set_checkboxes(document, tick_ao, tick_pc):
 def fill_template(template, values, out_path, fit=True, min_size=6.5, ticks=(True, True)):
     """Fill the template; returns the keys whose text had to be cut to fit one line."""
     d = docx.Document(template)
+    _prepare_sizes(d)
     too_long = []
     for p in _paragraphs(d):
         keys, filled = _replace_in_paragraph(p, values)
@@ -211,6 +380,7 @@ def fill_template(template, values, out_path, fit=True, min_size=6.5, ticks=(Tru
             too_long += keys
     if ticks is not None:
         set_checkboxes(d, *ticks)
+    freeze_auto_fields(d)
     d.save(out_path)
     return too_long
 
@@ -228,11 +398,12 @@ def field_limits(template):
         return _limits_cache[stamp]
     limits = {}
     d = docx.Document(template)
+    _prepare_sizes(d)
     for p in _paragraphs(d):
         avail = _available_width(p)
         if avail is None:
             continue
-        fixed, size, keys = 0.0, 9.0, []
+        fixed, size, keys = 0.0, _SIZES["default"], []
         for r in p.iter(qn("w:r")):
             text = "".join(t.text or "" for t in r.findall(qn("w:t")))
             found = PLACEHOLDER.findall(text)
@@ -240,8 +411,10 @@ def field_limits(template):
                 keys += found
                 size = _run_size(r)
             fixed += fontmetrics.text_width(PLACEHOLDER.sub("", text), _run_size(r), _run_bold(r))
-        if len(keys) == 1:
-            limits.setdefault(keys[0], (avail - fixed, size))
+        if len(keys) == 1:  # a field used twice (A.O.): the narrower place counts
+            old = limits.get(keys[0])
+            if old is None or avail - fixed < old[0]:
+                limits[keys[0]] = (avail - fixed, size)
     _limits_cache[stamp] = limits
     return limits
 
@@ -257,6 +430,21 @@ def check_fit(template, key, text, min_size=6.5):
         return None
     new = int(size * free / width * 2) / 2
     return max(new, min_size), new >= min_size
+
+
+REQUIRED_PLACEHOLDERS = ("SHIP", "DATE", "PERMIT_NO", "LOCATION", "PLANT", "WORK",
+                         "ISSUED_TO", "RA_NO", "LOTO_NAME", "AO", "PC", "PC_CLOSE")
+
+
+def template_missing(template):
+    """Placeholders the template lacks (an old v1.2 template has no SHIP / LOTO_NAME)."""
+    try:
+        d = docx.Document(template)
+    except Exception:  # noqa: BLE001 - reported to the user as a missing template
+        return list(REQUIRED_PLACEHOLDERS)
+    text = "".join(t.text or "" for p in _paragraphs(d) for t in p.iter(qn("w:t")))
+    found = set(PLACEHOLDER.findall(text))
+    return [k for k in REQUIRED_PLACEHOLDERS if k not in found]
 
 
 def values_for(store, permit):
@@ -312,10 +500,22 @@ def unique_path(folder, name):
     return path
 
 
-def write_permits(store, permits, replace_dates=False):
-    """Create .docx files, number them and record history.
+class PermitError(ValueError):
+    """Permits that must not be written (no P.C., unknown job ...)."""
 
-    Returns (paths, warnings); warnings name permits with text that may wrap."""
+
+def _check_all(store, permits):
+    bad = []
+    for p in permits:
+        problems = generator.check_permit(store, p)
+        if problems:
+            job = store.job(p.get("job_id")) or {"title": p.get("job_id")}
+            bad.append(f"{p.get('date')}  {job['title']}: {', '.join(problems)}")
+    if bad:
+        raise PermitError("\n".join(bad))
+
+
+def _prepare(store):
     s = store.settings
     folder = s.get("output_dir")
     if not folder:
@@ -324,6 +524,30 @@ def write_permits(store, permits, replace_dates=False):
     if not os.path.exists(template):
         raise FileNotFoundError(f"Template not found: {template}")
     os.makedirs(folder, exist_ok=True)
+    return folder, template
+
+
+def _write_one(store, p, path, template):
+    """Fill one permit into path; returns the keys cut to keep one line."""
+    s = store.settings
+    min_size = float(s.get("min_font_size", 6.5))
+    values = values_for(store, p)
+    res = check_fit(template, "ISSUED_TO", values["ISSUED_TO"], min_size)
+    if res and not res[1]:  # a big team: "2E DMITRII" instead of "2ND ENG DMITRII"
+        values["ISSUED_TO"] = generator.issued_to_text(store, p["crew"], compact=True)
+    return fill_template(template, values, path, fit=s.get("fit_one_line", True),
+                         min_size=min_size,
+                         ticks=(bool(s.get("tick_ao", True)), bool(s.get("tick_pc", True))))
+
+
+def write_permits(store, permits, replace_dates=False):
+    """Create .docx files, number them and record history.
+
+    Returns (paths, warnings); warnings name permits whose text had to be cut.
+    Raises PermitError (nothing written) if a permit has no P.C., an unknown job ..."""
+    s = store.settings
+    _check_all(store, permits)
+    folder, template = _prepare(store)
 
     numbers = generator.permit_numbers(store, permits, replace_dates)
     if replace_dates:
@@ -334,17 +558,10 @@ def write_permits(store, permits, replace_dates=False):
     for p, no in zip(permits, numbers):
         if not p.get("permit_no") and no:
             p["permit_no"] = no
-            if s.get("permit_numbering") == "sequential":
+            if s.get("permit_numbering") == "sequential" and str(no).isdigit():
                 s["next_permit_no"] = int(no) + 1
         path = unique_path(folder, file_name(store, p))
-        min_size = float(s.get("min_font_size", 6.5))
-        values = values_for(store, p)
-        res = check_fit(template, "ISSUED_TO", values["ISSUED_TO"], min_size)
-        if res and not res[1]:  # a big team: "2E DMITRII" instead of "2ND ENG DMITRII"
-            values["ISSUED_TO"] = generator.issued_to_text(store, p["crew"], compact=True)
-        too_long = fill_template(template, values, path,
-                                 fit=s.get("fit_one_line", True), min_size=min_size,
-                                 ticks=(bool(s.get("tick_ao", True)), bool(s.get("tick_pc", True))))
+        too_long = _write_one(store, p, path, template)
         paths.append(path)
         if too_long:
             warnings.append((os.path.basename(path), sorted(set(too_long))))
@@ -353,4 +570,21 @@ def write_permits(store, permits, replace_dates=False):
     store.history.sort(key=lambda h: h["date"])
     storage.save("history", store.history)
     storage.save("settings", store.settings)
+    return paths, warnings
+
+
+def rewrite_files(store, entries):
+    """Write the files of history entries again (same number and file name, overwritten),
+    e.g. permits made with an old template. Returns (paths, warnings)."""
+    folder, template = _prepare(store)
+    paths, warnings = [], []
+    for h in entries:
+        p = dict(h)
+        if not store.job(p.get("job_id")):
+            raise PermitError(f"{p.get('date')}: job {p.get('job_id')} is not in the list")
+        path = os.path.join(folder, h.get("file") or file_name(store, p))
+        too_long = _write_one(store, p, path, template)
+        paths.append(path)
+        if too_long:
+            warnings.append((os.path.basename(path), sorted(set(too_long))))
     return paths, warnings

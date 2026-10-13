@@ -51,22 +51,33 @@ def sort_by_rank(store, ids):
     return sorted(ids, key=key)
 
 
-def pc_candidates(store, crew_ids, lead=None):
-    """Team members allowed to sign as P.C., lead first, then by seniority."""
+def supervisor_ranks(store, job=None):
+    """Ranks that become P.C. when the job lead cannot be P.C. (2E, 3E by default)."""
+    return list((job or {}).get("pc_ranks") or store.settings.get("pc_supervisor_ranks") or [])
+
+
+def pc_candidates(store, crew_ids, lead=None, sup_ranks=None):
+    """Team members who sign as P.C., lead first, then by seniority.
+
+    When the lead cannot be P.C. (4E cadet, 5E), only the supervisor ranks
+    (2E / 3E) sign - not e.g. an AEO helping on a mechanical job."""
     pcs = sort_by_rank(store, [i for i in crew_ids if store.can_pc(i)])
+    if lead and lead in crew_ids and not store.can_pc(lead) and sup_ranks:
+        sup = [i for i in pcs if store.member(i)["rank"] in sup_ranks]
+        pcs = sup or pcs
     if lead in pcs:
         pcs = [lead] + [i for i in pcs if i != lead]
     return pcs
 
 
-def default_roles(store, crew_ids, lead=None):
+def default_roles(store, crew_ids, lead=None, sup_ranks=None):
     """Who signs sections 5, 6 and 7 - only ranks allowed to be P.C. (2E, 3E, ETO...).
 
-    The most junior of them accepts the permit (5) and hands it over to the next
-    one (6); the lead (or the most senior) closes it (7). With one P.C. he signs
-    5 and 7 and section 6 stays empty.
+    One of them other than the lead accepts the permit (5) and hands it over (6);
+    the lead (or the most senior) closes it (7). With one P.C. he signs 5 and 7
+    and section 6 stays empty.
     """
-    pcs = pc_candidates(store, crew_ids, lead)
+    pcs = pc_candidates(store, crew_ids, lead, sup_ranks)
     if not pcs:
         return "", "", ""
     pc = pcs[-1]
@@ -118,22 +129,58 @@ def permit_numbers(store, permits, replace_dates=False):
         return out
     if mode != "day":
         return [p.get("permit_no") or "" for p in permits]
-    dates = {p["date"] for p in permits}
-    existing = {d: 0 if replace_dates else sum(1 for h in store.history if h["date"] == d)
-                for d in dates}
-    batch = {d: sum(1 for p in permits if p["date"] == d) for d in dates}
-    seen = {d: 0 for d in dates}
+    def suffix(no, doy):
+        """'285' -> 1, '285-3' -> 3, anything else -> 0."""
+        no = str(no or "")
+        if no == str(doy):
+            return 1
+        if no.startswith(f"{doy}-") and no[len(str(doy)) + 1:].isdigit():
+            return int(no[len(str(doy)) + 1:])
+        return 0
+
     out = []
+    used = {}   # date -> highest suffix already taken
+    count = {}  # date -> permits that day (history + batch)
+    for d in {p["date"] for p in permits}:
+        doy = parse_date(d).timetuple().tm_yday
+        olds = [] if replace_dates else [h.get("permit_no") for h in store.history if h["date"] == d]
+        mine = [p.get("permit_no") for p in permits if p["date"] == d and p.get("permit_no")]
+        used[d] = max([suffix(n, doy) for n in olds + mine] or [0])
+        count[d] = len(olds) + sum(1 for p in permits if p["date"] == d)
     for p in permits:
         d = p["date"]
-        seen[d] += 1
         if p.get("permit_no"):
             out.append(p["permit_no"])
             continue
         doy = parse_date(d).timetuple().tm_yday
-        total = existing[d] + batch[d]
-        out.append(str(doy) if total == 1 else f"{doy}-{existing[d] + seen[d]}")
+        if count[d] == 1 and used[d] == 0:
+            out.append(str(doy))
+            used[d] = 1
+        else:
+            used[d] += 1
+            out.append(f"{doy}-{used[d]}")
     return out
+
+
+def check_permit(store, p):
+    """Problems that must stop a permit from being written (empty list = OK)."""
+    problems = []
+    if not store.job(p.get("job_id")):
+        problems.append("job not in the list")
+    crew = p.get("crew") or []
+    if not crew or any(store.member(i) is None for i in crew):
+        problems.append("crew member missing")
+    for role in ("pc", "close"):
+        if not p.get(role):
+            problems.append("no P.C.")
+            break
+    for role in ("pc", "transfer", "close"):
+        mid = p.get(role)
+        if mid and (mid not in crew or not store.can_pc(mid)):
+            problems.append(f"{mid} cannot sign as P.C.")
+    if p.get("loto") and not store.can_loto(p["loto"]):
+        problems.append(f"{p['loto']} cannot apply LOTO")
+    return sorted(set(problems))
 
 
 # ---------- automatic plan ----------
@@ -144,10 +191,12 @@ class Planner:
         self.rng = rng or random.Random()
         self.entries = []  # history + plan: dicts with date, job_id, crew
 
-    def load_history(self, start):
+    def load_history(self, start, end=None):
+        """Permits from LOOKBACK_DAYS before start up to the end of the plan (and the
+        no-repeat window after it), so that permits already made count too."""
         lo = start - dt.timedelta(days=LOOKBACK_DAYS)
-        self.entries = [h for h in self.store.history
-                        if lo <= parse_date(h["date"]) < start]
+        hi = (end or start) + dt.timedelta(days=int(self.store.settings.get("no_repeat_days", 7)))
+        self.entries = [h for h in self.store.history if lo <= parse_date(h["date"]) <= hi]
 
     def _active_members(self, ranks):
         return [m for m in self.store.crew if m.get("active", True) and m["rank"] in ranks]
@@ -162,15 +211,17 @@ class Planner:
                     total += 1.0 / (1 + age / 7)
         return total
 
-    def _pc_load(self, member_id, day):
-        """How often the member signed as P.C. recently (for 2E / 3E taking turns)."""
-        total = 0.0
+    def _pc_turn(self, member_id, day):
+        """For 2E / 3E taking turns as P.C.: the one whose last P.C. signature is
+        older goes first (ties: fewer recent signatures)."""
+        last, total = None, 0.0
         for e in self.entries:
             if member_id in (e.get("pc"), e.get("close")):
                 age = (day - parse_date(e["date"])).days
                 if 0 <= age <= LOOKBACK_DAYS:
                     total += 1.0 / (1 + age / 7)
-        return total
+                    last = age if last is None else min(last, age)
+        return (-(LOOKBACK_DAYS + 1 if last is None else last), total)
 
     def _pick(self, ranks, count, day, exclude, busy, load=None):
         load = load or self._load
@@ -182,18 +233,47 @@ class Planner:
         pool.sort(key=lambda i: load(i, day))
         return pool[:count]
 
-    def _last_used(self, job_id, before):
-        dates = [parse_date(e["date"]) for e in self.entries
-                 if e["job_id"] == job_id and parse_date(e["date"]) < before]
-        return max(dates) if dates else None
+    def _group(self, job_id):
+        j = self.store.job(job_id) or {}
+        return j.get("group") or job_id
 
-    def _choose_job(self, day, used_today):
+    def _dates_by_key(self):
+        """{job id or group: [day ordinals]}, rebuilt when entries were added."""
+        if getattr(self, "_idx_len", None) != len(self.entries):
+            idx = {}
+            for e in self.entries:
+                o = parse_date(e["date"]).toordinal()
+                jid = e.get("job_id")
+                idx.setdefault(("job", jid), []).append(o)
+                idx.setdefault(("group", self._group(jid)), []).append(o)
+            self._idx, self._idx_len = idx, len(self.entries)
+        return self._idx
+
+    def _gap(self, job, day):
+        """Days to the nearest permit of the same job (or job group), before or after."""
+        idx = self._dates_by_key()
+        key = ("group", job["group"]) if job.get("group") else ("job", job["id"])
+        dates = idx.get(key)
+        if not dates:
+            return LOOKBACK_DAYS
+        o = day.toordinal()
+        return min(abs(o - d) for d in dates)
+
+    def _can_get_pc(self, job):
+        if any(self.store.can_pc(m["id"]) for m in self._active_members(job.get("lead_ranks", []))):
+            return True
+        ranks = supervisor_ranks(self.store, job)
+        return any(self.store.can_pc(m["id"]) for m in self._active_members(ranks)) or \
+            any(self.store.can_pc(m["id"]) for m in self.store.crew if m.get("active", True))
+
+    def _choose_job(self, day, used_today, busy=()):
         s = self.store.settings
         jobs = [j for j in self.store.jobs
                 if j.get("active", True) and j["id"] not in used_today
-                and self._active_members(j.get("lead_ranks", []))]
+                and self._active_members(j.get("lead_ranks", [])) and self._can_get_pc(j)]
         if not jobs:
             return None
+        busy = set(busy)
         # who led the work yesterday / the day before: give others a turn
         recent_leads = {}
         for e in self.entries:
@@ -201,23 +281,24 @@ class Planner:
             if e["crew"] and age in LEAD_PENALTY:
                 lead = e.get("lead") or e["crew"][0]
                 recent_leads[lead] = min(recent_leads.get(lead, 1.0), LEAD_PENALTY[age])
-        ages, weights = [], []
+        gaps, weights = [], []
         for j in jobs:
-            last = self._last_used(j["id"], day)
-            age = (day - last).days if last else LOOKBACK_DAYS
+            gap = self._gap(j, day)
             leads = [m["id"] for m in self._active_members(j.get("lead_ranks", []))]
             factor = max(recent_leads.get(m, 1.0) for m in leads)
-            ages.append(age)
-            weights.append(age * factor)
-        fresh = [(j, w) for j, a, w in zip(jobs, ages, weights) if a > s["no_repeat_days"]]
-        if not fresh:  # every job was done recently: take the oldest ones
-            oldest = max(ages)
-            fresh = [(j, w) for j, a, w in zip(jobs, ages, weights) if a == oldest]
+            if busy and all(m in busy for m in leads):
+                factor *= 0.05  # second permit of the day: prefer another lead
+            gaps.append(gap)
+            weights.append(max(gap, 1) * factor)
+        fresh = [(j, w) for j, g, w in zip(jobs, gaps, weights) if g > s["no_repeat_days"]]
+        if not fresh:  # every job was done recently: take the longest-ago ones
+            far = max(gaps)
+            fresh = [(j, w) for j, g, w in zip(jobs, gaps, weights) if g == far]
         js, ws = zip(*fresh)
         return self.rng.choices(js, weights=ws, k=1)[0]
 
     def make_team(self, job, day, busy=()):
-        """Crew, lead, signatures and LOTO person for one job on one day."""
+        """Crew, lead and signatures for one job on one day (LOTO stays empty)."""
         busy = set(busy)
         lead = self._pick(job.get("lead_ranks", []), 1, day, set(), busy)
         team = list(lead)
@@ -227,13 +308,19 @@ class Planner:
         lo, hi = job.get("ratings", [0, 0])
         n = self.rng.randint(lo, hi)
         team += self._pick(job.get("rating_ranks", []), n, day, set(team), busy)
-        if team and not any(self.store.can_pc(i) for i in team):
+        sup = supervisor_ranks(self.store, job)
+        if team and not self.store.can_pc(team[0]):
             # e.g. 4E (cadet) leads the work: 2E / 3E take turns as P.C.
-            ranks = job.get("pc_ranks") or self.store.settings.get("pc_supervisor_ranks") or []
-            team += self._pick(ranks, 1, day, set(team), busy, load=self._pc_load)
+            if not any(self.store.can_pc(i) and self.store.member(i)["rank"] in sup for i in team):
+                pcs = [m["rank"] for m in self.store.crew
+                       if m.get("active", True) and self.store.can_pc(m["id"]) and m["rank"] in sup]
+                if not pcs:  # supervisor ranks not on board: anybody who may be P.C.
+                    pcs = [m["rank"] for m in self.store.crew
+                           if m.get("active", True) and self.store.can_pc(m["id"])]
+                team += self._pick(sorted(set(pcs)), 1, day, set(team), busy, load=self._pc_turn)
         lead_id = team[0] if team else ""
         crew = sort_by_rank(self.store, team)
-        pc, transfer, close = default_roles(self.store, crew, lead_id)
+        pc, transfer, close = default_roles(self.store, crew, lead_id, sup)
         # LOTO stays empty: the user ticks it himself (Edit... / Manual)
         return {"crew": crew, "lead": lead_id, "pc": pc, "transfer": transfer,
                 "close": close, "loto": ""}
@@ -242,20 +329,25 @@ class Planner:
         return self.make_team(job, day, busy)["crew"]
 
     def make_permit(self, day, used_today=(), busy=()):
-        job = self._choose_job(day, set(used_today))
+        job = self._choose_job(day, set(used_today), busy)
         if job is None:
             return None
         return {"date": day.isoformat(), "job_id": job["id"], **self.make_team(job, day, busy)}
 
+    def _day_start(self, day, exclude=None):
+        """Jobs and people already used on this day (history or other plan rows)."""
+        same = [e for e in self.entries if e["date"] == day.isoformat() and e is not exclude]
+        return {e["job_id"] for e in same}, {c for e in same for c in e["crew"]}
+
     def plan(self, start, end):
-        self.load_history(start)
+        self.load_history(start, end)
         result = []
         per_day = max(1, int(self.store.settings.get("permits_per_day", 1)))
         skip = set(self.store.settings.get("skip_weekdays") or [])
         for day in daterange(start, end):
             if day.weekday() in skip:
                 continue
-            used, busy = set(), set()
+            used, busy = self._day_start(day)
             for _ in range(per_day):
                 p = self.make_permit(day, used, busy)
                 if p is None:
@@ -267,15 +359,15 @@ class Planner:
         return result
 
     def reroll(self, plan, index):
-        """Replace one permit of a plan with a new random one."""
+        """Replace one permit of a plan with a new random one (same rules as plan())."""
         day = parse_date(plan[index]["date"])
-        others = [p for i, p in enumerate(plan) if i != index]
-        self.load_history(parse_date(plan[0]["date"]))
-        self.entries += others
-        same_day = [p for p in others if p["date"] == plan[index]["date"]]
-        used = {p["job_id"] for p in same_day} | {plan[index]["job_id"]}
-        busy = {c for p in same_day for c in p["crew"]}
-        new = self.make_permit(day, used, busy) or self.make_permit(day, used - {plan[index]["job_id"]}, busy)
+        dates = [parse_date(p["date"]) for p in plan]
+        self.load_history(min(dates), max(dates))
+        old = plan[index]
+        self.entries += [p for i, p in enumerate(plan) if i != index]
+        used, busy = self._day_start(day)
+        used.add(old["job_id"])
+        new = self.make_permit(day, used, busy) or self.make_permit(day, used - {old["job_id"]}, busy)
         if new:
             plan[index] = new
         return plan

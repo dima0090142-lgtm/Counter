@@ -164,8 +164,8 @@ def test_no_transfer_leaves_section_6_empty(store):
 
 
 def test_same_name_gets_suffix(store):
-    p = {"date": "2026-07-14", "job_id": "fo_strainers_cleaning", "crew": ["pal"],
-         "pc": "pal", "transfer": "", "close": "pal"}
+    p = {"date": "2026-07-14", "job_id": "fo_strainers_cleaning", "crew": ["singh"],
+         "pc": "singh", "transfer": "", "close": "singh"}
     a, b = docgen.write_permits(store, [dict(p), dict(p)])[0]
     assert a != b and b.endswith("(2).docx")
 
@@ -213,7 +213,7 @@ def test_too_long_text_is_cut_and_reported(store):
 def test_big_team_uses_compact_ranks(store):
     everybody = [m["id"] for m in store.crew if m["id"] != "ce"]
     p = {"date": "2026-07-14", "job_id": "fo_strainers_cleaning", "crew": everybody,
-         "pc": "pal", "transfer": "", "close": "pal"}
+         "pc": "singh", "transfer": "", "close": "singh"}
     (path,), _ = docgen.write_permits(store, [p])
     text = _all_text(path)
     assert "2E DMITRII, 3E ARUN" in text and "2ND ENG DMITRII" not in text
@@ -361,7 +361,8 @@ def test_old_settings_and_ranks_are_migrated(tmp_path, monkeypatch):
                                                    "order": 3}]))
     monkeypatch.setattr(storage, "DATA_DIR", str(data))
     st = storage.Store()
-    assert st.settings["permit_numbering"] == "sequential"
+    assert st.settings["permit_numbering"] == "day"
+    assert "auto_number" not in st.settings
     assert st.rank("4E")["can_pc"] is False and st.rank("3E")["can_pc"] is True
     assert all("loto" in j for j in st.jobs)
 
@@ -381,3 +382,141 @@ def test_icons_exist():
     Image = pytest.importorskip("PIL.Image")  # only to read the .ico sizes
     ico = Image.open(storage.resource("icons", "ptw.ico"))
     assert {(16, 16), (32, 32), (256, 256)} <= set(ico.info["sizes"])
+
+
+def test_upgrade_from_v12_job_list(tmp_path, monkeypatch):
+    """A ship running v1.2: DG jobs, old leads, own RA numbers, history with DG jobs."""
+    import json
+    import shutil
+    data = tmp_path / "data"
+    data.mkdir()
+    old = json.load(open(storage.default_path("upgrade/jobs_v1.2")))
+    for j in old:
+        if j["id"] == "hfo_purifier_overhaul":
+            j["ra_no"] = "ER-PUR-01"           # user's own RA number
+        if j["id"] == "dg_fuel_injectors_overhaul":
+            j["work"] = "My own text for the DG"  # user's own text
+    (data / "jobs.json").write_text(json.dumps(old))
+    (data / "history.json").write_text(json.dumps(
+        [{"date": "2026-10-01", "job_id": "dg_cylinder_head_overhaul", "crew": ["singh"],
+          "pc": "singh", "transfer": "", "close": "singh", "permit_no": "274",
+          "file": "x.docx"}]))
+    shutil.copy(storage.default_path("crew"), data / "crew.json")
+    monkeypatch.setattr(storage, "DATA_DIR", str(data))
+    st = storage.Store()
+    ids = {j["id"] for j in st.jobs}
+    assert not any(i.startswith("dg_") for i in ids)
+    assert not any("DG " in j["title"] or "Diesel generator" in j["plant"] for j in st.jobs)
+    assert len(st.jobs) == len(storage.default_records("jobs"))
+    assert st.job("sewage_plant_maintenance")["lead_ranks"] == ["3E"]
+    assert st.job("fo_strainers_cleaning")["lead_ranks"] == ["4E"]
+    assert st.job("hfo_purifier_overhaul")["ra_no"] == "ER-PUR-01"     # kept
+    assert st.job("ae_fuel_injectors_overhaul")["work"] == "My own text for the AE"
+    assert st.job("hfo_purifier_bowl_cleaning")["group"] == "hfo_purifier"
+    assert st.history[0]["job_id"] == "ae_cylinder_head_overhaul"
+    assert (data / "jobs_backup_v1.2.json").exists()
+    assert st.settings["data_version"] == storage.DATA_VERSION
+    # second start: nothing changes any more
+    st.jobs = [j for j in st.jobs if j["id"] != "ae_piston_overhaul"]
+    storage.save("jobs", st.jobs)
+    assert storage.Store().job("ae_piston_overhaul") is None
+
+
+def test_old_template_and_sounds_are_replaced(tmp_path, monkeypatch):
+    import subprocess
+    app = tmp_path / "app"
+    (app / "templates").mkdir(parents=True)
+    (app / "sounds").mkdir()
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    old_tpl = subprocess.run(["git", "-C", repo, "show", "a196775:templates/ptw_template.docx"],
+                             capture_output=True)
+    old_snd = subprocess.run(["git", "-C", repo, "show", "9f20988:sounds/startup.wav"],
+                             capture_output=True)
+    if old_tpl.returncode or old_snd.returncode:
+        pytest.skip("git history not available")
+    (app / "templates" / "ptw_template.docx").write_bytes(old_tpl.stdout)
+    (app / "sounds" / "startup.wav").write_bytes(old_snd.stdout)
+    (app / "sounds" / "ding.wav").write_bytes(b"RIFF my own sound")
+    monkeypatch.setattr(storage, "APP_DIR", str(app))
+    monkeypatch.setattr(storage, "DATA_DIR", str(app / "data"))
+    monkeypatch.setattr(storage, "DEFAULT_TEMPLATE", str(app / "templates" / "ptw_template.docx"))
+    storage.ensure_data()
+    assert docgen.template_missing(storage.DEFAULT_TEMPLATE) == []
+    assert (app / "templates" / "ptw_template_old.docx").exists()
+    assert storage.md5(str(app / "sounds" / "startup.wav")) == storage.md5(
+        os.path.join(repo, "sounds", "startup.wav"))
+    assert (app / "sounds" / "ding.wav").read_bytes() == b"RIFF my own sound"  # user's own kept
+
+
+def test_printed_dates_do_not_update(store):
+    """Word must not replace the permit date by the computer date when printing."""
+    p = {"date": "2026-03-05", "job_id": "fo_strainers_cleaning", "crew": ["singh"],
+         "pc": "singh", "transfer": "singh", "close": "singh"}
+    (path,), _ = docgen.write_permits(store, [p])
+    body = docx.Document(path).element.body
+    instr = " ".join(x.text or "" for x in body.iter(qn("w:instrText")))
+    assert "DATE" not in instr and "TIME" not in instr
+    types = {t.get(qn("w:val")) for t in body.iter(qn("w:type"))}
+    assert not types & {"currentDate", "currentTime"}
+    assert _all_text(path).count("05/03/2026") == 4
+    # an old template with the date fields is cleaned while filling, too
+    old = docx.Document(storage.template_path(store.settings))
+    assert docgen.freeze_auto_fields(old) == 0  # shipped template is already clean
+
+
+def test_numbers_never_repeat_after_history_delete(store):
+    p = {"date": "2026-10-12", "job_id": "fo_strainers_cleaning", "crew": ["singh"],
+         "pc": "singh", "transfer": "", "close": "singh"}
+    docgen.write_permits(store, [dict(p), dict(p)])
+    assert [h["permit_no"] for h in store.history] == ["285-1", "285-2"]
+    del store.history[0]
+    docgen.write_permits(store, [dict(p)])
+    assert [h["permit_no"] for h in store.history] == ["285-2", "285-3"]
+
+
+def test_permit_without_pc_is_refused(store):
+    p = {"date": "2026-10-12", "job_id": "fo_strainers_cleaning", "crew": ["kaushal", "padilla"],
+         "pc": "", "transfer": "", "close": ""}
+    with pytest.raises(docgen.PermitError):
+        docgen.write_permits(store, [p])
+    assert store.history == []
+
+
+def test_pc_falls_back_when_supervisor_ranks_not_on_board(store):
+    store.settings["pc_supervisor_ranks"] = ["XX"]
+    for p in make_plan(store, 40):
+        assert p["pc"] and store.can_pc(p["pc"])
+
+
+def test_4e_job_with_aeo_helper_gets_2e_or_3e_as_pc(store):
+    job = store.job("ac_plant_maintenance")
+    pl = generator.Planner(store, random.Random(1))
+    for k in range(30):
+        t = pl.make_team(job, dt.date(2026, 5, 1) + dt.timedelta(days=k))
+        if store.member(t["lead"])["rank"] in ("4E", "5E"):
+            assert store.member(t["pc"])["rank"] in ("2E", "3E")
+            assert store.member(t["close"])["rank"] in ("2E", "3E")
+
+
+def test_grouped_jobs_not_close_together(store):
+    plan = make_plan(store, 200)
+    last = {}
+    for p in plan:
+        g = store.job(p["job_id"])["group"]
+        if g:
+            d = dt.date.fromisoformat(p["date"])
+            if g in last:
+                assert (d - last[g]).days > store.settings["no_repeat_days"], (g, p["date"])
+            last[g] = d
+
+
+def test_reroll_respects_repeat_window_both_ways(store):
+    plan = make_plan(store, 30)
+    window = store.settings["no_repeat_days"]
+    pl = generator.Planner(store, random.Random(9))
+    for i in range(0, 30, 3):
+        pl.reroll(plan, i)
+        d = dt.date.fromisoformat(plan[i]["date"])
+        for q in plan:
+            if q is not plan[i] and q["job_id"] == plan[i]["job_id"]:
+                assert abs((dt.date.fromisoformat(q["date"]) - d).days) > window

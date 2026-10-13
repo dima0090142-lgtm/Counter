@@ -79,3 +79,72 @@ def test_manual_loto_empty_until_ticked(app):
     form.loto_var.set(False)
     form._loto_toggled()
     assert form.get()["loto"] == ""
+
+
+def test_enter_presses_focused_button(app):
+    from ptw import win95
+    got = {}
+
+    def press():
+        box = [w for w in app.winfo_children() if isinstance(w, win95.MessageBox)][0]
+        box.buttons[1].focus_set()  # Tab to "No"
+        box.update()
+        box.event_generate("<Return>")
+
+    app.after(300, press)
+    got["answer"] = gui.messagebox.askyesno("t", "Delete?", parent=app)
+    assert got["answer"] is False
+
+
+def test_message_box_gives_the_grab_back(app):
+    from ptw import win95
+    dlg = tk.Toplevel(app)
+    dlg.grab_set()
+    app.after(200, lambda: [w for w in dlg.winfo_children()
+                            if isinstance(w, win95.MessageBox)][0]._done(True))
+    gui.messagebox.showinfo("t", "x", parent=dlg)
+    assert app.grab_current() is dlg
+    dlg.destroy()
+
+
+def test_new_rank_cannot_sign_as_pc(app, monkeypatch):
+    monkeypatch.setattr(gui.messagebox, "showwarning", lambda *a, **k: None)
+    app.edit_ranks()
+    ed = [w for w in app.winfo_children() if isinstance(w, gui.ListEditor)][0]
+    ed.new()
+    rec = ed.records[-1]
+    assert rec["can_pc"] is False and rec["can_loto"] is False and rec["officer"] is False
+    assert rec["order"] > max(r["order"] for r in app.store.ranks)
+    ed.destroy()
+
+
+def test_recreate_file_keeps_number(app, tmp_path, monkeypatch):
+    from ptw import docgen
+    app.store.settings["output_dir"] = str(tmp_path / "out")
+    p = {"date": "2026-10-12", "job_id": "fo_strainers_cleaning", "crew": ["singh"],
+         "pc": "singh", "transfer": "", "close": "singh"}
+    (path,), _ = docgen.write_permits(app.store, [p])
+    os.utime(path, (1, 1))
+    app.history_tab.show()
+    app.history_tab.tree.selection_set(app.history_tab.tree.get_children()[0])
+    monkeypatch.setattr(gui.messagebox, "askyesno", lambda *a, **k: True)
+    monkeypatch.setattr(gui.messagebox, "showwarning", lambda *a, **k: None)
+    app.history_tab.recreate()
+    assert os.path.getmtime(path) > 1  # written again
+    assert len(app.store.history) == 1 and app.store.history[0]["permit_no"] == "285"
+    assert len(os.listdir(tmp_path / "out")) == 1
+
+
+def test_settings_refuse_bad_pc_ranks(app, monkeypatch):
+    warned = []
+    monkeypatch.setattr(gui.messagebox, "showwarning", lambda t, m, **k: warned.append(m))
+    d = gui.SettingsDialog(app)
+    e = d.code_entries["pc_supervisor_ranks"]
+    e.delete(0, "end")
+    e.insert(0, "4e")
+    d.ok()
+    assert warned and app.store.settings["pc_supervisor_ranks"] == ["2E", "3E"]
+    e.delete(0, "end")
+    e.insert(0, "2e, 3e")
+    d.ok()
+    assert app.store.settings["pc_supervisor_ranks"] == ["2E", "3E"]

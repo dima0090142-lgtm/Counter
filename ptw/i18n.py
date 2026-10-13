@@ -184,6 +184,23 @@ RU = {
         "В стандартном списке работ: {n}.\n\nДа — заменить ваш список стандартным\n"
         "Нет — только добавить работы, которых у вас нет",
     "Jobs list updated: {n} jobs ({added} new).": "Список работ обновлён: {n} работ ({added} новых).",
+    "Recreate file": "Пересоздать файл",
+    "Select permits in the list.": "Выделите пермиты в списке.",
+    "Write {n} files again with the same numbers?\nThe old files are overwritten.":
+        "Записать заново файлов: {n}, с теми же номерами?\nСтарые файлы будут перезаписаны.",
+    "These plan rows cannot be printed (selected in the list). Use Reroll or Edit...:":
+        "Эти строки плана нельзя печатать (выделены в списке). Нажмите «Заменить» или «Изменить...»:",
+    "'P.C. when the job lead cannot be P.C.' needs ranks that may be P.C.: {ok}":
+        "В поле «P.C., если ответственный не может быть P.C.» нужны ранги, которые могут быть P.C.: {ok}",
+    "Unknown rank: {codes}": "Неизвестный ранг: {codes}",
+    "Group (same filter / purifier: not on close days)":
+        "Группа (тот же фильтр / сепаратор: не в соседние дни)",
+    "The Word template has no fields for: {fields}.\n{path}\n\nThese values will not be printed. "
+    "Use the built-in template (Options > Settings > Files, Word template empty).\n\n"
+    "Create the files anyway?":
+        "В шаблоне Word нет полей: {fields}.\n{path}\n\nЭти значения не будут напечатаны. "
+        "Используйте встроенный шаблон (Параметры > Настройки > Файлы, поле «Шаблон Word» пустое)."
+        "\n\nВсё равно создать файлы?",
 }
 
 

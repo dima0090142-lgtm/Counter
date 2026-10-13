@@ -8,10 +8,14 @@ names) and replaces them with placeholders that ptw.docgen fills in later.
 Only run texts are changed, so all formatting of the form is kept.
 """
 import copy
+import os
 import sys
 
 import docx
 from docx.oxml.ns import qn
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from ptw.docgen import freeze_auto_fields  # noqa: E402
 
 # exact run text -> placeholder
 RUN_REPLACEMENTS = {
@@ -132,6 +136,9 @@ def main(src, dst):
             break
     else:
         print("LOTO table not found - {{LOTO_NAME}} not placed")
+
+    # dates of the form are "current date" fields: Word would print today's date
+    print("Self-updating date fields made plain text:", freeze_auto_fields(d))
 
     d.save(dst)
     leftovers = [p_text(p) for p in paragraphs(docx.Document(dst))
