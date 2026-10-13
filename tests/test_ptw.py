@@ -423,29 +423,40 @@ def test_upgrade_from_v12_job_list(tmp_path, monkeypatch):
 
 
 def test_old_template_and_sounds_are_replaced(tmp_path, monkeypatch):
-    import subprocess
+    """Files shipped by an older version (known md5) are replaced, the user's own are kept.
+
+    No git needed: "old" files are made here and their md5 is declared as shipped."""
+    import shutil
     app = tmp_path / "app"
     (app / "templates").mkdir(parents=True)
     (app / "sounds").mkdir()
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    old_tpl = subprocess.run(["git", "-C", repo, "show", "a196775:templates/ptw_template.docx"],
-                             capture_output=True)
-    old_snd = subprocess.run(["git", "-C", repo, "show", "9f20988:sounds/startup.wav"],
-                             capture_output=True)
-    if old_tpl.returncode or old_snd.returncode:
-        pytest.skip("git history not available")
-    (app / "templates" / "ptw_template.docx").write_bytes(old_tpl.stdout)
-    (app / "sounds" / "startup.wav").write_bytes(old_snd.stdout)
-    (app / "sounds" / "ding.wav").write_bytes(b"RIFF my own sound")
+    old_tpl = app / "templates" / "ptw_template.docx"
+    d = docx.Document(os.path.join(repo, "templates", "ptw_template.docx"))
+    d.add_paragraph("old version of the template")
+    d.save(str(old_tpl))
+    old_snd = app / "sounds" / "startup.wav"
+    old_snd.write_bytes(b"RIFF old startup sound of v1.2")
+    own_snd = app / "sounds" / "ding.wav"
+    own_snd.write_bytes(b"RIFF my own sound")
+    monkeypatch.setattr(storage, "OLD_TEMPLATE_MD5", {storage.md5(str(old_tpl))})
+    monkeypatch.setattr(storage, "OLD_SOUND_MD5", {storage.md5(str(old_snd))})
     monkeypatch.setattr(storage, "APP_DIR", str(app))
+    monkeypatch.setattr(storage, "BUNDLE_DIR", repo)
     monkeypatch.setattr(storage, "DATA_DIR", str(app / "data"))
-    monkeypatch.setattr(storage, "DEFAULT_TEMPLATE", str(app / "templates" / "ptw_template.docx"))
+    monkeypatch.setattr(storage, "DEFAULT_TEMPLATE", str(old_tpl))
     storage.ensure_data()
-    assert docgen.template_missing(storage.DEFAULT_TEMPLATE) == []
-    assert (app / "templates" / "ptw_template_old.docx").exists()
-    assert storage.md5(str(app / "sounds" / "startup.wav")) == storage.md5(
-        os.path.join(repo, "sounds", "startup.wav"))
-    assert (app / "sounds" / "ding.wav").read_bytes() == b"RIFF my own sound"  # user's own kept
+    assert storage.md5(str(old_tpl)) == storage.md5(os.path.join(repo, "templates", "ptw_template.docx"))
+    assert (app / "templates" / "ptw_template_old.docx").exists()      # backup of the old one
+    assert storage.md5(str(old_snd)) == storage.md5(os.path.join(repo, "sounds", "startup.wav"))
+    assert own_snd.read_bytes() == b"RIFF my own sound"                # user's own kept
+    # a template the user changed himself is never replaced
+    shutil.copy(app / "templates" / "ptw_template_old.docx", old_tpl)
+    with open(old_tpl, "ab") as f:
+        f.write(b" ")
+    before = storage.md5(str(old_tpl))
+    storage.ensure_data()
+    assert storage.md5(str(old_tpl)) == before
 
 
 def test_printed_dates_do_not_update(store):

@@ -17,7 +17,12 @@ if errorlevel 1 goto :error
 echo === Running tests ===
 python -m pip install pytest
 python -m pytest -q tests
-if errorlevel 1 goto :error
+if errorlevel 1 (
+    echo.
+    echo Some tests failed - see above.
+    choice /c YN /m "Build the program anyway"
+    if errorlevel 2 goto :error
+)
 
 echo === Keeping your data ===
 rem PyInstaller empties dist\PTW_Generator: save data\ of a program run from there

@@ -5,7 +5,8 @@
 
 ## 1. Что установить (один раз)
 
-1. **Python 3.10 или новее** с <https://www.python.org/downloads/>.
+1. **Python 3.10 или новее** с <https://www.python.org/downloads/> (лучше всего 3.12 или 3.13;
+   на 3.14 программа и тесты тоже работают).
    В первом окне установщика обязательно отметьте **Add python.exe to PATH**.
    Остальное оставьте по умолчанию: tkinter (графика) устанавливается вместе с Python.
 2. Проверьте в командной строке (`Win+R` → `cmd`):
@@ -109,5 +110,7 @@ python -m PyInstaller --noconfirm --clean --windowed --name PTW_Generator ^
 | `No module named tkinter` | Запустите установщик Python → Modify → отметьте **tcl/tk and IDLE** |
 | Антивирус ругается на exe | Так бывает с PyInstaller. Добавьте папку в исключения или используйте сборку без `--onefile` |
 | Нет звука | Проверьте **Настройки → Общие → Звуки** и что рядом с exe есть папка `sounds` с файлами `.wav` |
+| Тест `test_old_template_and_sounds_are_replaced` падает с `WinError 50` | Было в версии 1.3.2: тест вызывал `git`. Исправлено в 1.3.3. Если тесты всё же упали, `build.bat` спросит «Build the program anyway [Y,N]?» — `Y` соберёт программу |
+| exe не запускается: `ImportError ... tcl` / `tk` | Соберите на Python 3.13 (python.org), он проверен лучше всего; Python 3.14 тоже проходит тесты |
 | Календарь не открывается в exe | Проверьте, что в команде есть `--hidden-import babel.numbers` |
 | Изменения в работах пропали после обновления | Вы заменили папку `data`. Восстановите её из старой копии |
