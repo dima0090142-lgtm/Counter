@@ -11,6 +11,7 @@ from tkinter import filedialog, ttk
 from tkcalendar import Calendar, DateEntry
 
 from . import __version__, docgen, generator, i18n, printing, sound, storage, win95
+from . import log as ptwlog
 from .i18n import T
 from .win95 import BG
 
@@ -67,7 +68,10 @@ def member_label(store, m):
 
 
 def cal_options():
-    return win95.calendar_options("ru_RU" if i18n.language() == "ru" else "en_GB")
+    """Calendars start on today and do not go into the future (permits are not made ahead)."""
+    opts = win95.calendar_options("ru_RU" if i18n.language() == "ru" else "en_GB")
+    opts["maxdate"] = dt.date.today()
+    return opts
 
 
 def fit_warnings(store, values):
@@ -135,9 +139,20 @@ class PermitForm(tk.Frame):
         mid.pack(fill="both", expand=True)
         crew_box = win95.group(mid, T("Crew taking part"))
         crew_box.pack(side="left", fill="both", expand=True, padx=4, pady=4)
-        self.crew_frame = tk.Frame(crew_box, bg=BG)
+        # a table with a scrollbar (any number of crew): click / Space ticks a row
+        cols = [("on", ""), ("rank", T("Rank")), ("name", T("Name")), ("pc", "P.C.")]
+        self.crew_frame, self.crew_tree = win95.scrolled_tree(crew_box, cols, [28, 70, 220, 50],
+                                                              height=9)
+        self.crew_tree.configure(selectmode="browse")
+        self.crew_tree.column("on", anchor="center")
         self.crew_frame.pack(fill="both", expand=True)
-        win95.button(crew_box, T("Auto-pick crew"), self.auto_crew, width=18).pack(anchor="w", pady=(4, 0))
+        self.crew_tree.bind("<Button-1>", self._crew_click)
+        self.crew_tree.bind("<space>", lambda e: self._crew_toggle(self.crew_tree.focus()))
+        cb = tk.Frame(crew_box, bg=BG)
+        cb.pack(fill="x", pady=(4, 0))
+        win95.button(cb, T("Auto-pick crew"), self.auto_crew, width=18).pack(side="left")
+        win95.button(cb, T("All"), lambda: self._crew_all(True), width=8).pack(side="left", padx=4)
+        win95.button(cb, T("None"), lambda: self._crew_all(False), width=8).pack(side="left")
 
         roles = win95.group(mid, T("Signatures"))
         roles.pack(side="left", fill="y", padx=4, pady=4)
@@ -166,21 +181,20 @@ class PermitForm(tk.Frame):
         self.all_jobs = sorted((j for j in self.store.jobs if j.get("active", True)),
                                key=lambda j: j["title"].lower())
         self._filter_jobs()
-        for w in self.crew_frame.winfo_children():
-            w.destroy()
         old = {k for k, v in self.check_vars.items() if v.get()}
         self.check_vars = {}
+        self.crew_tree.delete(*self.crew_tree.get_children())
         members = [m for m in self.store.crew
                    if m.get("active", True) and m["id"] != s.get("ao_id")]
         members.sort(key=lambda m: self.store.rank(m["rank"])["order"])
-        per_col = max(1, (len(members) + 1) // 2)
-        for i, m in enumerate(members):
+        for m in members:
             v = tk.BooleanVar(value=m["id"] in old)
-            mark = "  (P.C.)" if self.store.can_pc(m["id"]) else ""
-            tk.Checkbutton(self.crew_frame, text=member_label(self.store, m) + mark, variable=v,
-                           anchor="w", command=self._crew_changed
-                           ).grid(row=i % per_col, column=i // per_col, sticky="w", padx=(0, 12))
+            self.crew_tree.insert("", "end", iid=m["id"], values=(
+                "", m["rank"], f"{m['first_name']} {m['last_name']}",
+                "P.C." if self.store.can_pc(m["id"]) else ""))
+            v.trace_add("write", lambda *_a, mid=m["id"]: self._crew_row(mid))
             self.check_vars[m["id"]] = v
+            self._crew_row(m["id"])
         ao = self.store.member(s.get("ao_id"))
         self.ao_label.config(text="A.O.: " + (generator.sign_text(self.store, ao["id"]) if ao
                                                else T("(not set)")))
@@ -243,6 +257,29 @@ class PermitForm(tk.Frame):
         i = self.job.current()
         return self.jobs[i] if 0 <= i < len(self.jobs) else None
 
+    def _crew_row(self, mid):
+        if self.crew_tree.exists(mid):
+            self.crew_tree.set(mid, "on", "\u2611" if self.check_vars[mid].get() else "\u2610")
+
+    def _crew_toggle(self, mid):
+        if mid in self.check_vars:
+            self.check_vars[mid].set(not self.check_vars[mid].get())
+            self._crew_changed()
+
+    def _crew_click(self, event):
+        mid = self.crew_tree.identify_row(event.y)
+        if mid and self.crew_tree.identify_region(event.x, event.y) == "cell":
+            self.crew_tree.focus(mid)
+            self.crew_tree.selection_set(mid)
+            self._crew_toggle(mid)
+            return "break"
+        return None
+
+    def _crew_all(self, on):
+        for v in self.check_vars.values():
+            v.set(on)
+        self._crew_changed()
+
     def selected_crew(self):
         ids = [k for k, v in self.check_vars.items() if v.get()]
         return generator.sort_by_rank(self.store, ids)
@@ -283,6 +320,24 @@ class PermitForm(tk.Frame):
     def set_roles(self, pc, transfer, close):
         for key, mid in (("pc", pc), ("transfer", transfer), ("close", close)):
             self.roles[key].set(generator.sign_text(self.store, mid) if mid else "")
+
+    def generate(self):
+        """Pick a job and crew for the chosen date with the same rules as Auto generate."""
+        day = self.date.get_date()
+        planner = generator.Planner(self.store)
+        planner.load_history(day, day)
+        used, busy = planner._day_start(day)
+        p = planner.make_permit(day, used, busy) or planner.make_permit(day)
+        if p is None:
+            messagebox.showinfo(app_title(), T("No job can be planned (check the jobs and crew)."),
+                                parent=self)
+            return
+        loto = self.loto.get() if self.loto_var.get() else ""
+        self.set(p)
+        if loto:  # LOTO ticked by the user stays
+            self.loto_var.set(True)
+            self.loto.set(loto)
+            self._loto_toggled()
 
     def auto_crew(self):
         j = self.current_job()
@@ -374,6 +429,49 @@ class PermitDialog(tk.Toplevel):
         self.destroy()
 
 
+def run_with_progress(app, parent, title, text, work, done):
+    """Run work(progress, cancelled) in a background thread with a progress window,
+    so the window keeps responding (slow network drive, hundreds of files).
+
+    done(result, error, cancelled) is called in the GUI thread at the end."""
+    import queue
+    import threading
+    q = queue.Queue()
+    dlg = win95.ProgressDialog(parent, title, text, T("Cancel"))
+    state = {"result": None, "error": None}
+
+    def worker():
+        try:
+            state["result"] = work(lambda k, n, name: q.put((k, n, name)), lambda: dlg.cancelled)
+        except Exception as e:  # noqa: BLE001 - reported in the GUI thread and logged
+            state["error"] = e
+            ptwlog.error(f"{title} failed", True)
+        finally:
+            q.put(None)
+
+    def poll():
+        last = None
+        try:
+            while True:
+                item = q.get_nowait()
+                if item is None:
+                    if last:
+                        dlg.set(*last)
+                    dlg.close()
+                    done(state["result"], state["error"], dlg.cancelled)
+                    return
+                last = item
+        except queue.Empty:
+            pass
+        if last:
+            dlg.set(*last)
+        app.after(100, poll)
+
+    ptwlog.log.info("%s started", title)
+    threading.Thread(target=worker, name="files", daemon=True).start()
+    app.after(100, poll)
+
+
 def show_write_result(app, parent, paths, warnings):
     """Status line, warnings about long text, offer to open the folder."""
     s = app.store
@@ -422,7 +520,7 @@ class AutoTab(tk.Frame):
         win95.fix_calendar_arrows(self.cal_from)
         g2 = win95.group(left, T("To"))
         g2.pack(fill="x", pady=(6, 0))
-        end = today + dt.timedelta(days=6)
+        end = today
         self.cal_to = Calendar(g2, selectmode="day", year=end.year, month=end.month,
                                day=end.day, **cal_options())
         self.cal_to.pack()
@@ -561,16 +659,30 @@ class AutoTab(tk.Frame):
                 return
             replace = ans
             self.show(replace)  # the numbers shown are the numbers printed
-        try:
-            paths, warnings = docgen.write_permits(self.store, self.plan, replace_dates=replace)
-        except Exception as e:  # show any problem to the user, nothing is lost
-            messagebox.showerror(app_title(), f"{T('Could not create files:')}\n{e}", parent=self)
-            return
-        show_write_result(self.app, self, paths, warnings)
-        self.plan = []
-        self.show()
-        if self.store.settings.get("open_folder_after", True):
-            open_path(self.store.settings["output_dir"])
+        plan = list(self.plan)
+
+        def work(progress, cancelled):
+            return docgen.write_permits(self.store, plan, replace_dates=replace,
+                                        progress=progress, cancelled=cancelled)
+
+        def done(result, error, cancelled):
+            if error is not None:
+                self.app.history_tab.show()
+                messagebox.showerror(app_title(), f"{T('Could not create files:')}\n{error}",
+                                     parent=self)
+                return
+            paths, warnings = result
+            show_write_result(self.app, self, paths, warnings)
+            written = {id(p) for p in plan[:len(paths)]}
+            self.plan = [p for p in self.plan if id(p) not in written]  # cancelled: rest stays
+            self.show()
+            if cancelled:
+                self.app.status.set(T("Cancelled: {n} of {total} files created",
+                                      n=len(paths), total=len(plan)))
+            elif self.store.settings.get("open_folder_after", True):
+                open_path(self.store.settings["output_dir"])
+
+        run_with_progress(self.app, self, app_title(), T("Creating permit files..."), work, done)
 
 
 class ManualTab(tk.Frame):
@@ -581,6 +693,9 @@ class ManualTab(tk.Frame):
         self.form.pack(fill="both", expand=True, padx=4, pady=4)
         bar = tk.Frame(self, bg=BG)
         bar.pack(fill="x", padx=8, pady=(0, 8))
+        win95.button(bar, T("Generate"), self.form.generate, width=14).pack(side="left")
+        tk.Label(bar, text=T("(a job and crew for the date - like Auto generate)"),
+                 fg=win95.DARK).pack(side="left", padx=8)
         win95.button(bar, T("Create file"), self.create, width=14,
                      font=win95.FONT_BOLD).pack(side="right")
 
@@ -592,18 +707,26 @@ class ManualTab(tk.Frame):
             return
         if not self.app.ensure_output_dir() or not self.app.check_template(self):
             return
-        try:
-            paths, warnings = docgen.write_permits(self.app.store, [p])
-        except Exception as e:  # show any problem to the user
-            messagebox.showerror(app_title(), f"{T('Could not create file:')}\n{e}", parent=self)
-            return
-        show_write_result(self.app, self, paths, warnings)
-        name = os.path.basename(paths[0])
-        self.app.status.set(T("Created {name}", name=name))
-        self.form.permit_no.delete(0, "end")
-        if messagebox.askyesno(app_title(), T("Created:\n{name}\n\nOpen it now?", name=name),
-                               parent=self):
-            open_path(paths[0])
+        def work(progress, cancelled):
+            return docgen.write_permits(self.app.store, [p], progress=progress, cancelled=cancelled)
+
+        def done(result, error, cancelled):
+            if error is not None:
+                messagebox.showerror(app_title(), f"{T('Could not create file:')}\n{error}",
+                                     parent=self)
+                return
+            paths, warnings = result
+            if not paths:
+                return
+            show_write_result(self.app, self, paths, warnings)
+            name = os.path.basename(paths[0])
+            self.app.status.set(T("Created {name}", name=name))
+            self.form.permit_no.delete(0, "end")
+            if messagebox.askyesno(app_title(), T("Created:\n{name}\n\nOpen it now?", name=name),
+                                   parent=self):
+                open_path(paths[0])
+
+        run_with_progress(self.app, self, app_title(), T("Creating permit files..."), work, done)
 
 
 class HistoryTab(tk.Frame):
@@ -702,12 +825,19 @@ class HistoryTab(tk.Frame):
                                    parent=self):
             return
         entries = [self.app.store.history[i] for i in sorted(sel)]
-        try:
-            paths, warnings = docgen.rewrite_files(self.app.store, entries)
-        except Exception as e:  # e.g. the file is open in Word
-            messagebox.showerror(app_title(), f"{T('Could not create files:')}\n{e}", parent=self)
-            return
-        show_write_result(self.app, self, paths, warnings)
+
+        def work(progress, cancelled):
+            return docgen.rewrite_files(self.app.store, entries, progress=progress,
+                                        cancelled=cancelled)
+
+        def done(result, error, cancelled):
+            if error is not None:  # e.g. the file is open in Word
+                messagebox.showerror(app_title(), f"{T('Could not create files:')}\n{error}",
+                                     parent=self)
+                return
+            show_write_result(self.app, self, *result)
+
+        run_with_progress(self.app, self, app_title(), T("Creating permit files..."), work, done)
 
     def delete(self):
         sel = self._sel()
@@ -1291,6 +1421,9 @@ class App(tk.Tk):
     # --- keyboard ---
     def _bind_keys(self):
         self.bind_all("<Control-KeyPress>", self._on_ctrl)  # replaces: no double calls after rebuild
+        labels = {"cut": T("Cut"), "copy": T("Copy (clipboard)"), "paste": T("Paste"),
+                  "all": T("Select all")}
+        self.bind_all("<Button-3>", lambda e: win95.context_menu(e, labels))
         self.bind("<F1>", lambda e: self.shortcuts())
         self.bind("<F5>", lambda e: self._on_tab(0, self.auto_tab.generate))
 
@@ -1309,6 +1442,8 @@ class App(tk.Tk):
         if not key:
             return None
         w = self.focus_get()
+        if key in ("c", "v", "x"):
+            return "break" if win95.edit_key(w, key, event.keysym) else None
         if key == "a":
             return "break" if win95.select_all(w) else None
         top = w.winfo_toplevel() if w is not None else self
@@ -1341,6 +1476,8 @@ class App(tk.Tk):
     def shortcuts(self):
         messagebox.showinfo(T("Keyboard shortcuts"), T(
             "Ctrl+A - select all (lists, text fields)\n"
+            "Ctrl+C / Ctrl+V / Ctrl+X - copy / paste / cut (lists: rows for Excel)\n"
+            "Right mouse button - Copy / Paste menu\n"
             "Shift / Ctrl + click - select several rows\n"
             "F5 or Ctrl+G - generate the plan\n"
             "Ctrl+R - reroll selected rows\n"
@@ -1437,6 +1574,9 @@ class App(tk.Tk):
         m.add_cascade(label=T("Options"), menu=o, underline=0)
         h = tk.Menu(m, tearoff=0)
         h.add_command(label=T("Keyboard shortcuts"), accelerator="F1", command=self.shortcuts)
+        h.add_command(label=T("Check for updates"), command=self.check_updates)
+        h.add_command(label=T("Open log folder"), command=lambda: open_path(ptwlog.LOG_DIR))
+        h.add_separator()
         h.add_command(label=T("About"), command=self.about)
         m.add_cascade(label=T("Help"), menu=h, underline=0)
         self.config(menu=m)
@@ -1575,12 +1715,107 @@ class App(tk.Tk):
                                            n=len(jobs), added=added), parent=self)
 
     def about(self):
-        messagebox.showinfo(T("About"), f"{app_title()}\n\n"
-                            + T("Generates daily Permit to Work forms\nfrom the Word template "
-                                "with rotating jobs and crew.")
-                            + f"\n\n{T('Data folder:')}\n{storage.DATA_DIR}", parent=self)
+        """About box with the version and the update check."""
+        dlg = tk.Toplevel(self)
+        dlg.title(T("About"))
+        dlg.configure(bg=BG)
+        dlg.resizable(False, False)
+        dlg.transient(self)
+        body = tk.Frame(dlg, bg=BG, padx=14, pady=12)
+        body.pack()
+        if self.icons.get(48):
+            tk.Label(body, image=self.icons[48]).grid(row=0, column=0, rowspan=3, sticky="n", padx=(0, 12))
+        tk.Label(body, text=app_title(), font=win95.FONT_BOLD).grid(row=0, column=1, sticky="w")
+        tk.Label(body, text=T("Version {v}", v=__version__)).grid(row=1, column=1, sticky="w")
+        tk.Label(body, justify="left", text=T("Generates daily Permit to Work forms\nfrom the Word "
+                                               "template with rotating jobs and crew.")
+                 + f"\n\n{T('Data folder:')}\n{storage.DATA_DIR}\n{T('Log files:')}\n{ptwlog.LOG_DIR}"
+                 ).grid(row=2, column=1, sticky="w", pady=(6, 0))
+        bar = tk.Frame(dlg, bg=BG)
+        bar.pack(pady=(0, 10))
+        win95.button(bar, T("Check for updates"), lambda: self.check_updates(dlg), width=20
+                     ).pack(side="left", padx=4)
+        win95.button(bar, T("Open log folder"), lambda: open_path(ptwlog.LOG_DIR), width=16
+                     ).pack(side="left", padx=4)
+        win95.button(bar, T("OK"), dlg.destroy).pack(side="left", padx=4)
+        win95.center(dlg, self)
+        dlg.grab_set()
+
+    def check_updates(self, parent=None):
+        from . import updater
+        parent = parent or self
+        repo = self.store.settings.get("update_repo") or updater.DEFAULT_REPO
+        try:
+            rel = updater.latest_release(repo)
+        except updater.UpdateError as e:
+            ptwlog.log.info("update check: %s", e)
+            messagebox.showwarning(T("Check for updates"),
+                                   T("Could not check for updates:\n{e}", e=e), parent=parent)
+            return
+        ptwlog.log.info("update check: latest %s, running %s", rel["version"], __version__)
+        if not updater.is_newer(rel):
+            messagebox.showinfo(T("Check for updates"),
+                                T("You have the latest version ({v}).", v=__version__), parent=parent)
+            return
+        if not updater.can_self_update():
+            if messagebox.askyesno(T("Check for updates"),
+                                   T("Version {new} is available (you have {v}).\n"
+                                     "Open the download page?", new=rel["version"], v=__version__),
+                                   parent=parent):
+                open_path(rel["page"])
+            return
+        if not messagebox.askyesno(T("Check for updates"),
+                                   T("Version {new} is available (you have {v}).\n\n"
+                                     "Download it and restart the program now?\n"
+                                     "Your data, templates and history are kept.",
+                                     new=rel["version"], v=__version__), parent=parent):
+            return
+
+        def work(progress, cancelled):
+            return updater.download(rel, progress, cancelled)
+
+        def done(path, error, cancelled):
+            if error is not None:
+                if not cancelled:
+                    messagebox.showerror(T("Check for updates"), str(error), parent=parent)
+                return
+            try:
+                updater.install_and_restart(path)
+            except OSError as e:
+                ptwlog.error("update install failed", True)
+                messagebox.showerror(T("Check for updates"), str(e), parent=parent)
+                return
+            ptwlog.log.info("updated to %s, restarting", rel["version"])
+            self.destroy()
+
+        run_with_progress(self, parent, T("Check for updates"),
+                          T("Downloading version {new}...", new=rel["version"]), work, done)
+
+    def report_callback_exception(self, exc, val, tb):
+        """An error in a button / menu: write it to the log and tell the user."""
+        ptwlog.error("Error in the window", (exc, val, tb))
+        try:
+            messagebox.showerror(app_title(), T("An error occurred:\n{e}\n\nDetails are in the log:\n{path}",
+                                                e=val, path=os.path.join(ptwlog.LOG_DIR, "ptw.log")),
+                                 parent=self)
+        except Exception:  # noqa: BLE001 - never fail while reporting a failure
+            pass
+
+    def _heartbeat(self):
+        ptwlog.heartbeat()
+        self.after(1000, self._heartbeat)
 
 
 def main():
-    app = App()
-    app.mainloop()
+    ptwlog.setup()
+    ptwlog.start_watchdog()
+    try:
+        from . import updater
+        updater.cleanup_old()
+        app = App()
+        app._heartbeat()
+        app.mainloop()
+        ptwlog.log.info("---- exit")
+    except Exception:
+        ptwlog.error("The program stopped with an error", True)
+        raise

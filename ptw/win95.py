@@ -473,3 +473,119 @@ def select_all(w):
         w.icursor("end")
         return True
     return False
+
+
+# ----------------------------------------------------------------------
+# Progress dialog (file creation can be slow on a network drive)
+# ----------------------------------------------------------------------
+
+class ProgressDialog(tk.Toplevel):
+    """Modal Win95 progress window: text, block bar, 'n of total' and Cancel."""
+
+    def __init__(self, parent, title, text, cancel_text="Cancel"):
+        super().__init__(parent)
+        self.title(title)
+        self.configure(bg=BG)
+        self.resizable(False, False)
+        self.transient(parent)
+        self.cancelled = False
+        self.protocol("WM_DELETE_WINDOW", self.cancel)
+        body = tk.Frame(self, bg=BG, padx=14, pady=12)
+        body.pack(fill="both", expand=True)
+        tk.Label(body, text=text, anchor="w").pack(fill="x")
+        self.name = tk.Label(body, text="", anchor="w", width=58)
+        self.name.pack(fill="x", pady=(6, 4))
+        self.W, self.H = 380, 18
+        self.c = tk.Canvas(body, width=self.W, height=self.H, bg=WHITE, highlightthickness=0,
+                           bd=2, relief="sunken")
+        self.c.pack(fill="x")
+        self.count = tk.Label(body, text="", anchor="w")
+        self.count.pack(fill="x", pady=(4, 0))
+        self.button = tk.Button(body, text=cancel_text, width=12, command=self.cancel)
+        self.button.pack(pady=(10, 0))
+        center(self, parent)
+        self._old_grab = self.grab_current()
+        self.grab_set()
+
+    def set(self, done, total, name=""):
+        self.c.delete("all")
+        blocks = (self.W - 4) // 10
+        n = int(blocks * done / total) if total else 0
+        for i in range(n):
+            self.c.create_rectangle(3 + i * 10, 3, 10 + i * 10, self.H - 1, fill=NAVY, outline="")
+        self.count.config(text=f"{done} / {total}")
+        if name:
+            self.name.config(text=name)
+
+    def cancel(self):
+        self.cancelled = True
+        self.button.config(state="disabled")
+
+    def close(self):
+        try:
+            self.grab_release()
+            self.destroy()
+            if self._old_grab is not None and self._old_grab.winfo_exists():
+                self._old_grab.grab_set()
+        except tk.TclError:
+            pass
+
+
+def copy_rows(w):
+    """Ctrl+C in a list: selected rows to the clipboard, columns separated by Tab (Excel)."""
+    lines = []
+    if isinstance(w, ttk.Treeview):
+        cols = w.cget("columns")
+        rows = w.selection() or ((w.focus(),) if w.focus() else ())
+        if rows:
+            lines.append("\t".join(w.heading(c, "text") for c in cols))
+        for iid in rows:
+            lines.append("\t".join(str(v) for v in w.item(iid, "values")))
+    elif isinstance(w, tk.Listbox):
+        lines = [w.get(i) for i in w.curselection()]
+    if not lines:
+        return False
+    w.clipboard_clear()
+    w.clipboard_append("\n".join(lines))
+    return True
+
+
+def edit_key(w, key, keysym):
+    """Ctrl+C / V / X: lists copy rows; text fields get Copy / Paste / Cut also with a
+    non-Latin layout (Tk itself only knows Ctrl+C with the Latin layout)."""
+    if isinstance(w, (ttk.Treeview, tk.Listbox)):
+        return key == "c" and copy_rows(w)
+    if isinstance(w, (tk.Entry, ttk.Entry, ttk.Combobox, tk.Spinbox, tk.Text)):
+        if keysym.lower() == key:  # Latin layout: Tk does it already
+            return False
+        w.event_generate({"c": "<<Copy>>", "v": "<<Paste>>", "x": "<<Cut>>"}[key])
+        return True
+    return False
+
+
+def context_menu(event, labels):
+    """Right click: Cut / Copy / Paste / Select all for fields, Copy / Select all for lists.
+
+    labels: dict with the translated texts cut, copy, paste, all."""
+    w = event.widget
+    m = tk.Menu(w, tearoff=0)
+    if isinstance(w, (tk.Entry, ttk.Entry, ttk.Combobox, tk.Spinbox)):
+        w.focus_set()
+        m.add_command(label=labels["cut"], accelerator="Ctrl+X",
+                      command=lambda: w.event_generate("<<Cut>>"))
+        m.add_command(label=labels["copy"], accelerator="Ctrl+C",
+                      command=lambda: w.event_generate("<<Copy>>"))
+        m.add_command(label=labels["paste"], accelerator="Ctrl+V",
+                      command=lambda: w.event_generate("<<Paste>>"))
+        m.add_separator()
+        m.add_command(label=labels["all"], accelerator="Ctrl+A", command=lambda: select_all(w))
+    elif isinstance(w, (ttk.Treeview, tk.Listbox)):
+        if isinstance(w, ttk.Treeview):
+            row = w.identify_row(event.y)
+            if row and row not in w.selection():
+                w.selection_set(row)
+        m.add_command(label=labels["copy"], accelerator="Ctrl+C", command=lambda: copy_rows(w))
+        m.add_command(label=labels["all"], accelerator="Ctrl+A", command=lambda: select_all(w))
+    else:
+        return
+    m.tk_popup(event.x_root, event.y_root)

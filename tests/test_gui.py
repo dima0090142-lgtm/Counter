@@ -24,6 +24,17 @@ def app(tmp_path, monkeypatch):
     a.destroy()
 
 
+def _wait(app, cond, seconds=10):
+    import time
+    end = time.time() + seconds
+    while time.time() < end and not cond():
+        app.update()
+        time.sleep(0.05)
+    for _ in range(5):  # let the progress window close
+        app.update()
+        time.sleep(0.05)
+
+
 def _click(lb, index):
     """What a mouse click on a Listbox row does."""
     lb.selection_clear(0, "end")
@@ -130,6 +141,7 @@ def test_recreate_file_keeps_number(app, tmp_path, monkeypatch):
     monkeypatch.setattr(gui.messagebox, "askyesno", lambda *a, **k: True)
     monkeypatch.setattr(gui.messagebox, "showwarning", lambda *a, **k: None)
     app.history_tab.recreate()
+    _wait(app, lambda: os.path.getmtime(path) > 1)  # written in the background
     assert os.path.getmtime(path) > 1  # written again
     assert len(app.store.history) == 1 and app.store.history[0]["permit_no"] == "285"
     assert len(os.listdir(tmp_path / "out")) == 1
@@ -222,3 +234,54 @@ def test_hotkeys_generate_and_tabs(app):
     assert app.auto_tab.plan
     app._on_ctrl(_Key("3"))
     assert app.notebook.index("current") == 2
+
+
+def test_create_files_in_background_with_progress(app, tmp_path, monkeypatch):
+    import datetime as dt
+    from ptw import win95
+    app.store.settings["output_dir"] = str(tmp_path / "out")
+    app.store.settings["open_folder_after"] = False
+    seen = []
+    orig = win95.ProgressDialog.set
+    monkeypatch.setattr(win95.ProgressDialog, "set",
+                        lambda self, d, t, n="": (seen.append((d, t)), orig(self, d, t, n)))
+    app.auto_tab.set_range(dt.date(2026, 6, 1), dt.date(2026, 6, 30))
+    app.auto_tab.generate()
+    app.auto_tab.create()
+    _wait(app, lambda: not app.auto_tab.plan)
+    assert len(os.listdir(tmp_path / "out")) == 30
+    assert seen and seen[-1] == (30, 30)
+    assert len(app.store.history) == 30
+
+
+def test_manual_generate_and_crew_table(app):
+    form = app.manual_tab.form
+    form.generate()
+    p = form.get()
+    assert p["crew"] and app.store.can_pc(p["pc"])
+    marks = {iid: form.crew_tree.set(iid, "on") for iid in form.crew_tree.get_children()}
+    assert {k for k, v in marks.items() if v == "\u2611"} == set(p["crew"])
+    form._crew_all(False)
+    assert form.selected_crew() == []
+    form._crew_toggle("singh")
+    assert form.selected_crew() == ["singh"]
+
+
+def test_ctrl_c_copies_rows(app):
+    app.auto_tab.generate()
+    tree = app.auto_tab.tree
+    tree.selection_set(tree.get_children())
+    tree.focus_set()
+    app.update()
+    assert app._on_ctrl(_Key("Cyrillic_es")) == "break"  # Ctrl+C with the Russian layout
+    text = app.clipboard_get()
+    assert text.split("\n")[0].split("\t")[0] in ("Date", "Дата")
+    assert len(text.split("\n")) == len(tree.get_children()) + 1
+
+
+def test_calendars_start_today_and_stop_today(app):
+    import datetime as dt
+    today = dt.date.today()
+    assert app.auto_tab.cal_from.selection_get() == today
+    assert app.auto_tab.cal_to.selection_get() == today
+    assert app.auto_tab.cal_to["maxdate"] == today

@@ -195,6 +195,8 @@ RU = {
     "{n} files sent to the printer": "Отправлено на печать файлов: {n}",
     "Keyboard shortcuts": "Горячие клавиши",
     "Ctrl+A - select all (lists, text fields)\n"
+    "Ctrl+C / Ctrl+V / Ctrl+X - copy / paste / cut (lists: rows for Excel)\n"
+    "Right mouse button - Copy / Paste menu\n"
     "Shift / Ctrl + click - select several rows\n"
     "F5 or Ctrl+G - generate the plan\n"
     "Ctrl+R - reroll selected rows\n"
@@ -208,6 +210,8 @@ RU = {
     "Ctrl+1 / 2 / 3 - Auto generate / Manual / History\n"
     "Ctrl+Q - exit":
         "Ctrl+A — выделить всё (списки, поля ввода)\n"
+        "Ctrl+C / Ctrl+V / Ctrl+X — копировать / вставить / вырезать (в списках — строки для Excel)\n"
+        "Правая кнопка мыши — меню «Копировать / Вставить»\n"
         "Shift / Ctrl + щелчок — выделить несколько строк\n"
         "F5 или Ctrl+G — сгенерировать план\n"
         "Ctrl+R — заменить выделенные строки\n"
@@ -220,6 +224,27 @@ RU = {
         "Ctrl+O — открыть папку с пермитами\n"
         "Ctrl+1 / 2 / 3 — Автогенерация / Вручную / История\n"
         "Ctrl+Q — выход\n\nКлавиши работают и в русской раскладке.",
+    "Name": "Имя", "All": "Все", "None": "Никого",
+    "(a job and crew for the date - like Auto generate)":
+        "(работа и экипаж на выбранную дату — как в автогенерации)",
+    "No job can be planned (check the jobs and crew).":
+        "Не удалось подобрать работу (проверьте список работ и экипаж).",
+    "Creating permit files...": "Создание файлов пермитов...",
+    "Cancelled: {n} of {total} files created": "Отменено: создано файлов {n} из {total}",
+    "Cut": "Вырезать", "Copy (clipboard)": "Копировать", "Paste": "Вставить",
+    "Select all": "Выделить всё", "Log files:": "Журнал ошибок:",
+    "Check for updates": "Проверить обновления", "Open log folder": "Открыть папку журнала",
+    "Could not check for updates:\n{e}": "Не удалось проверить обновления:\n{e}",
+    "You have the latest version ({v}).": "У вас последняя версия ({v}).",
+    "Version {new} is available (you have {v}).\nOpen the download page?":
+        "Доступна версия {new} (у вас {v}).\nОткрыть страницу загрузки?",
+    "Version {new} is available (you have {v}).\n\nDownload it and restart the program now?\n"
+    "Your data, templates and history are kept.":
+        "Доступна версия {new} (у вас {v}).\n\nСкачать и перезапустить программу?\n"
+        "Ваши данные, шаблоны и история сохранятся.",
+    "Downloading version {new}...": "Загрузка версии {new}...",
+    "An error occurred:\n{e}\n\nDetails are in the log:\n{path}":
+        "Произошла ошибка:\n{e}\n\nПодробности в журнале:\n{path}",
     "Select permits in the list.": "Выделите пермиты в списке.",
     "Write {n} files again with the same numbers?\nThe old files are overwritten.":
         "Записать заново файлов: {n}, с теми же номерами?\nСтарые файлы будут перезаписаны.",

@@ -1,5 +1,6 @@
 """Filling the Word template and saving permits."""
 import datetime as dt
+import io
 import os
 import re
 
@@ -369,9 +370,23 @@ def set_checkboxes(document, tick_ao, tick_pc):
             checked.set(qn("w:val"), val)
 
 
+_template_cache = {}
+
+
+def _template_bytes(template):
+    """The template is read once (a network drive can be slow), again only if it changed."""
+    stamp = (template, os.path.getmtime(template), os.path.getsize(template))
+    data = _template_cache.get(template)
+    if not data or data[0] != stamp:
+        with open(template, "rb") as f:
+            data = (stamp, f.read())
+        _template_cache[template] = data
+    return data[1]
+
+
 def fill_template(template, values, out_path, fit=True, min_size=6.5, ticks=(True, True)):
     """Fill the template; returns the keys whose text had to be cut to fit one line."""
-    d = docx.Document(template)
+    d = docx.Document(io.BytesIO(_template_bytes(template)))
     _prepare_sizes(d)
     too_long = []
     for p in _paragraphs(d):
@@ -540,9 +555,11 @@ def _write_one(store, p, path, template):
                          ticks=(bool(s.get("tick_ao", True)), bool(s.get("tick_pc", True))))
 
 
-def write_permits(store, permits, replace_dates=False):
+def write_permits(store, permits, replace_dates=False, progress=None, cancelled=None):
     """Create .docx files, number them and record history.
 
+    progress(done, total, file name) is called after every file; cancelled() -> True
+    stops after the current file (the files written so far stay in the history).
     Returns (paths, warnings); warnings name permits whose text had to be cut.
     Raises PermitError (nothing written) if a permit has no P.C., an unknown job ..."""
     s = store.settings
@@ -569,30 +586,38 @@ def write_permits(store, permits, replace_dates=False):
         store.history = [h for h in store.history if h["date"] not in dates]
 
     paths, warnings = [], []
-    for p, no in zip(permits, numbers):
-        if not p.get("permit_no") and no:
-            p["permit_no"] = no
-            if s.get("permit_numbering") == "sequential" and str(no).isdigit():
-                s["next_permit_no"] = int(no) + 1
-        path = unique_path(folder, file_name(store, p))
-        too_long = _write_one(store, p, path, template)
-        paths.append(path)
-        if too_long:
-            warnings.append((os.path.basename(path), sorted(set(too_long))))
-        store.history.append({**p, "file": os.path.basename(path),
-                              "created": dt.datetime.now().isoformat(timespec="seconds")})
-    store.history.sort(key=lambda h: h["date"])
-    storage.save("history", store.history)
-    storage.save("settings", store.settings)
+    try:
+        for k, (p, no) in enumerate(zip(permits, numbers), 1):
+            if cancelled and cancelled():
+                break
+            if not p.get("permit_no") and no:
+                p["permit_no"] = no
+                if s.get("permit_numbering") == "sequential" and str(no).isdigit():
+                    s["next_permit_no"] = int(no) + 1
+            path = unique_path(folder, file_name(store, p))
+            too_long = _write_one(store, p, path, template)
+            paths.append(path)
+            if too_long:
+                warnings.append((os.path.basename(path), sorted(set(too_long))))
+            store.history.append({**p, "file": os.path.basename(path),
+                                  "created": dt.datetime.now().isoformat(timespec="seconds")})
+            if progress:
+                progress(k, len(permits), os.path.basename(path))
+    finally:  # also after an error / cancel: the files already written are recorded
+        store.history.sort(key=lambda h: h["date"])
+        storage.save("history", store.history)
+        storage.save("settings", store.settings)
     return paths, warnings
 
 
-def rewrite_files(store, entries):
+def rewrite_files(store, entries, progress=None, cancelled=None):
     """Write the files of history entries again (same number and file name, overwritten),
     e.g. permits made with an old template. Returns (paths, warnings)."""
     folder, template = _prepare(store)
     paths, warnings = [], []
-    for h in entries:
+    for k, h in enumerate(entries, 1):
+        if cancelled and cancelled():
+            break
         p = dict(h)
         if not store.job(p.get("job_id")):
             raise PermitError(f"{p.get('date')}: job {p.get('job_id')} is not in the list")
@@ -601,4 +626,6 @@ def rewrite_files(store, entries):
         paths.append(path)
         if too_long:
             warnings.append((os.path.basename(path), sorted(set(too_long))))
+        if progress:
+            progress(k, len(entries), os.path.basename(path))
     return paths, warnings

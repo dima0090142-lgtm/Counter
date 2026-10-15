@@ -1,0 +1,61 @@
+# Builds PTW_Generator.exe on Windows and publishes it as a GitHub release
+# "v<version>" (version from ptw/__init__.py). The program's "Check for updates"
+# downloads the exe of the newest release. A version that already has a release
+# is not built again - raise __version__ to publish a new one.
+name: Build exe release
+
+on:
+  push:
+    branches: [main, master, "claude/permit-to-work-generator-ad1sz9"]
+    paths: ["ptw/**", "defaults/**", "templates/**", "sounds/**", "icons/**", "main.py",
+            "requirements.txt", ".github/workflows/release.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Version
+        id: v
+        shell: bash
+        run: |
+          VER=$(python -c "import ptw; print(ptw.__version__)")
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          if gh release view "v$VER" >/dev/null 2>&1; then
+            echo "exists=yes" >> "$GITHUB_OUTPUT"
+            echo "Release v$VER already exists - nothing to do"
+          else
+            echo "exists=no" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Build exe
+        if: steps.v.outputs.exists == 'no'
+        shell: cmd
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --name PTW_Generator ^
+            --add-data "defaults;defaults" --add-data "templates;templates" --add-data "sounds;sounds" ^
+            --add-data "icons;icons" --icon icons\ptw.ico --hidden-import babel.numbers main.py
+
+      - name: Publish release
+        if: steps.v.outputs.exists == 'no'
+        shell: bash
+        run: |
+          gh release create "v${{ steps.v.outputs.version }}" dist/PTW_Generator.exe \
+            --target "${{ github.sha }}" \
+            --title "PTW Generator ${{ steps.v.outputs.version }}" \
+            --notes "Download PTW_Generator.exe and start it. Updates: Help > Check for updates."
+        env:
+          GH_TOKEN: ${{ github.token }}

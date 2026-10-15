@@ -43,6 +43,7 @@ DEFAULT_SETTINGS = {
     "tick_pc": True,             # tick the P.C. boxes of sections 2 and 3
     "pc_supervisor_ranks": ["2E", "3E"],  # P.C. when the job lead cannot be P.C.
     "loto_preferred_ranks": ["ETO", "AEO"],
+    "update_repo": "dima0090142-lgtm/Counter",  # GitHub releases with PTW_Generator.exe
 }
 
 DATA_VERSION = 3  # 1.3: AE instead of DG, LOTO / P.C. flags, job groups
